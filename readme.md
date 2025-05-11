@@ -97,7 +97,7 @@ The **Chatbot Service** provides an AI-powered chatbot for user support. It uses
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/traorecheikh/tyvaa-microservices.git
+   git clone https://github.com/traorecheikh/backend-tyvaa.git
    cd backend-tyvaa
    ```
 
@@ -111,6 +111,14 @@ The **Chatbot Service** provides an AI-powered chatbot for user support. It uses
    cd services/gateway-service
    npm install
    cd ../chatbot-service
+   npm install
+   cd services/auth-service
+   npm install
+   cd ../auth-service
+   npm install
+   cd services/user-service
+   npm install
+   cd ../user-service
    npm install
    ```
 
