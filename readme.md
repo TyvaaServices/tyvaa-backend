@@ -98,7 +98,7 @@ The **Chatbot Service** provides an AI-powered chatbot for user support. It uses
 1. Clone the repository:
    ```bash
    git clone https://github.com/traorecheikh/tyvaa-microservices.git
-   cd tyvaa-microservices
+   cd backend-tyvaa
    ```
 
 2. Install dependencies for all services:
