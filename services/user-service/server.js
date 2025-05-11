@@ -5,13 +5,13 @@ const sequelize = require('./config/db');
 const User = require('./model/user');
 
 const port = process.env.PORT || 2003;
-
-app.listen({port:port,host:'0.0.0.0'},(err, address) => {
+app.register(router);
+app.listen({port:port,host:'0.0.0.0'},async (err, address) => {
     if (err) {
         app.log.error(err);
         process.exit(1);
     }
-    sequelize.sync({alter:true}).then(() => {
+    await sequelize.sync({alter:true}).then(() => {
         app.log.info('Database synced');
     }).catch(err => {
         app.log.error('Error syncing database', err);
