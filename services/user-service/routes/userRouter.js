@@ -1,16 +1,39 @@
 
-
+const axios = require('axios');
 function router(fastify,opts){
     const User = require('./../model/user');
     fastify.get('/health', async (req, reply) => {
         return {status: 'user-service running'};
     });
 
+    function generateOTP() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
     fastify.get('/users', async (req, reply) => {
         const users = await User.findAll();
+        //console.log(users);
         return reply.send({users});
     });
-
+    //login
+    fastify.post('/login', async (req, reply) => {
+        const { phoneNumber } = req.body;
+        const user = await User.findOne({ where: { phoneNumber } });
+        if (!user) {
+            return reply.status(404).send({ error: 'User not found' });
+        } else {
+            const otp = generateOTP();
+            const response = await axios.post('http://localhost:2002/token',
+                {
+                    id: user.id,
+                    phoneNumber: user.phoneNumber,
+            });
+            //console.log(response);
+           const token= response.data.token;
+           // Vous pouvez ici envoyer l'OTP via SMS ou email
+            return reply.send({ user, otp ,token});
+        }
+    });
     fastify.get('/users/:id', async (req, reply) => {
         const {id} = req.params;
         const user = await User.findByPk(id);
