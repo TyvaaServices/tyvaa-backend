@@ -120,6 +120,10 @@ The **Chatbot Service** provides an AI-powered chatbot for user support. It uses
 
 ### Running Locally
 
+0. Start all **Services**:
+    ```bash
+    turbo run dev
+    ```
 1. Start the **Gateway Service**:
    ```bash
    cd services/gateway-service
@@ -149,6 +153,7 @@ PORT=2000
 ### Chatbot Service
 
 ```env
+PORT=2001
 GOOGLE_API_KEY=your-google-api-key
 ```
 
@@ -215,7 +220,7 @@ npm test
 2. Run the containers:
    ```bash
    docker run -p 2000:2000 gateway-service
-   docker run -p 3000:3000 chatbot-service
+   docker run -p 2001:2001 chatbot-service
    ```
 
 ---
