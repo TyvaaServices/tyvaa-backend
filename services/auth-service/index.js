@@ -11,8 +11,8 @@ fastify.get('/health', async (req, reply) => {
 });
 
 fastify.post('/token', async (req, reply) => {
-    const {id, username} = req.body;
-    const token = fastify.jwt.sign({id, username});
+    const {id, phoneNumber} = req.body;
+    const token = fastify.jwt.sign({id, phoneNumber});
     return {token};
 });
 
