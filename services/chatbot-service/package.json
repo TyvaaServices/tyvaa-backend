@@ -1,0 +1,26 @@
+{
+  "name": "chatbot-service",
+  "version": "2.0.1",
+  "description": "chatbot-service for tyvaa",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "type": "commonjs",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/swagger": "^9.5.1",
+    "@fastify/swagger-ui": "^5.2.2",
+    "@genkit-ai/googleai": "^1.8.0",
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^16.5.0",
+    "fastify": "^5.3.2",
+    "genkit": "^1.8.0",
+    "nodemon": "^3.1.10",
+    "zod": "^3.24.4",
+    "zod-to-json-schema": "^3.24.5"
+  }
+}
