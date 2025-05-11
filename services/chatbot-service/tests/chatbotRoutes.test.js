@@ -77,7 +77,7 @@ describe('Chatbot Routes', () => {
             method: 'GET',
             url: '/api/support/chat',
         });
-        expect(response.statusCode).toBe(404); // or 405, depending on your Fastify config
+        expect(response.statusCode).toBe(404);
     });
 
 });
