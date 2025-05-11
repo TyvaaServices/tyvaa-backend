@@ -1,18 +1,22 @@
 {
   "name": "backend-tyvaa",
   "version": "1.0.0",
+  "private": true,
   "description": "Backend services for Tyvaa",
   "scripts": {
-    "test": "jest",
-    "lint": "eslint .",
-    "dev": "node -e \"console.log('Running development servers...'); require('child_process').spawn('npm', ['run', 'dev'], {cwd: './services/gateway-service', stdio: 'inherit'}); require('child_process').spawn('npm', ['run', 'dev'], {cwd: './services/chatbot-service', stdio: 'inherit'});\""
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
   },
+  "packageManager": "npm@10.5.0",
   "workspaces": [
-    "services/*"
+    "services/*",
+    "packages/*"
   ],
   "devDependencies": {
     "eslint": "^8.44.0",
-    "jest": "^29.5.0"
+    "jest": "^29.5.0",
+    "turbo": "^2.5.3"
   },
   "engines": {
     "node": ">=18.0.0"
