@@ -17,9 +17,7 @@ const ChatRequestSchema = z.object({
             })
         )
         .optional(),
-
 });
-
 
 const chatSchema = {
     description: 'Send a message to the support chatbot',
@@ -54,8 +52,23 @@ const chatSchema = {
 };
 
 async function chatbotRoutes(fastify, options) {
-    fastify.post('/chat', {schema: chatSchema}, async (request, reply) => {
+    // Disable automatic validation by setting schema validation to false
+    fastify.post('/chat', {
+        schema: chatSchema,
+        validatorCompiler: () => () => ({error: null}), // Disable automatic validation
+    }, async (request, reply) => {
         try {
+            // Validate input schema manually
+            const validationResult = ChatRequestSchema.safeParse(request.body);
+
+            if (!validationResult.success) {
+                return reply.code(400).send({
+                    error: 'Validation Error',
+                    message: 'Invalid input data',
+                    issues: validationResult.error.issues
+                });
+            }
+
             const {message, personality, history} = request.body;
 
             const input = {
@@ -63,20 +76,28 @@ async function chatbotRoutes(fastify, options) {
                 personality,
                 history,
             };
-            console.log(history);
 
             const output = await getSupportChatResponse(input);
 
+            if (!output || !output.response) {
+                throw new Error('Invalid response from chatbot flow.');
+            }
+
             reply.code(200).send({reply: output.response});
         } catch (error) {
+            console.error("Error in chatbot route:", error);
+
             if (error.name === 'ZodError') {
                 reply.code(400).send({
                     error: 'Validation Error',
                     message: error.message,
-                    issues: error.issues,
+                    issues: error.issues || []
                 });
             } else {
-                reply.code(500).send({error: 'Failed to get response from chatbot.'});
+                reply.code(500).send({
+                    error: 'Failed to get response from chatbot.',
+                    message: error.message || 'Internal server error'
+                });
             }
         }
     });
