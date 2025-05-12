@@ -1,20 +1,18 @@
 {
-  "name": "user-service",
+  "name": "notification-service",
   "version": "1.0.0",
-  "description": "user service for Tyvaa",
+  "description": "notification service for Tyvaa",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "node server.js",
     "test": ""
   },
   "type": "commonjs",
   "dependencies": {
+    "firebase-admin": "^13.3.0",
     "dotenv": "^16.3.1",
     "fastify": "^5.3.2",
-    "sequelize": "^6.32.1",
-    "pg":"^8.15.6",
-    "pg-hstore":"^2.3.4",
     "nodemon": "^3.0.2",
     "zod": "^3.22.4",
     "axios": "^1.9.0",

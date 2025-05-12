@@ -11,7 +11,7 @@ app.listen({port:port,host:'0.0.0.0'},async (err, address) => {
         app.log.error(err);
         process.exit(1);
     }
-    await sequelize.sync({alter:true}).then(() => {
+    await sequelize.sync({alter:true,logging:false}).then(() => {
         app.log.info('Database synced');
     }).catch(err => {
         app.log.error('Error syncing database', err);

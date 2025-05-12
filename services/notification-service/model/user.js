@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const sequelize = require('../config/serviceAccountKey.json');
 
 const User = sequelize.define('User',{
     id: {
@@ -14,10 +14,6 @@ const User = sequelize.define('User',{
         validate: {
             is: /^\+?[1-9]\d{1,14}$/, // E.164 format
         },
-    },
-    fcmToken: {
-        type: DataTypes.STRING,
-        allowNull: true,
     },
    
 })
