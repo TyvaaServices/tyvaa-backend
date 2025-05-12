@@ -2,7 +2,7 @@
 
 This repository contains the microservices architecture for **Tyvaa**, a ridesharing platform designed to connect
 drivers and passengers in Senegal. The project is built using **Fastify**, a high-performance web framework for Node.js,
-and includes multiple services such as a **Gateway Service** and a **Chatbot Service**.
+and includes multiple services such as a **Gateway Service**, **Chatbot Service**, **Notification Service**, and **User Service**.
 
 ---
 
@@ -13,6 +13,8 @@ and includes multiple services such as a **Gateway Service** and a **Chatbot Ser
 3. [Services](#services)
     - [Gateway Service](#gateway-service)
     - [Chatbot Service](#chatbot-service)
+    - [Notification Service](#notification-service)
+    - [User Service](#user-service)
 4. [Installation](#installation)
 5. [Usage](#usage)
 6. [Environment Variables](#environment-variables)
@@ -40,6 +42,8 @@ The project follows a **microservices architecture** with the following key comp
 - **Gateway Service**: Acts as the central entry point for all API requests and proxies them to the appropriate
   microservices.
 - **Chatbot Service**: Provides a support chatbot for user assistance, powered by AI.
+- **Notification Service**: Handles notifications (e.g., SMS, email) for user interactions.
+- **User Service**: Manages user data, including authentication and user profiles.
 
 Each service is self-contained and communicates with others via HTTP.
 
@@ -85,6 +89,43 @@ The **Chatbot Service** provides an AI-powered chatbot for user support. It uses
 
 ---
 
+### Notification Service
+
+The **Notification Service** handles notifications for the Tyvaa platform, such as sending SMS or email alerts.
+
+#### Features:
+
+- Sends notifications via Firebase.
+- Supports dynamic configuration using environment variables.
+- Validates notification payloads.
+
+#### Key Files:
+
+- `server.js`: Entry point for the service.
+- `routes/notificationRouter.js`: API routes for sending notifications.
+- `.env`: Configuration for Firebase and service-specific settings.
+
+---
+
+### User Service
+
+The **User Service** manages user data and authentication for the Tyvaa platform.
+
+#### Features:
+
+- Handles user registration and login.
+- Generates OTPs for authentication.
+- Manages user profiles and updates.
+
+#### Key Files:
+
+- `server.js`: Entry point for the service.
+- `routes/userRouter.js`: API routes for user management.
+- `model/user.js`: Sequelize model for user data.
+- `config/db.js`: Database configuration.
+
+---
+
 ## Installation
 
 ### Prerequisites
@@ -112,11 +153,7 @@ The **Chatbot Service** provides an AI-powered chatbot for user support. It uses
    npm install
    cd ../chatbot-service
    npm install
-   cd services/auth-service
-   npm install
-   cd ../auth-service
-   npm install
-   cd services/user-service
+   cd ../notification-service
    npm install
    cd ../user-service
    npm install
@@ -128,19 +165,23 @@ The **Chatbot Service** provides an AI-powered chatbot for user support. It uses
 
 ### Running Locally
 
-0. Start all **Services**:
+1. Start all **Services**:
     ```bash
     turbo run dev
     ```
-1. Start the **Gateway Service**:
+
+2. Start individual services if needed:
    ```bash
    cd services/gateway-service
    npm run dev
-   ```
 
-2. Start the **Chatbot Service**:
-   ```bash
-   cd services/chatbot-service
+   cd ../chatbot-service
+   npm run dev
+
+   cd ../notification-service
+   npm run dev
+
+   cd ../user-service
    npm run dev
    ```
 
@@ -163,6 +204,24 @@ PORT=2000
 ```env
 PORT=2001
 GOOGLE_API_KEY=your-google-api-key
+```
+
+### Notification Service
+
+```env
+PORT=2004
+FIREBASE_KEY_BASE64=your-firebase-key-base64
+```
+
+### User Service
+
+```env
+PORT=2003
+DB_USER=your-db-user
+DB_PASSWORD=your-db-password
+DB_HOST=your-db-host
+DB_PORT=your-db-port
+DB_NAME=your-db-name
 ```
 
 ---
@@ -192,6 +251,16 @@ http://localhost:2000/docs
     - `src/routes/`: API route definitions.
     - `Dockerfile`: Docker configuration.
 
+- **Notification Service**:
+    - `routes/`: API route definitions.
+    - `server.js`: Service entry point.
+    - `.env`: Environment variables.
+
+- **User Service**:
+    - `routes/`: API route definitions.
+    - `model/`: Sequelize models.
+    - `config/`: Database configuration.
+
 ### Scripts
 
 - `npm start`: Start the service.
@@ -211,6 +280,12 @@ npm test
 
 cd ../chatbot-service
 npm test
+
+cd ../notification-service
+npm test
+
+cd ../user-service
+npm test
 ```
 
 ---
@@ -223,12 +298,16 @@ npm test
    ```bash
    docker build -t gateway-service ./services/gateway-service
    docker build -t chatbot-service ./services/chatbot-service
+   docker build -t notification-service ./services/notification-service
+   docker build -t user-service ./services/user-service
    ```
 
 2. Run the containers:
    ```bash
    docker run -p 2000:2000 gateway-service
    docker run -p 2001:2001 chatbot-service
+   docker run -p 2004:2004 notification-service
+   docker run -p 2003:2003 user-service
    ```
 
 ---
