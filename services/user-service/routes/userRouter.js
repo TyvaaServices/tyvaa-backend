@@ -44,7 +44,6 @@ function router(fastify,opts){
         }
         
     });
-
     fastify.post('/users', async (req, reply) => {
         const {phoneNumber} = req.body;
         const existingUser = await User.findOne({where: {phoneNumber}});
