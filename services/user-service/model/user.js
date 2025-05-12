@@ -15,6 +15,10 @@ const User = sequelize.define('User',{
             is: /^\+?[1-9]\d{1,14}$/, // E.164 format
         },
     },
+    fcmToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
    
 })
 

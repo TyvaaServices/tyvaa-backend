@@ -82,6 +82,18 @@ function router(fastify,opts){
             return reply.status(204).send();
         }
     });
+    fastify.post('/users/:id/fcm-token', async (req, reply) => {
+        const {id} = req.params;
+        const {fcmToken} = req.body;
+        const user = await User.findByPk(id);
+        if (!user) {
+            return reply.status(404).send({error: 'User not found'});
+        }else{
+            user.fcmToken = fcmToken;
+            await user.save();
+            return reply.send({user});
+        }
+    });
 }
 
 module.exports = router;

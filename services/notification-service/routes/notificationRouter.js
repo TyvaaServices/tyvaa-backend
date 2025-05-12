@@ -34,7 +34,7 @@ async function sendFCM(token, title, body, data) {
 
 async function router(fastify, options) {
   fastify.post("/send-notification", async (request, reply) => {
-    const { token, title, body, data } = request.body; // Add data extraction
+    const { token, title, body, data } = request.body;
     if (!token || !title || !body) {
       return reply.status(400).send({ error: "Missing required fields" });
     }
@@ -42,4 +42,15 @@ async function router(fastify, options) {
     reply.send({ status: "Notification sent" });
   });
 }
+
+// {
+//   "token": "",
+//     "title": "Test Notification",
+//     "body": "This is a test message from Postman",
+//     "data": {
+//   "type": "test",
+//       "id": "12345",
+//       "route": "/test-screen"
+// }
+// }
 module.exports = router;
