@@ -4,6 +4,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+temp_service_account.json
+serviceAccountKey.json
+.turbo
+.idea
+
+
+
 # Logs
 logs/
 *.log
