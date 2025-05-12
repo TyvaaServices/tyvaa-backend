@@ -18,6 +18,7 @@ function router(fastify,opts){
     //login
     fastify.post('/login', async (req, reply) => {
         const { phoneNumber } = req.body;
+        console.log("here");
         const user = await User.findOne({ where: { phoneNumber } });
         if (!user) {
             return reply.status(404).send({ error: 'User not found' });
@@ -30,7 +31,8 @@ function router(fastify,opts){
             });
             //console.log(response);
            const token= response.data.token;
-           // Vous pouvez ici envoyer l'OTP via SMS ou email
+            // Vous pouvez ici envoyer l'OTP via SMS ou email
+            console.log(`OTP for ${user.phoneNumber}: ${otp}`);
             return reply.send({ user, otp ,token});
         }
     });
