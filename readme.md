@@ -2,7 +2,8 @@
 
 This repository contains the microservices architecture for **Tyvaa**, a ridesharing platform designed to connect
 drivers and passengers in Senegal. The project is built using **Fastify**, a high-performance web framework for Node.js,
-and includes multiple services such as a **Gateway Service**, **Chatbot Service**, **Notification Service**, and **User Service**.
+and includes multiple services such as a **Gateway Service**, **Chatbot Service**, **Notification Service**, and **User
+Service**.
 
 ---
 

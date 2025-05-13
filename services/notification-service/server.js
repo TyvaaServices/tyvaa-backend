@@ -17,6 +17,6 @@ app.register(router);
 const port = process.env.PORT || 2004;
 app.listen({port, host: '0.0.0.0'}, (err, address) => {
     initializeApp({
-            credential: cert(keyPath),
-        });
+        credential: cert(keyPath),
+    });
 });

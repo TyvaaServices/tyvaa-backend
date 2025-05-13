@@ -1,7 +1,7 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/serviceAccountKey.json');
 
-const User = sequelize.define('User',{
+const User = sequelize.define('User', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -15,7 +15,7 @@ const User = sequelize.define('User',{
             is: /^\+?[1-9]\d{1,14}$/, // E.164 format
         },
     },
-   
+
 })
 
 module.exports = User;
