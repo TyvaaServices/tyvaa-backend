@@ -1,4 +1,6 @@
-const sequelize = require('sequelize');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
+
 
 const ride = sequelize.define('Ride', {
     driverId: {
@@ -33,4 +35,4 @@ const ride = sequelize.define('Ride', {
         allowNull: false,
     }
 });
-module.exports = Ride;
+module.exports = ride;
