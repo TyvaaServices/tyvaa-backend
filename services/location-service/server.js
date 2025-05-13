@@ -1,101 +1,102 @@
 require('dotenv').config();
 const fastify = require('fastify');
-const app = fastify({logger: true});
+const app = fastify({ logger: true });
 
-const {createClient} = require('ioredis');
-const {Server} = require('socket.io');
+const { createClient } = require('ioredis');
+const { Server } = require('socket.io');
 const axios = require('axios');
 
 let redis;
 let io;
 let redisAvailable = true;
 
-try {
-    redis = createClient({
-        host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379
-    });
+async function startServer() {
+    try {
+        redis = createClient({
+            host: process.env.REDIS_HOST || 'localhost',
+            port: process.env.REDIS_PORT || 6379,
+        });
 
-    redis.on('error', (err) => {
-        // console.error('Redis error:', err);
-        redisAvailable = false;
-    });
+        redis.on('error', (err) => {
+            console.error('Redis error:', err);
+            redisAvailable = false;
+        });
 
-    redis.ping().then(() => {
+        await redis.ping();
         console.log('Redis connected successfully');
         redisAvailable = true;
 
-        if (redisAvailable) {
-            app.decorate('redis', redis);
+        app.decorate('redis', redis);
 
-            io = new Server(app.server, {
-                cors: {
-                    origin: '*',
-                },
-            });
-
-            io.on('connection', (socket) => {
-                console.log('Client connected:', socket.id);
-
-                socket.on('updateLocation', async (data) => {
-                    try {
-                        const {userId, location} = data;
-
-                        socket.data.userId = userId;
-                        socket.data.location = location;
-
-                        await redis.geoadd('users:locations', location.longitude, location.latitude, userId);
-
-                        await redis.set(`${userId}:location`, JSON.stringify({userId, location}));
-
-                        io.emit('locationUpdate', {userId, location});
-                    } catch (err) {
-                        console.error('Error in updateLocation:', err);
-                    }
-                });
-
-                socket.on('disconnect', async () => {
-
-                    console.log('Client disconnected:', socket.id);
-                    const {userId} = socket.data;
-                    if (!userId) return;
-
-                    const locationData = await redis.get(`${userId}:location`);
-                    if (!locationData) return;
-
-                    const parsed = JSON.parse(locationData);
-                    console.log(`trying to log last known location of User with id : ${userId}`);
-                    const response = await axios.post(`http://localhost:2003/users/${parsed.userId}/update-location`, {
-                        location: parsed.location
-                    }).catch(e => {
-                        console.log(`Error while sending location of User with id : ${userId}  to user service:`);
-                    });
-
-                    if (response != null && response.status === 200) {
-                        console.log(`Location updated successfully for User with id : ${userId} in user service`);
-                    } else {
-                        console.log(`Failed to update location of User with id : ${userId} in user service`);
-                    }
-                });
-            });
-        }
-    }).catch(err => {
-        console.error('Failed to connect to Redis, skipping io and redis setup:', err);
+    } catch (err) {
+        console.error('Failed to connect to Redis:', err);
         redisAvailable = false;
-    });
-} catch (err) {
-    console.error('Error setting up Redis:', err);
-    redisAvailable = false;
-}
+    }
 
-const port = process.env.PORT || 2005;
-app.listen({port: port, host: '0.0.0.0'}, async (err, address) => {
-    if (err) {
+    const port = process.env.PORT || 2005;
+    try {
+        await app.listen({ port, host: '0.0.0.0' });
+        app.log.info(`Server listening at http://0.0.0.0:${port}`);
+    } catch (err) {
         app.log.error(err);
         process.exit(1);
     }
-    app.log.info(`Server listening at ${address}`);
-    if (!redisAvailable) {
-        app.log.warn('Redis is not available. Socket.IO and location tracking have been disabled.');
+
+    if (redisAvailable) {
+        io = new Server(app.server, {
+            cors: {
+                origin: '*',
+            },
+        });
+
+        io.on('connection', (socket) => {
+            console.log('Client connected:', socket.id);
+
+            socket.on('updateLocation', async (data) => {
+                try {
+                    const { userId, location } = data;
+
+                    socket.data.userId = userId;
+                    socket.data.location = location;
+
+                    await redis.geoadd('users:locations', location.longitude, location.latitude, userId);
+                    await redis.set(`${userId}:location`, JSON.stringify({ userId, location }));
+
+                    io.emit('locationUpdate', { userId, location });
+                } catch (err) {
+                    console.error('Error in updateLocation:', err);
+                }
+            });
+
+            socket.on('disconnect', async () => {
+                console.log('Client disconnected:', socket.id);
+                const { userId } = socket.data;
+                if (!userId) return;
+
+                const locationData = await redis.get(`${userId}:location`);
+                if (!locationData) return;
+
+                const parsed = JSON.parse(locationData);
+                console.log(`Logging last known location for User ID: ${userId}`);
+
+                try {
+                    const response = await axios.post(`http://localhost:2003/users/${parsed.userId}/update-location`, {
+                        location: parsed.location,
+                    });
+
+                    if (response.status === 200) {
+                        console.log(`Location updated successfully for User ID: ${userId}`);
+                    } else {
+                        console.log(`Failed to update location for User ID: ${userId}`);
+                    }
+                } catch (e) {
+                    console.error(`Error sending location for User ID: ${userId} to user service.`);
+                }
+            });
+        });
+    } else {
+        app.log.warn('Redis not available. Skipping Socket.IO initialization.');
     }
-});
+}
+
+startServer();
