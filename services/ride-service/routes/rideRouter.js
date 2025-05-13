@@ -1,9 +1,9 @@
 const axios = require('axios');
+const ride = require('./../model/ride');
 
-const router = function (fastify,opts){
-  const ride = require('./../model/ride');
+async function router(fastify, opts) {
     fastify.get('/health', async (req, reply) => {
-        return {status: 'ride-service running'};
+        return { status: 'ride-service running' };
     });
 
     fastify.get('/rides', async (req, reply) => {
