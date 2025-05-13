@@ -1,38 +1,58 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db');
 
-const User = sequelize.define('User',{
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    phoneNumber: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-        validate: {
-            is: /^\+?[1-9]\d{1,14}$/, // E.164 format
+const User = sequelize.define('User', {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
         },
+        phoneNumber: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+            validate: {
+                is: /^\+?[1-9]\d{1,14}$/, // E.164 format
+            },
+        },
+        fcmToken: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        driverLicense: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        carImage: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        isDriver: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        isVerified: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        isBlocked: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        // location: {
+        //     type: DataTypes.GEOMETRY('POINT'),
+        //     allowNull: true,
+        // }
     },
-    fcmToken: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    driverLicense: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    carImage: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    isDriver: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-    },
-   
-})
+//     {
+//     indexes: [
+//         {
+//             fields: ['location'],
+//             using: 'GIST',
+//         }
+//     ]
+// }
+)
 
 module.exports = User;
 
