@@ -10,6 +10,8 @@ services/notification-service/config/serviceAccountKey.json
 .turbo
 .idea
 .turbo/*
+coverage/
+
 
 
 
