@@ -19,6 +19,18 @@ const User = sequelize.define('User',{
         type: DataTypes.STRING,
         allowNull: true,
     },
+    driverLicense: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    carImage: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    isDriver: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
    
 })
 
