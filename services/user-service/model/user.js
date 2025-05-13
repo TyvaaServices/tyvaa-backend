@@ -39,19 +39,23 @@ const User = sequelize.define('User', {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
-        // location: {
-        //     type: DataTypes.GEOMETRY('POINT'),
-        //     allowNull: true,
-        // }
+        latitude: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        longitude: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
     },
-//     {
-//     indexes: [
-//         {
-//             fields: ['location'],
-//             using: 'GIST',
-//         }
-//     ]
-// }
+    {
+        indexes: [
+            {
+                fields: ['location'],
+                using: 'GIST',
+            }
+        ]
+    }
 )
 
 module.exports = User;
