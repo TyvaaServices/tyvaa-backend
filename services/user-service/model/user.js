@@ -23,6 +23,10 @@ const User = sequelize.define('User', {
             type: DataTypes.STRING,
             allowNull: true,
         },
+    isOnline: {
+            type:DataTypes.BOOLEAN,
+            defaultValue: false,
+    },
         carImage: {
             type: DataTypes.STRING,
             allowNull: true,
