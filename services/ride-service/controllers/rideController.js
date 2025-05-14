@@ -1,6 +1,7 @@
 // controllers/rideController.js
 const axios = require('axios');
 const ride = require('./../models/ride');
+const logger = require('./../utils/logger');
 
 module.exports = {
     healthCheck: async (req, reply) => {
@@ -8,24 +9,51 @@ module.exports = {
     },
 
     getAllRides: async (req, reply) => {
-        const rides = await ride.findAll();
-        return reply.send({rides});
+        try {
+            logger.info('Requete pour recuperer tous les trajets');
+            const rides = await ride.findAll();
+            logger.info(`${rides.length} trajets trouves`);
+            return reply.send({ rides });
+        } catch (error) {
+            logger.error('Erreur lors de la recuperation des trajets:', error);
+            return reply.status(500).send({ error: 'Erreur interne du serveur' });
+        }
     },
+
 
     getRideById: async (req, reply) => {
-        const {id} = req.params;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
+        try {
+            const { id } = req.params;
+            logger.info(`Requête pour récupérer le trajet avec l'id: ${id}`);
+
+            const rideDetails = await ride.findByPk(id);
+
+            if (!rideDetails) {
+                logger.warn(`Aucun trajet trouvé avec l'id: ${id}`);
+                return reply.status(404).send({ error: 'Ride not found' });
+            }
+
+            logger.info(`Trajet trouvé: ${JSON.stringify(rideDetails)}`);
+            return reply.send({ rideDetails });
+        } catch (error) {
+            logger.error(`Erreur lors de la récupération du trajet avec l'id ${req.params.id}:`, error);
+            return reply.status(500).send({ error: 'Erreur interne du serveur' });
         }
-        return reply.send({rideDetails});
     },
 
+
     createRide: async (req, reply) => {
-        const {driverId, departure, destination, dateTime, places, comment, price} = req.body;
-        const rideDetails = await ride.create({driverId, departure, destination, dateTime, places, comment, price});
-        return reply.status(201).send({rideDetails});
-    },
+        try {
+            const {driverId, departure, destination, dateTime, places, comment, price} = req.body;
+            logger.info('Requete pour creer un nouveau trajet');
+            const rideDetails = await ride.create({driverId, departure, destination, dateTime, places, comment, price});
+            logger.info(`Trajet créé avec succès: ${JSON.stringify(rideDetails)}`);
+            return reply.status(201).send({rideDetails});
+        }catch(error) {
+            logger.error('Erreur lors de la creation du trajet:', error);
+            return reply.status(500).send({error: 'Erreur interne du serveur'});
+        }
+        },
 
     updateRide: async (req, reply) => {
         const {id} = req.params;
