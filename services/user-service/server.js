@@ -2,7 +2,7 @@ const fastify = require('fastify');
 const app = fastify({logger: true});
 const router = require('./routes/userRouter');
 const sequelize = require('./config/db');
-const User = require('./model/user');
+const User = require('./models/user');
 
 const port = process.env.PORT || 2003;
 app.register(router);
