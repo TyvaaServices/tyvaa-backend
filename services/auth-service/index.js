@@ -6,17 +6,17 @@ fastify.register(jwt, {
     secret: process.env.JWT_SECRET || 'supersecret'
 });
 
-fastify.get('/health', async (req, reply) => {
+fastify.get('/api/v1/health', async (req, reply) => {
     return {status: 'auth-service running'};
 });
 
-fastify.post('/token', async (req, reply) => {
+fastify.post('/api/v1/token', async (req, reply) => {
     const {id, phoneNumber} = req.body;
     const token = fastify.jwt.sign({id, phoneNumber});
     return {token};
 });
 
-fastify.post('/verify', async (req, reply) => {
+fastify.post('/api/v1/verify', async (req, reply) => {
     try {
         const decoded = await fastify.jwt.verify(req.body.token);
         return {valid: true, decoded};
