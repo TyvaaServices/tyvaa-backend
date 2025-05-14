@@ -24,7 +24,7 @@ module.exports = {
         }
 
         const otp = generateOTP();
-        const response = await axios.post(`${process.env.AUTH_SERVICE_URL}`, {
+        const response = await axios.post(`${process.env.AUTH_SERVICE_URL}/api/v1/token`, {
             id: user.id,
             phoneNumber: user.phoneNumber,
         });

@@ -15,6 +15,10 @@ const User = sequelize.define('User', {
                 is: /^\+?[1-9]\d{1,14}$/, // E.164 format
             },
         },
+    "nomComplet":{
+      type: DataTypes.STRING,
+        allowNull: true,
+    },
         fcmToken: {
             type: DataTypes.STRING,
             allowNull: true,
@@ -52,14 +56,7 @@ const User = sequelize.define('User', {
             allowNull: true,
         },
     },
-    {
-        indexes: [
-            {
-                fields: ['location'],
-                using: 'GIST',
-            }
-        ]
-    }
+
 )
 
 module.exports = User;
