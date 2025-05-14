@@ -5,7 +5,7 @@ const router = require('./routes/rideRouter');
 
 const port = process.env.PORT || 2004;
 
-app.register(router);
+app.register(router, {prefix: '/api/v1'});
 
 app.listen({port: port, host: '0.0.0.0'}, async (err, address) => {
     if (err) {
