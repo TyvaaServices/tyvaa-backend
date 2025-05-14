@@ -1,9 +1,9 @@
 require('dotenv').config();
 const fastify = require('fastify');
-const app = fastify({ logger: true });
+const app = fastify({logger: true});
 
-const { createClient } = require('ioredis');
-const { Server } = require('socket.io');
+const {createClient} = require('ioredis');
+const {Server} = require('socket.io');
 const axios = require('axios');
 
 let redis;
@@ -35,7 +35,7 @@ async function startServer() {
 
     const port = process.env.PORT || 2005;
     try {
-        await app.listen({ port, host: '0.0.0.0' });
+        await app.listen({port, host: '0.0.0.0'});
         app.log.info(`Server listening at http://0.0.0.0:${port}`);
     } catch (err) {
         app.log.error(err);
@@ -53,16 +53,17 @@ async function startServer() {
             console.log('Client connected:', socket.id);
 
             socket.on('updateLocation', async (data) => {
+                console.log(data)
                 try {
-                    const { userId, location } = data;
+                    const {userId, location} = data;
 
                     socket.data.userId = userId;
                     socket.data.location = location;
 
                     await redis.geoadd('users:locations', location.longitude, location.latitude, userId);
-                    await redis.set(`${userId}:location`, JSON.stringify({ userId, location }));
+                    await redis.set(`${userId}:location`, JSON.stringify({userId, location}));
 
-                    io.emit('locationUpdate', { userId, location });
+                    io.emit('locationUpdate', {userId, location});
                 } catch (err) {
                     console.error('Error in updateLocation:', err);
                 }
@@ -70,7 +71,7 @@ async function startServer() {
 
             socket.on('disconnect', async () => {
                 console.log('Client disconnected:', socket.id);
-                const { userId } = socket.data;
+                const {userId} = socket.data;
                 if (!userId) return;
 
                 const locationData = await redis.get(`${userId}:location`);
