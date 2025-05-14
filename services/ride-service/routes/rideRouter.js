@@ -1,7 +1,7 @@
 
 const rideController = require('../controllers/rideController');
 
-async function router(fastify, opts) {
+async function rideRoutes(fastify, opts) {
     fastify.get('/health', rideController.healthCheck);
     fastify.get('/rides', rideController.getAllRides);
     fastify.get('/rides/:id', rideController.getRideById);
@@ -16,4 +16,4 @@ async function router(fastify, opts) {
     fastify.post('/rides/:id/notify', rideController.notifyRide);
 }
 
-module.exports = router;
+module.exports = rideRoutes;
