@@ -4,7 +4,7 @@ require('dotenv').config();
 const fastify = require('fastify')({logger: true});
 const chatbotRoutes = require('./src/routes/chatbotRoutes');
 
-fastify.register(chatbotRoutes, {prefix: '/api/support'});
+fastify.register(chatbotRoutes, {prefix: '/api/v1/support'});
 
 const port = process.env.PORT || 2001;
 fastify.listen({port, host: '0.0.0.0'}, (err, address) => {
