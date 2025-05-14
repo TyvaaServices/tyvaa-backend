@@ -13,7 +13,7 @@ const jsonString = Buffer.from(base64Key, 'base64').toString('utf-8');
 const keyPath = path.join(__dirname, 'temp_service_account.json');
 fs.writeFileSync(keyPath, jsonString);
 
-app.register(router);
+app.register(router, {prefix: '/api/v1'});
 const port = process.env.PORT || 2004;
 app.listen({port, host: '0.0.0.0'}, (err, address) => {
     initializeApp({
