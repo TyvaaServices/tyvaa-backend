@@ -9,9 +9,9 @@ fastify.register(require('@fastify/swagger'), swaggerConfig.options);
 fastify.register(require('@fastify/swagger-ui'), swaggerConfig.uiOptions);
 
 fastify.register(proxy, {
-    upstream: process.env.CHATBOT_SERVICE_URL || 'http://localhost:2001',
-    prefix: '/api/support/chat',
-    rewritePrefix: '/api/support/chat',
+    upstream: process.env.CHATBOT_SERVICE_URL || 'http://localhost:2001/api/v1',
+    prefix: '/support/chat',
+    rewritePrefix: '/support/chat',
 });
 
 const port = process.env.PORT || 2000;
