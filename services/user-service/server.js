@@ -12,11 +12,12 @@ app.listen({port: port, host: '0.0.0.0'}, async (err, address) => {
         process.exit(1);
     }
     await sequelize.sync({
-        force: true, logging: true
+        alter: true, logging: true
     }).then(() => {
         app.log.info('Database synced');
     }).catch(err => {
         app.log.error('Error syncing database', err);
+        console.log(err);
     });
     app.log.info(`Server listening at ${address}`);
 });
