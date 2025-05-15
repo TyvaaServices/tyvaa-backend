@@ -31,7 +31,7 @@ module.exports = {
 
         const token = response.data.token;
         console.log(`OTP for ${user.phoneNumber}: ${otp}`);
-        return reply.send({user, otp, token});
+        return reply.send({user , otp, token});
     },
 
     getUserById: async (req, reply) => {
@@ -54,16 +54,45 @@ module.exports = {
     },
 
     updateUser: async (req, reply) => {
-        const {id} = req.params;
-        const {phoneNumber} = req.body;
-        const user = await User.findByPk(id);
+        const { id } = req.params;
+        const {
+            phoneNumber,
+            nomComplet,
+            fcmToken,
+            driverLicense,
+            isOnline,
+            carImage,
+            isDriver,
+            isVerified,
+            isBlocked,
+        } = req.body;
 
-        if (!user) return reply.status(404).send({error: 'User not found'});
+        try {
+            const user = await User.findByPk(id);
 
-        user.phoneNumber = phoneNumber;
-        await user.save();
-        return reply.send({user});
+            if (!user) {
+                return reply.status(404).send({ error: 'User not found' });
+            }
+
+            if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+            if (nomComplet !== undefined) user.nomComplet = nomComplet;
+            if (fcmToken !== undefined) user.fcmToken = fcmToken;
+            if (driverLicense !== undefined) user.driverLicense = driverLicense;
+            if (isOnline !== undefined) user.isOnline = isOnline;
+            if (carImage !== undefined) user.carImage = carImage;
+            if (isDriver !== undefined) user.isDriver = isDriver;
+            if (isVerified !== undefined) user.isVerified = isVerified;
+            if (isBlocked !== undefined) user.isBlocked = isBlocked;
+
+            await user.save();
+
+            return reply.send({ user });
+        } catch (err) {
+            console.error(err);
+            return reply.status(500).send({ error: 'Server error' });
+        }
     },
+
 
     deleteUser: async (req, reply) => {
         const {id} = req.params;

@@ -96,6 +96,7 @@ async function startServer() {
             });
         });
     } else {
+        process.exit();
         app.log.warn('Redis not available. Skipping Socket.IO initialization.');
     }
 }
