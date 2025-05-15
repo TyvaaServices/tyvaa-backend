@@ -1,11 +1,12 @@
 // controllers/rideController.js
 const axios = require('axios');
 const ride = require('./../models/ride');
+const rideParticipant = require('./../models/rideParticipant');
 const logger = require('./../utils/logger');
 
 module.exports = {
     healthCheck: async (req, reply) => {
-        return { status: 'ride-service running' };
+        return {status: 'ride-service running'};
     },
 
     getAllRides: async (req, reply) => {
@@ -13,31 +14,31 @@ module.exports = {
             logger.info('Requete pour recuperer tous les trajets');
             const rides = await ride.findAll();
             logger.info(`${rides.length} trajets trouves`);
-            return reply.send({ rides });
+            return reply.send({rides});
         } catch (error) {
             logger.error('Erreur lors de la recuperation des trajets:', error);
-            return reply.status(500).send({ error: 'Erreur interne du serveur' });
+            return reply.status(500).send({error: 'Erreur interne du serveur'});
         }
     },
 
 
     getRideById: async (req, reply) => {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             logger.info(`Requête pour récupérer le trajet avec l'id: ${id}`);
 
             const rideDetails = await ride.findByPk(id);
 
             if (!rideDetails) {
                 logger.warn(`Aucun trajet trouvé avec l'id: ${id}`);
-                return reply.status(404).send({ error: 'Ride not found' });
+                return reply.status(404).send({error: 'Ride not found'});
             }
 
             logger.info(`Trajet trouvé: ${JSON.stringify(rideDetails)}`);
-            return reply.send({ rideDetails });
+            return reply.send({rideDetails});
         } catch (error) {
             logger.error(`Erreur lors de la récupération du trajet avec l'id ${req.params.id}:`, error);
-            return reply.status(500).send({ error: 'Erreur interne du serveur' });
+            return reply.status(500).send({error: 'Erreur interne du serveur'});
         }
     },
 
@@ -49,11 +50,11 @@ module.exports = {
             const rideDetails = await ride.create({driverId, departure, destination, dateTime, places, comment, price});
             logger.info(`Trajet créé avec succès: ${JSON.stringify(rideDetails)}`);
             return reply.status(201).send({rideDetails});
-        }catch(error) {
+        } catch (error) {
             logger.error('Erreur lors de la creation du trajet:', error);
             return reply.status(500).send({error: 'Erreur interne du serveur'});
         }
-        },
+    },
 
     updateRide: async (req, reply) => {
         const {id} = req.params;
@@ -74,6 +75,43 @@ module.exports = {
         }
         await rideDetails.destroy();
         return reply.send({message: 'Ride deleted successfully'});
+    },
+
+    bookRide: async (req, reply) => {
+        const {id} = req.params;
+        const {userId} = req.body;
+        const rideDetails = await ride.findByPk(id);
+        if (!rideDetails) {
+            return reply.status(404).send({error: 'Ride not found'});
+        }
+        try {
+            const rideParticipantDetails = await rideParticipant.create({rideId: id, userId});
+            const response = await axios.get(`http://user-service:2003/users/${rideDetails.driverId}`);
+            if (!response.data) {
+                return reply.status(404).send({error: 'Driver not found'});
+            }
+            const driverDetails = response.data;
+            const notificationResponse = await axios.post(`http://notification-service:2004/send-notification`, {
+                token: driverDetails.fcmToken,
+                title: 'New Ride Booking',
+                body: `User ${userId} has booked your ride from ${rideDetails.departure} to ${rideDetails.destination}.`,
+                data: {
+                    type: 'ride_booking',
+                    rideId: id,
+                    userId
+                }
+            });
+            if (notificationResponse.status !== 200) {
+                logger.error(`Failed to send notification to driver ${rideDetails.driverId}: ${notificationResponse.statusText}`);
+                return reply.status(500).send({error: 'Error sending notification'});
+            }
+            logger.info(`Notification sent to driver ${rideDetails.driverId} for ride ${id}`);
+            logger.info(`Ride booked successfully by user ${userId} for ride ${id}`);
+            return reply.send({message: 'Ride booked successfully', rideParticipantDetails, response});
+        } catch (e) {
+            logger.error(`Error booking ride ${id} for user ${userId}: ${e.message}`);
+            return reply.status(500).send({error: 'Error booking ride'});
+        }
     },
 
     acceptRide: async (req, reply) => {
