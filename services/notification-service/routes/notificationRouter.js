@@ -1,4 +1,5 @@
 const {getMessaging} = require("firebase-admin/messaging");
+const logger = require('./../utils/logger');
 
 async function sendFCM(token, title, body, data) {
     const message = {
