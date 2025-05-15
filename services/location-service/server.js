@@ -9,6 +9,43 @@ const axios = require('axios');
 let redis;
 let io;
 let redisAvailable = true;
+app.post('/match-ride', async (request, reply) => {
+    const {riderId, location} = request.body;
+
+    if (!location || !riderId) {
+        return reply.code(400).send({error: 'Missing location or riderId'});
+    }
+
+    try {
+        const drivers = await redis.georadius(
+            'drivers:locations',
+            location.longitude,
+            location.latitude,
+            5,
+            'km',
+            'WITHDIST',
+        );
+
+        if (drivers.length === 0) {
+            return reply.code(404).send({message: 'No nearby drivers found'});
+        }
+
+        const [nearestDriver] = drivers;
+        const [driverId, distance] = nearestDriver;
+        const socketId = userSocketMap.get(driverId);
+        io.to(socketId).emit('rideRequest', {riderId, location});
+
+        return reply.send({
+            driverId,
+            distance: `${distance} km`,
+        });
+
+    } catch (err) {
+        request.log.error(err);
+        return reply.code(500).send({error: 'Internal server error'});
+    }
+});
+const userSocketMap = new Map();
 
 async function startServer() {
     try {
@@ -56,9 +93,13 @@ async function startServer() {
                 console.log(data)
                 try {
                     const {userId, location} = data;
+                    userSocketMap.set(userId, socket.id);
 
                     socket.data.userId = userId;
                     socket.data.location = location;
+                    if (data.isDriver && data.isOnline && data.isVerified) {
+                        await redis.geoadd('drivers:locations', location.longitude, location.latitude, userId);
+                    }
 
                     await redis.geoadd('users:locations', location.longitude, location.latitude, userId);
                     await redis.set(`${userId}:location`, JSON.stringify({userId, location}));
