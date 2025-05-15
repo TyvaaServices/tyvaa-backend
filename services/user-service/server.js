@@ -3,6 +3,7 @@ const app = fastify({logger: true});
 const router = require('./routes/userRouter');
 const sequelize = require('./config/db');
 const User = require('./models/user');
+const logger = require('./utils/logger');
 
 const port = process.env.PORT || 2003;
 app.register(router, {prefix: '/api/v1'});
