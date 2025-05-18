@@ -47,6 +47,43 @@ const swaggerOptions = {
                     },
                 },
             },
+            '/users': {
+                get: {
+                    tags: ['Auth'],
+                    summary: 'Récupérer la liste des utilisateurs (proxy vers user-service)',
+                    responses: {
+                        '200': {
+                            description: 'Liste des utilisateurs',
+                            schema: { type: 'object' },
+                        },
+                    },
+                },
+                post: {
+                    tags: ['Auth'],
+                    summary: 'Créer un utilisateur (proxy vers user-service)',
+                    parameters: [{ in: 'body', name: 'user', schema: { type: 'object' } }],
+                    responses: {
+                        '201': { description: 'Utilisateur créé', schema: { type: 'object' } },
+                    },
+                },
+            },
+            '/rides': {
+                get: {
+                    tags: ['Rides'],
+                    summary: 'Récupérer la liste des trajets (proxy vers ride-service)',
+                    responses: {
+                        '200': { description: 'Liste des trajets', schema: { type: 'object' } },
+                    },
+                },
+                post: {
+                    tags: ['Rides'],
+                    summary: 'Créer un trajet (proxy vers ride-service)',
+                    parameters: [{ in: 'body', name: 'ride', schema: { type: 'object' } }],
+                    responses: {
+                        '201': { description: 'Trajet créé', schema: { type: 'object' } },
+                    },
+                },
+            },
             '/api/auth/login': {
                 post: {
                     tags: ['Auth'],
@@ -168,6 +205,16 @@ const swaggerOptions = {
                                 },
                             },
                         },
+                    },
+                },
+            },
+            '/support/chat': {
+                post: {
+                    tags: ['Chatbot'],
+                    summary: 'Envoyer un message au chatbot (proxy vers chatbot-service)',
+                    parameters: [{ in: 'body', name: 'message', schema: { type: 'object' } }],
+                    responses: {
+                        '200': { description: 'Réponse du chatbot', schema: { type: 'object' } },
                     },
                 },
             },
