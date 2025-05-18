@@ -300,4 +300,5 @@ module.exports = {
             return reply.status(500).send({error: 'Failed to update location'});
         }
     },
+    generateOTP,
 };
