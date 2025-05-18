@@ -96,7 +96,7 @@ module.exports = {
     },
 
     createUser: async (req, reply) => {
-        const {phoneNumber} = req.body;
+        const {phoneNumber,fullName} = req.body;
         logger.info(`Creating new user with phone number: ${phoneNumber}`);
 
         try {
@@ -109,11 +109,20 @@ module.exports = {
             }
 
             logger.debug(`Creating new user with data: ${JSON.stringify(req.body)}`);
-            const user = await User.create({phoneNumber});
+            const user = await User.create({phoneNumber,fullName});
 
             logger.info(`User created successfully with ID: ${user.id}`);
             logger.debug(`New user data: ${JSON.stringify(user)}`);
-            return reply.status(201).send({user});
+            const response = await axios.post(`${process.env.AUTH_SERVICE_URL}/api/v1/token`, {
+                id: user.id,
+                phoneNumber: user.phoneNumber,
+            });
+
+            const token = response.data.token;
+
+            const otp = generateOTP();
+
+            return reply.status(201).send({user, otp, token});
         } catch (error) {
             logger.error(`Error creating user with phone ${phoneNumber}: ${error.message}`);
             logger.debug(`Error stack: ${error.stack}`);
@@ -128,7 +137,7 @@ module.exports = {
 
         const {
             phoneNumber,
-            nomComplet,
+            fullName,
             fcmToken,
             driverLicense,
             isOnline,
@@ -154,9 +163,9 @@ module.exports = {
                 logger.debug(`Updating phoneNumber from ${user.phoneNumber} to ${phoneNumber}`);
                 user.phoneNumber = phoneNumber;
             }
-            if (nomComplet !== undefined) {
-                logger.debug(`Updating nomComplet from ${user.nomComplet} to ${nomComplet}`);
-                user.nomComplet = nomComplet;
+            if (fullName !== undefined) {
+                logger.debug(`Updating fullName from ${user.fullName} to ${fullName}`);
+                user.fullName = fullName;
             }
             if (fcmToken !== undefined) {
                 logger.debug(`Updating fcmToken to new value`);

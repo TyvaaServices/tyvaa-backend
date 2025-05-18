@@ -12,10 +12,10 @@ const User = sequelize.define('User', {
             allowNull: false,
             unique: true,
             validate: {
-                is: /^\+?[1-9]\d{1,14}$/, // E.164 format
+                is: /^\+?[1-9]\d{1,14}$/,
             },
         },
-    "nomComplet":{
+    fullName:{
       type: DataTypes.STRING,
         allowNull: true,
     },
