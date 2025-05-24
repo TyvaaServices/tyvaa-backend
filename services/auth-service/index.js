@@ -1,6 +1,6 @@
 const fastify = require('fastify')({logger: true});
 require('dotenv').config();
-const jwt = require('fastify-jwt');
+const jwt = require('@fastify/jwt');
 const logger = require('./utils/logger');
 
 logger.info('Initializing auth service');
