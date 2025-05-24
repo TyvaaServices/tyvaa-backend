@@ -15,10 +15,10 @@ const User = sequelize.define('User', {
                 is: /^\+?[1-9]\d{1,14}$/,
             },
         },
-    fullName:{
-      type: DataTypes.STRING,
-        allowNull: true,
-    },
+        fullName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
         fcmToken: {
             type: DataTypes.STRING,
             allowNull: true,
@@ -27,10 +27,10 @@ const User = sequelize.define('User', {
             type: DataTypes.STRING,
             allowNull: true,
         },
-    isOnline: {
-            type:DataTypes.BOOLEAN,
+        isOnline: {
+            type: DataTypes.BOOLEAN,
             defaultValue: false,
-    },
+        },
         carImage: {
             type: DataTypes.STRING,
             allowNull: true,
@@ -38,6 +38,10 @@ const User = sequelize.define('User', {
         isDriver: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
+        },
+        dateOfBirth: {
+            type: DataTypes.DATE,
+            allowNull: true,
         },
         isVerified: {
             type: DataTypes.BOOLEAN,
@@ -56,7 +60,6 @@ const User = sequelize.define('User', {
             allowNull: true,
         },
     },
-
 )
 
 module.exports = User;
