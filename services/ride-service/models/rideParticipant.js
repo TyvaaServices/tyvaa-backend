@@ -5,6 +5,7 @@ const RideParticipant = sequelize.define('RideParticipant', {
     rideId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+
     },
     userId: {
         type: DataTypes.INTEGER,
@@ -13,6 +14,6 @@ const RideParticipant = sequelize.define('RideParticipant', {
     status: {
         type: DataTypes.ENUM('pending', 'accepted', 'rejected', 'cancelled'),
         defaultValue: 'pending',
-    }
+    },
 });
 module.exports = RideParticipant;

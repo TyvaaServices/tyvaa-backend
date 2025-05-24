@@ -1,4 +1,3 @@
-// controllers/rideController.js
 const axios = require('axios');
 const ride = require('./../models/ride');
 const rideParticipant = require('./../models/rideParticipant');
