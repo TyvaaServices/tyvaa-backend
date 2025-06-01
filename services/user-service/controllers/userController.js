@@ -57,6 +57,7 @@ module.exports = {
             const response = await axios.post(`${process.env.AUTH_SERVICE_URL}/api/v1/token`, {
                 id: user.id,
                 phoneNumber: user.phoneNumber,
+                isDriver: user.isDriver,
             });
 
             const token = response.data.token;
@@ -96,7 +97,7 @@ module.exports = {
     },
 
     createUser: async (req, reply) => {
-        const {phoneNumber,fullName} = req.body;
+        const {phoneNumber, fullName} = req.body;
         logger.info(`Creating new user with phone number: ${phoneNumber}`);
 
         try {
@@ -109,7 +110,7 @@ module.exports = {
             }
 
             logger.debug(`Creating new user with data: ${JSON.stringify(req.body)}`);
-            const user = await User.create({phoneNumber,fullName});
+            const user = await User.create({phoneNumber, fullName});
 
             logger.info(`User created successfully with ID: ${user.id}`);
             logger.debug(`New user data: ${JSON.stringify(user)}`);
