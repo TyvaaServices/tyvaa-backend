@@ -1,0 +1,25 @@
+{
+  "driverId": 1,
+  "departure": "MEDINA",
+  "destination": "GRAND YOFF",
+  "seatsAvailable": 3,
+  "recurrence": [
+    "Monday",
+    "Wednesday",
+    "Friday"
+  ],
+  "comment": "Weekly commute",
+  "price": 500,
+  "status": "active",
+  "startDate": "2025-06-03",
+  "endDate": "2025-07-03",
+  "time": "08:00:00",
+  "isRecurring": true
+}
+{
+  "rideId": 1,
+  "rideDate": "2025-06-05T08:00:00Z",
+  "seatsAvailable": 3,
+  "seatsBooked": 0,
+  "status": "scheduled"
+}
