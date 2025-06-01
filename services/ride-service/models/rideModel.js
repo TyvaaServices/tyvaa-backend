@@ -1,7 +1,7 @@
 const {DataTypes} = require('sequelize');
 const sequelize = require('./../config/db');
 
-const ride = sequelize.define('Ride', {
+const RideModel = sequelize.define('RideModel', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -19,11 +19,7 @@ const ride = sequelize.define('Ride', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    dateTime: {
-        type: DataTypes.DATE,
-        allowNull: false,
-    },
-    places: {
+    seatsAvailable: {
         type: DataTypes.INTEGER,
         allowNull: false,
         validate: {
@@ -31,24 +27,40 @@ const ride = sequelize.define('Ride', {
         },
     },
     recurrence: {
-        type: DataTypes.ARRAY(DataTypes.STRING), // Example: ['Mon', 'Tue', 'Thu']
-        allowNull: true, // Only for recurring trips
-    },
-    rideStyle: {
-        type: DataTypes.ENUM('quiet', 'chill', 'music'),
-        defaultValue: 'chill',
+        type: DataTypes.ARRAY(DataTypes.STRING), // ['Monday', 'Tuesday']
+        allowNull: true,
     },
     comment: {
         type: DataTypes.TEXT,
         defaultValue: '',
     },
     price: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false,
     },
     status: {
         type: DataTypes.ENUM('active', 'cancelled', 'completed'),
         defaultValue: 'active',
     },
+    startDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+    },
+    endDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+    },
+    time: {
+        type: DataTypes.TIME,
+        allowNull: true,
+    },
+    isRecurring: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
+}, {
+    tableName: 'rides',
+    timestamps: false,
 });
-module.exports = ride;
+
+module.exports = RideModel;
