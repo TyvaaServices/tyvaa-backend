@@ -145,7 +145,7 @@ The **Ride Service** handles ride creation, retrieval, and management for the Ty
 - `server.js`: Entry point for the service.
 - `controllers/rideController.js`: Business logic for ride management.
 - `routes/rideRouter.js`: API routes for ride operations.
-- `models/ride.js`: Sequelize model for ride data.
+- `models/rideModel.js`: Sequelize model for ride data.
 
 ---
 

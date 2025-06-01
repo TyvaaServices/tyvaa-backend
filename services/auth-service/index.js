@@ -28,12 +28,12 @@ fastify.get('/api/v1/health', async (req, reply) => {
 });
 
 fastify.post('/api/v1/token', async (req, reply) => {
-    const {id, phoneNumber} = req.body;
+    const {id, phoneNumber, isDriver} = req.body;
     logger.info(`Token generation requested for user ID: ${id}`);
     logger.debug(`Request payload: ${JSON.stringify(req.body)}`);
 
     try {
-        const token = fastify.jwt.sign({id, phoneNumber});
+        const token = fastify.jwt.sign({id, phoneNumber, isDriver});
         logger.info(`Token successfully generated for user ID: ${id}`);
         logger.debug(`Generated token: ${token}`);
         return {token};
