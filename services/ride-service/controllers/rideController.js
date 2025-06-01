@@ -1,217 +1,142 @@
-const axios = require('axios');
-const ride = require('./../models/ride');
-const rideParticipant = require('./../models/rideParticipant');
-const logger = require('./../utils/logger');
+const rideService = require('../services/rideService');
 
 module.exports = {
     healthCheck: async (req, reply) => {
         return {status: 'ride-service running'};
     },
 
+
+    //TODO uncomment this when driver authentication is implemented
+    //     if (!req.user?.isDriver) {
+    //     return reply.code(403).send({ error: 'Driver access required' });
+    // }
+
     getAllRides: async (req, reply) => {
-        try {
-            logger.info('Requete pour recuperer tous les trajets');
-            const rides = await ride.findAll();
-            logger.info(`${rides.length} trajets trouves`);
-            return reply.send({rides});
-        } catch (error) {
-            logger.error('Erreur lors de la recuperation des trajets:', error);
-            return reply.status(500).send({error: 'Erreur interne du serveur'});
-        }
+        const rides = await rideService.getAllRides();
+        return reply.send(rides);
     },
-
-
     getRideById: async (req, reply) => {
-        try {
-            const {id} = req.params;
-            logger.info(`Requête pour récupérer le trajet avec l'id: ${id}`);
-
-            const rideDetails = await ride.findByPk(id);
-
-            if (!rideDetails) {
-                logger.warn(`Aucun trajet trouvé avec l'id: ${id}`);
-                return reply.status(404).send({error: 'Ride not found'});
-            }
-
-            logger.info(`Trajet trouvé: ${JSON.stringify(rideDetails)}`);
-            return reply.send({rideDetails});
-        } catch (error) {
-            logger.error(`Erreur lors de la récupération du trajet avec l'id ${req.params.id}:`, error);
-            return reply.status(500).send({error: 'Erreur interne du serveur'});
-        }
+        const ride = await rideService.getRideById(req.params.id);
+        if (!ride) return reply.code(404).send({error: 'Ride not found'});
+        return reply.send(ride);
     },
-
-
     createRide: async (req, reply) => {
-        try {
-            const {driverId, departure, destination, dateTime, places, comment, price} = req.body;
-            logger.info('Requete pour creer un nouveau trajet');
-            const rideDetails = await ride.create({driverId, departure, destination, dateTime, places, comment, price});
-            logger.info(`Trajet créé avec succès: ${JSON.stringify(rideDetails)}`);
-            return reply.status(201).send({rideDetails});
-        } catch (error) {
-            logger.error('Erreur lors de la creation du trajet:', error);
-            return reply.status(500).send({error: 'Erreur interne du serveur'});
-        }
+        const ride = await rideService.createRide(req.body);
+        return reply.code(201).send(ride);
     },
-
     updateRide: async (req, reply) => {
-        const {id} = req.params;
-        const {driverId, departure, destination, dateTime, places, comment, price} = req.body;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
-        await rideDetails.update({driverId, departure, destination, dateTime, places, comment, price});
-        return reply.send({rideDetails});
+        const ride = await rideService.updateRide(req.params.id, req.body);
+        if (!ride) return reply.code(404).send({error: 'Ride not found'});
+        return reply.send(ride);
     },
-
     deleteRide: async (req, reply) => {
-        const {id} = req.params;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
-        await rideDetails.destroy();
-        return reply.send({message: 'Ride deleted successfully'});
+        const deleted = await rideService.deleteRide(req.params.id);
+        if (!deleted) return reply.code(404).send({error: 'Ride not found'});
+        return reply.send({message: 'Ride deleted'});
     },
 
-    bookRide: async (req, reply) => {
-        const {id} = req.params;
-        const {userId} = req.body;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
+    // RIDE INSTANCE CRUD
+    getAllRideInstances: async (req, reply) => {
+        const instances = await rideService.getAllRideInstances();
+        return reply.send(instances);
+    },
+    getRideInstanceById: async (req, reply) => {
+        const instance = await rideService.getRideInstanceById(req.params.id);
+        if (!instance) return reply.code(404).send({error: 'RideInstance not found'});
+        return reply.send(instance);
+    },
+    createRideInstance: async (req, reply) => {
+        const instance = await rideService.createRideInstance(req.body);
+        return reply.code(201).send(instance);
+    },
+    updateRideInstance: async (req, reply) => {
+        const instance = await rideService.updateRideInstance(req.params.id, req.body);
+        if (!instance) return reply.code(404).send({error: 'RideInstance not found'});
+        return reply.send(instance);
+    },
+    deleteRideInstance: async (req, reply) => {
+        const deleted = await rideService.deleteRideInstance(req.params.id);
+        if (!deleted) return reply.code(404).send({error: 'RideInstance not found'});
+        return reply.send({message: 'RideInstance deleted'});
+    },
+
+    // BOOKING CRUD & LOGIC
+    getAllBookings: async (req, reply) => {
+        const bookings = await rideService.getAllBookings();
+        return reply.send(bookings);
+    },
+    getBookingById: async (req, reply) => {
+        const booking = await rideService.getBookingById(req.params.id);
+        if (!booking) return reply.code(404).send({error: 'Booking not found'});
+        return reply.send(booking);
+    },
+    createBooking: async (req, reply) => {
         try {
-            const rideParticipantDetails = await rideParticipant.create({rideId: id, userId});
-            const response = await axios.get(`http://user-service:2003/users/${rideDetails.driverId}`);
-            if (!response.data) {
-                return reply.status(404).send({error: 'Driver not found'});
-            }
-            const driverDetails = response.data;
-            const notificationResponse = await axios.post(`http://notification-service:2004/send-notification`, {
-                token: driverDetails.fcmToken,
-                title: 'New Ride Booking',
-                body: `User ${userId} has booked your ride from ${rideDetails.departure} to ${rideDetails.destination}.`,
-                data: {
-                    type: 'ride_booking',
-                    rideId: id,
-                    userId
-                }
-            });
-            if (notificationResponse.status !== 200) {
-                logger.error(`Failed to send notification to driver ${rideDetails.driverId}: ${notificationResponse.statusText}`);
-                return reply.status(500).send({error: 'Error sending notification'});
-            }
-            logger.info(`Notification sent to driver ${rideDetails.driverId} for ride ${id}`);
-            logger.info(`Ride booked successfully by user ${userId} for ride ${id}`);
-            return reply.send({message: 'Ride booked successfully', rideParticipantDetails, response});
-        } catch (e) {
-            logger.error(`Error booking ride ${id} for user ${userId}: ${e.message}`);
-            return reply.status(500).send({error: 'Error booking ride'});
+            const booking = await rideService.createBooking(req.body);
+            return reply.code(201).send(booking);
+        } catch (err) {
+            return reply.code(400).send({error: err.message});
         }
+    },
+    updateBooking: async (req, reply) => {
+        const booking = await rideService.updateBooking(req.params.id, req.body);
+        if (!booking) return reply.code(404).send({error: 'Booking not found'});
+        return reply.send(booking);
+    },
+    deleteBooking: async (req, reply) => {
+        const deleted = await rideService.deleteBooking(req.params.id);
+        if (!deleted) return reply.code(404).send({error: 'Booking not found'});
+        return reply.send({message: 'Booking deleted'});
+    },
+    bookRide: async (req, reply) => {
+        try {
+            const booking = await rideService.bookRide(req.body);
+            return reply.code(201).send(booking);
+        } catch (err) {
+            return reply.code(400).send({error: err.message});
+        }
+    },
+    cancelBooking: async (req, reply) => {
+        const cancelled = await rideService.cancelBooking(req.params.bookingId);
+        if (!cancelled) return reply.code(404).send({error: 'Booking not found or already cancelled'});
+        return reply.send({message: 'Booking cancelled'});
     },
 
     acceptRide: async (req, reply) => {
-        const {id} = req.params;
-        const {userId} = req.body;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
-        try {
-            const response = await axios.post(`http://user-service:2003/users/${rideDetails.driverId}/notify`, {
-                message: `Ride ${id} accepted by user ${userId}`
-            });
-            return reply.send({message: 'Ride accepted successfully', response});
-        } catch (error) {
-            return reply.status(500).send({error: 'Error notifying driver'});
-        }
+        const accepted = await rideService.acceptRide(req.params.id);
+        if (!accepted) return reply.code(404).send({error: 'Ride not found'});
+        return reply.send({message: 'Ride accepted'});
     },
-
     rejectRide: async (req, reply) => {
-        const {id} = req.params;
-        const {userId} = req.body;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
-        try {
-            const response = await axios.post(`http://user-service:2003/users/${rideDetails.driverId}/notify`, {
-                message: `Ride ${id} rejected by user ${userId}`
-            });
-            return reply.send({message: 'Ride rejected successfully', response});
-        } catch (error) {
-            return reply.status(500).send({error: 'Error notifying driver'});
-        }
+        const rejected = await rideService.rejectRide(req.params.id);
+        if (!rejected) return reply.code(404).send({error: 'Ride not found'});
+        return reply.send({message: 'Ride rejected'});
     },
-
     completeRide: async (req, reply) => {
-        const {id} = req.params;
-        const {userId} = req.body;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
-        try {
-            const response = await axios.post(`http://user-service:2003/users/${rideDetails.driverId}/notify`, {
-                message: `Ride ${id} completed by user ${userId}`
-            });
-            return reply.send({message: 'Ride completed successfully', response});
-        } catch (error) {
-            return reply.status(500).send({error: 'Error notifying driver'});
-        }
+        const completed = await rideService.completeRide(req.params.id);
+        if (!completed) return reply.code(404).send({error: 'Ride not found'});
+        return reply.send({message: 'Ride completed'});
     },
 
+    // Ride rating
     rateRide: async (req, reply) => {
-        const {id} = req.params;
-        const {userId, rating} = req.body;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
         try {
-            const response = await axios.post(`http://user-service:2003/users/${rideDetails.driverId}/notify`, {
-                message: `Ride ${id} rated by user ${userId} with rating ${rating}`
-            });
-            return reply.send({message: 'Ride rated successfully', response});
-        } catch (error) {
-            return reply.status(500).send({error: 'Error notifying driver'});
+            const {userId, rating, comment} = req.body;
+            const rideInstanceId = req.params.id;
+            const result = await rideService.rateRide({userId, rideInstanceId, rating, comment});
+            return reply.send({message: 'Ride rated', rating: result.rideRating, average: result.average});
+        } catch (err) {
+            return reply.code(400).send({error: err.message});
         }
     },
 
     reportRide: async (req, reply) => {
-        const {id} = req.params;
-        const {userId, reason} = req.body;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
-        try {
-            const response = await axios.post(`http://user-service:2003/users/${rideDetails.driverId}/notify`, {
-                message: `Ride ${id} reported by user ${userId} for reason: ${reason}`
-            });
-            return reply.send({message: 'Ride reported successfully', response});
-        } catch (error) {
-            return reply.status(500).send({error: 'Error notifying driver'});
-        }
+        await rideService.reportRide(req.params.id);
+        return reply.send({message: 'Ride reported (stub)'});
     },
 
     notifyRide: async (req, reply) => {
-        const {id} = req.params;
-        const {message} = req.body;
-        const rideDetails = await ride.findByPk(id);
-        if (!rideDetails) {
-            return reply.status(404).send({error: 'Ride not found'});
-        }
-        try {
-            const response = await axios.post(`http://user-service:2003/users/${rideDetails.driverId}/notify`, {
-                message
-            });
-            return reply.send({message: 'Notification sent successfully', response});
-        } catch (error) {
-            return reply.status(500).send({error: 'Error notifying driver'});
-        }
-    }
+        await rideService.notifyRide(req.params.id);
+        return reply.send({message: 'Ride notification sent (stub)'});
+    },
 };
