@@ -27,10 +27,7 @@ const User = sequelize.define('User', {
             type: DataTypes.STRING,
             allowNull: true,
         },
-        isOnline: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
+
         profileImage: {
             type: DataTypes.STRING,
             allowNull: true,
@@ -39,10 +36,6 @@ const User = sequelize.define('User', {
           type: DataTypes.ENUM('male','female'),
             allowNull: false,
         },
-    dateOfBirth: {
-        type:  DataTypes.DATE,
-        allowNull: false,
-    },
     email:{
         type:  DataTypes.STRING,
         allowNull: true,
