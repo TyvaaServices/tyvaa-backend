@@ -2,12 +2,6 @@ const axios = require('axios');
 const User = require('./../models/user');
 const logger = require('./../utils/logger');
 
-function generateOTP() {
-    logger.info('Generating new OTP');
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    logger.debug(`OTP generated: ${otp}`);
-    return otp;
-}
 
 module.exports = {
     health: async (req, reply) => {
@@ -97,7 +91,7 @@ module.exports = {
     },
 
     createUser: async (req, reply) => {
-        const {phoneNumber, fullName} = req.body;
+        const {phoneNumber, fullName, dateOfBirth, sexe, email} = req.body;
         logger.info(`Creating new user with phone number: ${phoneNumber}`);
 
         try {
@@ -110,105 +104,98 @@ module.exports = {
             }
 
             logger.debug(`Creating new user with data: ${JSON.stringify(req.body)}`);
-            const user = await User.create({phoneNumber, fullName});
+            const user = await User.create({phoneNumber, fullName, dateOfBirth, sexe, email});
 
             logger.info(`User created successfully with ID: ${user.id}`);
             logger.debug(`New user data: ${JSON.stringify(user)}`);
-            const response = await axios.post(`${process.env.AUTH_SERVICE_URL}/api/v1/token`, {
-                id: user.id,
-                phoneNumber: user.phoneNumber,
-            });
 
-            const token = response.data.token;
-
-            const otp = generateOTP();
+            let token;
+            let otp;
+            try {
+                const response = await axios.post(`${process.env.AUTH_SERVICE_URL}/api/v1/token`, {
+                    id: user.id,
+                    phoneNumber: user.phoneNumber,
+                });
+                token = response.data.token;
+                otp = response.data.otp;
+            } catch (authError) {
+                logger.error(`Auth service error for user ${user.id}: ${authError.message}`);
+                logger.debug(`Auth service error stack: ${authError.stack}`);
+                logger.debug(`Auth service error details: ${JSON.stringify(authError.response ? authError.response.data : authError)}`);
+                return reply.status(500).send({
+                    error: 'Failed to create user (auth service)',
+                    message: authError.message,
+                    details: authError.response ? authError.response.data : authError
+                });
+            }
 
             return reply.status(201).send({user, otp, token});
         } catch (error) {
             logger.error(`Error creating user with phone ${phoneNumber}: ${error.message}`);
             logger.debug(`Error stack: ${error.stack}`);
-            return reply.status(500).send({error: 'Failed to create user'});
+            logger.debug(`Full error object: ${JSON.stringify(error)}`);
+            return reply.status(500).send({
+                error: 'Failed to create user',
+                message: error.message,
+                details: error
+            });
         }
     },
-
     updateUser: async (req, reply) => {
         const {id} = req.params;
         logger.info(`Updating user with ID: ${id}`);
-        logger.debug(`Update payload: ${JSON.stringify(req.body)}`);
 
-        const {
-            phoneNumber,
-            fullName,
-            fcmToken,
-            driverLicense,
-            isOnline,
-            carImage,
-            isDriver,
-            isVerified,
-            isBlocked,
-        } = req.body;
+        const parts = req.parts();
+        const fields = {};
+        let profileImageBuffer = null;
+        let profileImageFilename = null;
+
+        for await (const part of parts) {
+            if (part.file) {
+                if (part.fieldname === 'profile_image') {
+                    logger.debug(`Received profile image file: ${part.filename}`);
+                    profileImageFilename = part.filename;
+                    profileImageBuffer = await part.toBuffer();
+                }
+            } else {
+                fields[part.fieldname] = part.value;
+            }
+        }
 
         try {
-            logger.debug(`Looking up user with ID: ${id}`);
             const user = await User.findByPk(id);
-
             if (!user) {
                 logger.warn(`Update failed: No user found with ID ${id}`);
                 return reply.status(404).send({error: 'User not found'});
             }
 
-            logger.debug(`User found, current data: ${JSON.stringify(user)}`);
-            logger.debug('Updating user fields');
-
-            if (phoneNumber !== undefined) {
-                logger.debug(`Updating phoneNumber from ${user.phoneNumber} to ${phoneNumber}`);
-                user.phoneNumber = phoneNumber;
-            }
-            if (fullName !== undefined) {
-                logger.debug(`Updating fullName from ${user.fullName} to ${fullName}`);
-                user.fullName = fullName;
-            }
-            if (fcmToken !== undefined) {
-                logger.debug(`Updating fcmToken to new value`);
-                user.fcmToken = fcmToken;
-            }
-            if (driverLicense !== undefined) {
-                logger.debug(`Updating driverLicense from ${user.driverLicense} to ${driverLicense}`);
-                user.driverLicense = driverLicense;
-            }
-            if (isOnline !== undefined) {
-                logger.debug(`Updating isOnline from ${user.isOnline} to ${isOnline}`);
-                user.isOnline = isOnline;
-            }
-            if (carImage !== undefined) {
-                logger.debug(`Updating carImage to new value`);
-                user.carImage = carImage;
-            }
-            if (isDriver !== undefined) {
-                logger.debug(`Updating isDriver from ${user.isDriver} to ${isDriver}`);
-                user.isDriver = isDriver;
-            }
-            if (isVerified !== undefined) {
-                logger.debug(`Updating isVerified from ${user.isVerified} to ${isVerified}`);
-                user.isVerified = isVerified;
-            }
-            if (isBlocked !== undefined) {
-                logger.debug(`Updating isBlocked from ${user.isBlocked} to ${isBlocked}`);
-                user.isBlocked = isBlocked;
+            for (const key in fields) {
+                if (fields.hasOwnProperty(key) && key in user) {
+                    logger.debug(`Updating ${key} to ${fields[key]}`);
+                    user[key] = fields[key];
+                }
             }
 
-            logger.debug('Saving updated user data to database');
+            if (profileImageBuffer && profileImageFilename) {
+                const fs = require('fs');
+                const path = require('path');
+                const uploadDir = path.join(__dirname, '..', 'uploads');
+                const filePath = path.join(uploadDir, profileImageFilename);
+
+                fs.mkdirSync(uploadDir, {recursive: true});
+                fs.writeFileSync(filePath, profileImageBuffer);
+
+                user.profileImage = `/uploads/${profileImageFilename}`;
+            }
+
             await user.save();
-
-            logger.info(`User ${id} updated successfully`);
-            logger.debug(`Updated user data: ${JSON.stringify(user)}`);
             return reply.send({user});
         } catch (err) {
             logger.error(`Error updating user ${id}: ${err.message}`);
-            logger.debug(`Error stack: ${err.stack}`);
             return reply.status(500).send({error: 'Server error'});
         }
     },
+
 
     deleteUser: async (req, reply) => {
         const {id} = req.params;
@@ -301,5 +288,4 @@ module.exports = {
             return reply.status(500).send({error: 'Failed to update location'});
         }
     },
-    generateOTP,
 };

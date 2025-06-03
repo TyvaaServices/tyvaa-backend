@@ -27,19 +27,27 @@ const User = sequelize.define('User', {
             type: DataTypes.STRING,
             allowNull: true,
         },
-
+        isOnline: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
         profileImage: {
             type: DataTypes.STRING,
             allowNull: true,
         },
-        sexe:{
-          type: DataTypes.ENUM('male','female'),
+        sexe: {
+            type: DataTypes.ENUM('male', 'female'),
             allowNull: false,
         },
-    email:{
-        type:  DataTypes.STRING,
-        allowNull: true,
-    },
+        dateOfBirth: {
+            type: DataTypes.DATE,
+            allowNull: false,
+        },
+        email: {
+            type: DataTypes.STRING,
+            allowNull: true,
+
+        },
         carImage: {
             type: DataTypes.STRING,
             allowNull: true,
@@ -47,10 +55,6 @@ const User = sequelize.define('User', {
         isDriver: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
-        },
-        dateOfBirth: {
-            type: DataTypes.DATE,
-            allowNull: true,
         },
         isVerified: {
             type: DataTypes.BOOLEAN,

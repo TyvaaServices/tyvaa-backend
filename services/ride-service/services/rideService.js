@@ -12,6 +12,17 @@ const rideService = {
     createRide: async (data) => {
         const ride = await RideModel.create(data);
         logger.info('Ride created', ride.id);
+        // Automatically create RideInstance for non-recurrent rides
+        if (!ride.isRecurring && ride.startDate && ride.time) {
+            const rideDateTime = new Date(`${ride.startDate}T${ride.time}`);
+            await RideInstance.create({
+                rideId: ride.id,
+                rideDate: rideDateTime,
+                seatsAvailable: ride.seatsAvailable,
+                status: 'scheduled',
+            });
+            logger.info('RideInstance automatically created for non-recurrent ride', ride.id);
+        }
         return ride;
     },
     updateRide: async (id, data) => {
