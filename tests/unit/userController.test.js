@@ -1,7 +1,7 @@
-const userController = require('./userController');
-const User = require('../models/user');
+const userController = require('../../src/modules/user-module/controllers/userController');
+const User = require('../../src/modules/user-module/models/user');
 
-jest.mock('../models/user');
+jest.mock('../../src/modules/user-module/models/user');
 
 const mockReply = () => {
   const res = {};

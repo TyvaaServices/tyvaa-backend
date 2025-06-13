@@ -1,6 +1,7 @@
 const {Op} = require('sequelize');
 const {RideModel, RideInstance} = require('../../../config');
-const logger = require('../utils/logger');
+const createLogger = require('../../../utils/logger');
+const logger = createLogger('ride-cron');
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -59,4 +60,3 @@ async function generateRecurringRides() {
 }
 
 module.exports = generateRecurringRides;
-

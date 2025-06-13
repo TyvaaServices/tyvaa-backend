@@ -1,5 +1,6 @@
 const {Booking, RideInstance, RideModel, RideRating} = require('./../../../config');
-const logger = require('./../utils/logger');
+const createLogger = require('./../../../utils/logger');
+const logger = createLogger('ride-service');
 
 const rideService = {
     getAllRides: async () => {
@@ -169,4 +170,3 @@ const rideService = {
 };
 
 module.exports = rideService;
-

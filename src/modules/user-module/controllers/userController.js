@@ -1,6 +1,6 @@
 const {User} = require('./../../../config/index');
-const logger = require('./../utils/logger');
-
+const createLogger = require('./../../../utils/logger');
+const logger = createLogger('user-controller');
 
 module.exports = (fastify) => ({
     getAllUsers: async (req, reply) => {

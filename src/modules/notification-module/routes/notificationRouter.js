@@ -1,5 +1,6 @@
 const {getMessaging} = require("firebase-admin/messaging");
-const logger = require('./../utils/logger');
+const createLogger = require('./../../../utils/logger');
+const logger = createLogger('notification-router');
 
 async function sendFCM(token, title, body, data) {
     const message = {
@@ -27,9 +28,9 @@ async function sendFCM(token, title, body, data) {
 
     try {
         const response = await getMessaging().send(message);
-        console.log("✅ Notification sent:", response);
+        logger.info("Notification sent:", response);
     } catch (err) {
-        console.error("❌ Error:", err);
+        logger.error("Error:", err);
     }
 }
 
