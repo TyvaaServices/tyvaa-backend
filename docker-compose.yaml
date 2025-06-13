@@ -1,0 +1,63 @@
+services:
+  gateway-service:
+    build: ./services/gateway-service
+    ports:
+      - "2000:2000"
+    environment:
+      - PORT=2000
+      - CHATBOT_SERVICE_URL=http://chatbot-service:2001
+      - USER_SERVICE_URL=http://user-service:2003
+      - RIDE_SERVICE_URL=http://ride-service:2006 # Placeholder for future
+    depends_on:
+      - chatbot-service
+      - user-service
+
+  chatbot-service:
+    build: ./services/chatbot-service,./services/chatbot-service,./services/user-service
+    ports:
+      - "2001:2001"
+    environment:
+      - PORT=2001
+
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "2003:2003"
+    environment:
+      - PORT=2003
+      - DB_HOST=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=tyvaa
+      - DB_PORT=5432
+      - DB_REDIS=6379
+    depends_on:
+      - postgres
+
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "2004:2004"
+    environment:
+      - PORT=2004
+      - JWT_SECRET=supersecret
+
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tyvaa
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    restart: always
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
