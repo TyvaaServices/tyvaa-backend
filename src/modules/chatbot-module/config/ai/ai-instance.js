@@ -6,7 +6,7 @@
  */
 
 const {genkit} = require('genkit');
-const {googleAI, gemini20FlashExp} = require('@genkit-ai/googleai'); // Update to gemini-2.0-flash
+const {googleAI, gemini20FlashExp} = require('@genkit-ai/googleai');
 
 const plugins = [];
 

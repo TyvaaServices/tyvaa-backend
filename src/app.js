@@ -3,6 +3,8 @@ const chatbotModule = require('./modules/chatbot-module/server');
 const notificationModule = require('./modules/notification-module/server');
 const rideModule = require('./modules/ride-module/server');
 const userModule = require('./modules/user-module/server');
+const bookingModule = require('./modules/booking-module/server');
+const rideRatingModule = require('./modules/rideRating-module/server');
 require('dotenv').config();
 const sequelize = require('./config/db');
 const {User, RideModel, Booking, RideInstance,RideRating} = require('./config/index');
@@ -16,6 +18,8 @@ async function buildApp() {
     fastify.register(notificationModule);
     fastify.register(rideModule);
     fastify.register(userModule);
+    fastify.register(bookingModule);
+    fastify.register(rideRatingModule);
     fastify.register(require('@fastify/swagger'), swaggerConfig.options);
     fastify.register(require('@fastify/swagger-ui'), swaggerConfig.uiOptions);
     fastify.register(compress, {global: true});

@@ -1,6 +1,6 @@
 'use strict';
 
-const {ai} = require('./../ai-instance');
+const {ai} = require('../ai-instance');
 const {z} = require('zod');
 
 const messageSchema = z.object({

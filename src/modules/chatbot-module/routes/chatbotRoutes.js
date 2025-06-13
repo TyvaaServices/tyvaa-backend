@@ -1,6 +1,6 @@
 'use strict';
 
-const {getSupportChatResponse} = require('../ai/flows/support-chat-flow'); // Adjust path as needed
+const {getSupportChatResponse} = require('../config/ai/flows/support-chat-flow'); // Adjust path as needed
 const {z} = require('zod');
 const {zodToJsonSchema} = require('zod-to-json-schema');
 

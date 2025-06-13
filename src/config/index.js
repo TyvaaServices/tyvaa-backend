@@ -1,7 +1,7 @@
 const RideInstance = require('./../modules/ride-module/models/rideInstance');
 const RideModel = require('./../modules/ride-module/models/rideModel');
-const Booking = require('./../modules/ride-module/models/booking');
-const RideRating = require('./../modules/ride-module/models/rideRating');
+const Booking = require('./../modules/booking-module/models/booking');
+const RideRating = require('./../modules/rideRating-module/models/rideRating');
 const User = require('./../modules/user-module/models/user');
 
 Booking.belongsTo(RideInstance, {foreignKey: 'rideInstanceId'});

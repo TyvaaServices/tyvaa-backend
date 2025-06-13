@@ -1,7 +1,7 @@
 'use strict';
 require('dotenv').config();
 
-const chatbotRoutes = require('./src/routes/chatbotRoutes');
+const chatbotRoutes = require('./routes/chatbotRoutes');
 
 
 module.exports = async function (fastify, opts) {

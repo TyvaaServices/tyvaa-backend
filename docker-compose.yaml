@@ -1,63 +1,40 @@
+version: '3.8'
 services:
-  gateway-service:
-    build: ./services/gateway-service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "2000:2000"
+      - "3000:3000"
     environment:
-      - PORT=2000
-      - CHATBOT_SERVICE_URL=http://chatbot-service:2001
-      - USER_SERVICE_URL=http://user-service:2003
-      - RIDE_SERVICE_URL=http://ride-service:2006 # Placeholder for future
-    depends_on:
-      - chatbot-service
-      - user-service
-
-  chatbot-service:
-    build: ./services/chatbot-service,./services/chatbot-service,./services/user-service
-    ports:
-      - "2001:2001"
-    environment:
-      - PORT=2001
-
-  user-service:
-    build: ./services/user-service
-    ports:
-      - "2003:2003"
-    environment:
-      - PORT=2003
-      - DB_HOST=postgres
+      - GOOGLE_API_KEY=e2e1e2e21
+      - NODE_ENV=production
+      - DB_HOST=db
+      - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=tyvaa
-      - DB_PORT=5432
-      - DB_REDIS=6379
+      - FIREBASE_KEY_BASE64=ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAidHl2YWEtcHJvamVjdCIsCiAgInByaXZhdGVfa2V5X2lkIjogIjk1ODJiNGRjOGNkM2EwOTQ1YzBkNzZmOTRjOGRmNTZlODZjOWQxNjEiLAogICJwcml2YXRlX2tleSI6ICItLS0tLUJFR0lOIFBSSVZBVEUgS0VZLS0tLS1cbk1JSUV2d0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktrd2dnU2xBZ0VBQW9JQkFRRHlraklDKzZJbldXaGNcblJCZHpUZ3p4NUE2ZFV0WXY3MUU5VTJIaTZvSFNuc3AwMkNxdGZWUjkxeEx1RFI2UHRUU1NoSERVT2s4bS9aR1FcblZ5UkkybDFJQ2tiNkZ0T2g4SVFTWisyVkFBS0FvVCtyTUsyOG9HSDRFOTgrbUtsK3V5U0ZZaGFnZVFud0pyaG9cbmpmUGt0Q0Q2eHNlMWsyY0ZKeThTRWFLQlZwZ0NtRTJwSjBxc1dHSk5BNDVJOFQ5ZHVkcGlvaG8yZDVEa1VBaTJcblB3VWtUR1dCalRZa3dGMkRJUjBISnJnN1RsUFliUjVTNWxjZkI1UmUzT3RObjlsamJCT0FYSmlBTWhrckt0c3RcbnlrTGdjdjNMbFgzUDF3cURocmwzYWZZUGladGpJam0vQWh3cDZhOFR0NXdGN2l6MWtwY1E2RFJzUnYzOW5lSGNcbjBYa2p0SktYQWdNQkFBRUNnZ0VBWUhIQ0VxK0wzRXRQRkFnNnJxeWt0dlF1MzF4VkxyL2ZOQnZYK29tMHpsSTJcbk90akx0eWp5bEFvVVM3UEpwK2VySEdvdUZpT00zdnJJaW5RclNCQVNNSmR0ZXZmaWN5dVd4MTZzOXFZSFdLOUVcbkNrT1RnRURnVXV0THdxNmVEWFpJNGdPSzdZalNhN3BwYmFDckRRNlZZai93bllBYTROQ2doWFdmZi84Mjl5aGlcbjF0Z2ZyZyt3MGxOcWs3OHpvRFBuazhiVmFKVGhJcVRFTTNUUnlxaXFZTisxek9wcGxDcnFUTEgxUjJzeFQ3NitcbkdQdVRuUFpoZHNyTWJmZGZ1alpIdUJ1R01tdnAwcVpIeDYyL3Z4bVpIZFRreEVDMUhJNzQ0OU1wcDIzSzc1TDBcbmk3RzFPS2ZFMHRxQUhpSG9kSXJORU96UVd6VG04UGs1RFlSMnVsK1lXUUtCZ1FEL3J1NTIyajlQdW5kcVRyVllcbmJZcEFXamxhLzRBaFlRdjJnRVp1WkNxVCtFZm52SFhMK0dBWUlQQ3B1SjBrWDd6ZVFERFEyMWlONmdLeENEOENcbm83bnlVOVNVOUo0cWQyOS9TUjRZSjFqZkVFcU9ud1YwVGhMWDB1YXcvVTZZRlJvMHhNbnp6TW0wbGY4ZXJDMVhcbmROZnFUQUZpaWxQZllFL0F5V1dsRjZrR2JRS0JnUUR5M3hzOWlCL3c3RWg2dDZlZGt1ZmszRGxOVXQyWmdnSmlcbm9nZ2ppRlZvUFpJNTlNcC84ME50TG5wK3hjOHNQV0J5VEpsU2JLY0RrMzRyTmxHdXQ3TFJaM0ozS1czS2RwOHFcbi9KbWZxRGhQR0E1L1MvV2VyMUQ5WTZ0M3FZUHYvR3RZV2tDakcrTzZyeFlQUCs4VkgyVHJidWh3S3JMTDMyN2RcblUrOHpYZmdxa3dLQmdRQ2ZyTDkvdWd5UDNnTjFnSElBSjJpUGg4a0o2MFk1a2tIR1Q1V3NteUY4QnpIZ3B2RnBcbjBGTXl2bCtObnAyRWVjV1pocnoxc2dZN21ralVCakpUazZ3c2llM1ltR3V1V2FobjlXRzE4OXlzY2FBZU1YRldcbmtPdHpuV0kwWmYwUFBSNkFsZVVKUEhzN0svR0hWajk2dnAyWTFKNkl5NXBWaGZCSWxYM0UvR0d5Z1FLQmdRREtcbkdJak1UT2QzVE1hTEJ5Tzg1Uzk5cXhzcmtwYS9WQVcwR1d4NFZNdnM3NzhyNXR4U1dCUjFWOFdxaytOdXhxdm9cbnNJQ3NxNmpXT3ZjejhnRktSNlhPeGl2anFGK3BwOGVPdDU4RjBhNzVjZVV1WEFESXlNMjE3Q2dVYk1SVEFGSTZcbnRPOHdTdGJXMHphaC9ldHVRaTl5RVZudGJEcFhsMWJqYVNLVU5jOTViUUtCZ1FDeTNrWVdZZVhWaFV3RDdmY2tcbktaelBiUHQzZjd1VjlhbkZ2WHNTdEVGSTRpcUk5MExTKzgrZmpRQ2Q1Q3hheEtwbDRQUU90eUFxdzlxSjhiU2tcbnJ4TGpGUkhuSk5MUUg4L2pobHp3L29HMUpCSHJYaG1KYzFpWTNvQmdhNDZaV2xma0U2b3p0cm43T2NYZzUwS1VcbjE0MTI5RklGWXBTV2tkcVFBRGtwUnVpOVB3PT1cbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS1cbiIsCiAgImNsaWVudF9lbWFpbCI6ICJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0B0eXZhYS1wcm9qZWN0LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAiY2xpZW50X2lkIjogIjExNDg4MzEzMDM4ODMzNTIxNzE5NyIsCiAgImF1dGhfdXJpIjogImh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9vL29hdXRoMi9hdXRoIiwKICAidG9rZW5fdXJpIjogImh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwKICAiYXV0aF9wcm92aWRlcl94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL29hdXRoMi92MS9jZXJ0cyIsCiAgImNsaWVudF94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkvZmlyZWJhc2UtYWRtaW5zZGstZmJzdmMlNDB0eXZhYS1wcm9qZWN0LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAidW5pdmVyc2VfZG9tYWluIjogImdvb2dsZWFwaXMuY29tIgp9Cg==%
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your_jwt_secret
+    restart: unless-stopped
     depends_on:
-      - postgres
-
-  auth-service:
-    build: ./services/auth-service
-    ports:
-      - "2004:2004"
-    environment:
-      - PORT=2004
-      - JWT_SECRET=supersecret
-
-  postgres:
+      - db
+      - redis
+  db:
     image: postgres:latest
-    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: tyvaa
     volumes:
       - pgdata:/var/lib/postgresql/data
-
   redis:
     image: redis:latest
-    restart: always
     volumes:
       - redisdata:/data
-
 volumes:
   pgdata:
   redisdata:
+
