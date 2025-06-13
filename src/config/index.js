@@ -4,7 +4,6 @@ const Booking = require('./../modules/booking-module/models/booking');
 const RideRating = require('./../modules/rideRating-module/models/rideRating');
 const User = require('./../modules/user-module/models/user');
 
-Booking.belongsTo(RideInstance, {foreignKey: 'rideInstanceId'});
 RideModel.hasMany(RideInstance, {foreignKey: 'rideId'});
 RideInstance.belongsTo(RideModel, {foreignKey: 'rideId'});
 RideInstance.hasMany(Booking, {foreignKey: 'rideInstanceId'});
@@ -12,6 +11,7 @@ RideInstance.hasMany(RideRating, {foreignKey: 'rideInstanceId'});
 RideRating.belongsTo(RideInstance, {foreignKey: 'rideInstanceId'});
 
 Booking.belongsTo(User, { foreignKey: 'userId' });
+Booking.belongsTo(RideInstance, {foreignKey: 'rideInstanceId'});
 User.hasMany(Booking, { foreignKey: 'userId' });
 
 RideRating.belongsTo(User, { foreignKey: 'userId' });
@@ -20,4 +20,6 @@ User.hasMany(RideRating, { foreignKey: 'userId' });
 RideModel.belongsTo(User, { as: 'driver', foreignKey: 'driverId' });
 User.hasMany(RideModel, { as: 'drives', foreignKey: 'driverId' });
 
-module.exports = {Booking, RideInstance, RideModel, RideRating, User};
+module.exports = {RideInstance, RideModel, RideRating, User, Booking};
+
+

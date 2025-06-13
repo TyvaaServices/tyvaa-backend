@@ -1,5 +1,5 @@
 const fastify = require('fastify');
-const chatbotRoutes = require('../src/routes/chatbotRoutes');
+const chatbotRoutes = require('../../src/modules/chatbot-module/routes/chatbotRoutes');
 
 process.env.NODE_ENV = 'test';
 
