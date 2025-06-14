@@ -18,14 +18,14 @@ resource "koyeb_service" "backend_service" {
   definition {
     name = var.service_name
     instance_types {
-      type = "nano"
+      type = "free"
     }
     ports {
       port     = 3000
       protocol = "http"
     }
     scalings {
-      min = 1
+      min = 0
       max = 1
     }
     env {
@@ -40,7 +40,7 @@ resource "koyeb_service" "backend_service" {
       path = "/"
       port = 3000
     }
-    regions = ["was"]
+    regions = ["fra"]
     git {
       repository = "github.com/traorecheikh/backend-tyvaa"
       branch     = "dev-test"
