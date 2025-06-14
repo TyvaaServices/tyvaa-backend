@@ -86,8 +86,8 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ./infra
-        run: terraform plan -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}" -var="github_repo=traorecheikh/backend-tyvaa" -var="git_branch=${GITHUB_REF#refs/heads/}" -var="database_url=${{ secrets.DATABASE_URL }}"
+        run: terraform plan -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}" -var="database_url=${{ secrets.DATABASE_URL }}"
 
       - name: Terraform Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}" -var="github_repo=traorecheikh/backend-tyvaa" -var="git_branch=${GITHUB_REF#refs/heads/}" -var="database_url=${{ secrets.DATABASE_URL }}"
+        run: terraform apply -auto-approve -var="database_url=${{ secrets.DATABASE_URL }}"
