@@ -3,6 +3,8 @@ name: Backend CI
 on:
   pull_request:
     branches: [ main, dev ]
+  push:
+    branches: [ dev-test ]
 
 jobs:
   test:
@@ -21,20 +23,16 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm i
-          cd services/chatbot-service && npm i
-          cd ../gateway-service && npm i || true
+        run: npm ci
 
       - name: Set NODE_ENV to test
         run: echo "NODE_ENV=test" >> $GITHUB_ENV
 
-      - name: Run linting
-        run: npm run lint || true
+      - name: Run lint
+        run: npm run lint
 
       - name: Run tests
-        run: |
-          cd services/chatbot-service && npm test
+        run: npm test
 
   deploy:
     name: Deploy
@@ -47,3 +45,11 @@ jobs:
 
       - name: Deploy to production
         run: echo "Add deployment script here when ready"
+
+      - name: Deploy to Koyeb
+        uses: koyeb/action-deploy@v1
+        with:
+          token: ${{ secrets.KOYEB_API_TOKEN }}
+          app-name: backend-tyvaa
+          service-name: backend-tyvaa-service
+          git: true
