@@ -56,10 +56,11 @@ jobs:
 
       - name: Deploy to Koyeb
         run: |
-          ~/.koyeb/bin/koyeb app init ctyvaaaabamc-service \
+          ~/.koyeb/bin/koyeb app init tyvaa-backend \
             --git github.com/${{ github.repository }} \
             --git-branch ${{ github.ref_name }} \
             --git-builder buildpack \
+            --git-buildpack-run-command "npm start" \
             --ports 3000:http \
             --env "PORT=3000" \
             --env "DATABASE_URL=${{ secrets.DATABASE_URL }}"
