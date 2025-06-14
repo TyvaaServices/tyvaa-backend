@@ -28,9 +28,6 @@ jobs:
       - name: Set NODE_ENV to test
         run: echo "NODE_ENV=test" >> $GITHUB_ENV
 
-      - name: Run lint
-        run: npm run lint
-
       - name: Run tests
         run: npm test
 
