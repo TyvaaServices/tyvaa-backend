@@ -9,15 +9,28 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    strategy:
+      matrix:
+        node-version: [ 22.x ]
+
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js
+
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Set NODE_ENV to test
+        run: echo "NODE_ENV=test" >> $GITHUB_ENV
+
       - name: Run tests
         run: npm test
 
@@ -25,8 +38,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     env:
-      KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
 
@@ -38,6 +51,10 @@ jobs:
       - name: Terraform Init
         working-directory: ./infra
         run: terraform init
+        env:
+          TF_VAR_koyeb_token: ${{ secrets.KOYEB_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
 
       - name: Terraform Validate
         working-directory: ./infra
@@ -45,8 +62,9 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ./infra
-        run: terraform plan -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}" -var="github_repo=traorecheikh/backend-tyvaa" -var="git_branch=${GITHUB_REF#refs/heads/}" -var="database_url=${{ secrets.DATABASE_URL }}"
+        run: terraform plan -var="database_url=${{ secrets.DATABASE_URL }}"
 
       - name: Terraform Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}" -var="github_repo=traorecheikh/backend-tyvaa" -var="git_branch=${GITHUB_REF#refs/heads/}" -var="database_url=${{ secrets.DATABASE_URL }}"
+        run: terraform apply -auto-approve -var="database_url=${{ secrets.DATABASE_URL }}"
+
