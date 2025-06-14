@@ -1,0 +1,51 @@
+name: Deploy to Koyeb
+
+on:
+  push:
+    branches:
+      - main
+      - dev-test
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.0.0
+
+      - name: Terraform Init
+        working-directory: ./infra
+        run: terraform init
+        env:
+          TF_VAR_koyeb_token: ${{ secrets.KOYEB_TOKEN }}
+
+      - name: Terraform Validate
+        working-directory: ./infra
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ./infra
+        run: terraform plan -var="database_url=${{ secrets.DATABASE_URL }}"
+
+      - name: Terraform Apply
+        working-directory: ./infra
+        run: terraform apply -auto-approve -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}" -var="github_repo=traorecheikh/backend-tyvaa" -var="git_branch=${GITHUB_REF#refs/heads/}" -var="database_url=${{ secrets.DATABASE_URL }}"
