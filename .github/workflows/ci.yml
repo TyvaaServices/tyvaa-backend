@@ -40,13 +40,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Deploy to production
-        run: echo "Add deployment script here when ready"
+      - name: Install Koyeb CLI
+        run: curl -sSfL https://cli.koyeb.com/install.sh | sh
+
+      - name: Authenticate Koyeb CLI
+        run: ~/.koyeb/bin/koyeb auth login --token ${{ secrets.KOYEB_API_TOKEN }}
 
       - name: Deploy to Koyeb
-        uses: koyeb/action-deploy@v1
-        with:
-          token: ${{ secrets.KOYEB_API_TOKEN }}
-          app-name: backend-tyvaa
-          service-name: backend-tyvaa-service
-          git: true
+        run: ~/.koyeb/bin/koyeb app deploy backend-tyvaa --git ${{ github.repository }} --branch ${{ github.ref_name }} --wait
