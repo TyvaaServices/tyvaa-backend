@@ -56,7 +56,7 @@ jobs:
 
       - name: Deploy to Koyeb
         run: |
-          ~/.koyeb/bin/koyeb service app init ctyvaaaabamc-service \
+          ~/.koyeb/bin/koyeb app init ctyvaaaabamc-service \
             --git github.com/${{ github.repository }} \
             --git-branch ${{ github.ref_name }} \
             --git-builder buildpack \
