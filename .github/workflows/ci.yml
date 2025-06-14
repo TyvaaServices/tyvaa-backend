@@ -56,13 +56,11 @@ jobs:
 
       - name: Deploy to Koyeb
         run: |
-          ~/.koyeb/bin/koyeb app init tyvaaaabamc \
-          --git https://github.com/${{ github.repository }}.git \
-          --git-branch ${{ github.ref_name }} \
-          --git-builder buildpack \
-          --ports 3000:http \
-          --env "PORT=3000" \
-          --env "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-
-
-
+          ~/.koyeb/bin/koyeb service app init ctyvaaaabamc-service \
+            --app tyvaaaabamc \
+            --git github.com/${{ github.repository }} \
+            --git-branch ${{ github.ref_name }} \
+            --git-builder buildpack \
+            --ports 3000:http \
+            --env "PORT=3000" \
+            --env "DATABASE_URL=${{ secrets.DATABASE_URL }}"
