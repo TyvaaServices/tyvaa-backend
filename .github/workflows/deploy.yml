@@ -52,6 +52,7 @@ jobs:
         run: terraform init
         env:
           TF_VAR_koyeb_token: ${{ secrets.KOYEB_TOKEN }}
+          KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
 
       - name: Terraform Validate
         working-directory: ./infra
