@@ -47,7 +47,9 @@ jobs:
         run: echo "$HOME/.koyeb/bin" >> $GITHUB_PATH
 
       - name: Authenticate Koyeb CLI
-        run: ~/.koyeb/bin/koyeb login --token ${{ secrets.KOYEB_API_TOKEN }}
+        run: |
+          mkdir -p ~/.koyeb
+          echo "token: ${{ secrets.KOYEB_API_TOKEN }}" > ~/.koyeb.yaml
 
       - name: Deploy to Koyeb
         run: |
