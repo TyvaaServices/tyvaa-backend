@@ -61,7 +61,7 @@ jobs:
             --git-branch ${{ github.ref_name }} \
             --git-builder "docker" \
             --ports 3000:http \
-            --env "PORT=3000"
+            --env "PORT=3000" \
             --env "DATABASE_URL=${{ secrets.DATABASE_URL }}"
 
 
