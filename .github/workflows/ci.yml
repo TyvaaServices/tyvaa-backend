@@ -56,7 +56,7 @@ jobs:
           ~/.koyeb/bin/koyeb app init tyvaaa \
             --git github.com/${{ github.repository }} \
             --git-branch ${{ github.ref_name }}
-            --git-builder docker \
+            --git-builder "docker" \
             --ports 3000:http \
             --env "PORT=3000"
 
