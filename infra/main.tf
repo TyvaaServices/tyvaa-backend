@@ -40,6 +40,7 @@ resource "koyeb_service" "backend_service" {
       path = "/"
       port = 3000
     }
+
     regions = ["fra"]
     git {
       repository = "github.com/traorecheikh/backend-tyvaa"
