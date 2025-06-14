@@ -86,7 +86,7 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ./infra
-        run: terraform plan -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}" -var="database_url=${{ secrets.DATABASE_URL }}"
+        run: terraform plan -var="database_url=${{ secrets.DATABASE_URL }}"
 
       - name: Terraform Apply
         working-directory: ./infra
