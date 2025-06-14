@@ -53,8 +53,9 @@ jobs:
 
       - name: Deploy to Koyeb
         run: |
-          ~/.koyeb/bin/koyeb app init backend-tyvaa \
-            --git https://github.com/${{ github.repository }}.git \
+          ~/.koyeb/bin/koyeb app init tyvaa \
+            --git ${{ github.repository }} \
             --git-branch ${{ github.ref_name }} \
-            --git-builder buildpack \
-            --wait
+            --git-builder docker \
+            --ports 3000:http \
+            --env "PORT=3000"
