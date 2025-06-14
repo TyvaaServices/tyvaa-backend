@@ -47,7 +47,12 @@ jobs:
         run: echo "$HOME/.koyeb/bin" >> $GITHUB_PATH
 
       - name: Authenticate Koyeb CLI
-        run: ~/.koyeb/bin/koyeb auth login --token ${{ secrets.KOYEB_API_TOKEN }}
+        run: ~/.koyeb/bin/koyeb login --token ${{ secrets.KOYEB_API_TOKEN }}
 
       - name: Deploy to Koyeb
-        run: ~/.koyeb/bin/koyeb app deploy backend-tyvaa --git ${{ github.repository }} --branch ${{ github.ref_name }} --wait
+        run: |
+          ~/.koyeb/bin/koyeb app init backend-tyvaa \
+            --git https://github.com/${{ github.repository }}.git \
+            --git-branch ${{ github.ref_name }} \
+            --git-builder buildpack \
+            --wait
