@@ -22,8 +22,9 @@ async function userRoutes(fastify, opts) {
     userController.submitDriverApplication
   );
   fastify.get(
-    "/users/driver-application/status",{ preValidation: [fastify.authenticate] },
-    userController.getDriverApplicationStatus()
+    "/users/driver-application/status",
+    { preValidation: [fastify.authenticate] },
+    userController.getDriverApplicationStatus
   );
 
 

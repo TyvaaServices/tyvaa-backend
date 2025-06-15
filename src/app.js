@@ -13,7 +13,6 @@ const swaggerConfig = require("./config/swagger");
 const rateLimit = require('@fastify/rate-limit');
 
 const compress = require('@fastify/compress');
-const jwtPlugin = require('../src/utils/jwt');
 const fastifyJwt = require('@fastify/jwt');
 
 async function buildApp() {
@@ -32,7 +31,6 @@ async function buildApp() {
             reply.code(403).send({ message: 'Forbidden: Admins only' });
         }
     });
-    fastify.register(jwtPlugin);
     fastify.register(chatbotModule);
     fastify.register(notificationModule);
     fastify.register(rideModule);
