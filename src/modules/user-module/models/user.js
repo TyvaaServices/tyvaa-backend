@@ -1,5 +1,6 @@
 const {DataTypes} = require('sequelize');
 const sequelize = require('./../../../config/db');
+const DriverApplication = require('./driverApplication');
 
 const User = sequelize.define('User', {
         id: {
@@ -20,10 +21,6 @@ const User = sequelize.define('User', {
             allowNull: true,
         },
         fcmToken: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        driverLicense: {
             type: DataTypes.STRING,
             allowNull: true,
         },
@@ -75,5 +72,6 @@ const User = sequelize.define('User', {
     },
 )
 
-module.exports = User;
 
+
+module.exports = User;
