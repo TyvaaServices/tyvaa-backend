@@ -36,14 +36,28 @@ async function buildApp() {
 
 buildApp()
     .then(() => {
+        let server;
         fastify.listen({ port: process.env.PORT || 3000, host: '0.0.0.0' }, async (err, address) => {
             if (err) {
                 fastify.log.error(err);
                 process.exit(1);
             }
-            await sequelize.sync({force: true, logging: false});
+            await sequelize.sync({alter: true, logging: false});
             fastify.log.info(`Server listening at ${address}`);
         });
+        ;
+
+        const shutdown = async () => {
+            try {
+                await fastify.close();
+                setTimeout(() => process.exit(0), 200);
+            } catch (err) {
+                fastify.log.error('Error during shutdown', err);
+                process.exit(1);
+            }
+        };
+        process.on('SIGTERM', shutdown);
+        process.on('SIGINT', shutdown);
     })
     .catch((err) => {
         fastify.log.error('Failed to start app:', err);

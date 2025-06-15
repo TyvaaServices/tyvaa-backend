@@ -7,6 +7,14 @@ const RideInstance = sequelize.define('RideInstance', {
         primaryKey: true,
         autoIncrement: true,
     },
+    rideId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'rides',
+            key: 'id',
+        },
+    },
     rideDate: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -34,4 +42,3 @@ const RideInstance = sequelize.define('RideInstance', {
 });
 
 module.exports = RideInstance;
-
