@@ -13,8 +13,26 @@ const swaggerConfig = require("./config/swagger");
 const rateLimit = require('@fastify/rate-limit');
 
 const compress = require('@fastify/compress');
+const jwtPlugin = require('../src/utils/jwt');
+const fastifyJwt = require('@fastify/jwt');
 
 async function buildApp() {
+    fastify.register(fastifyJwt, { secret: process.env.JWT_SECRET || 'your-secret-key' });
+    fastify.decorate('authenticate', async function(request, reply) {
+        try {
+            await request.jwtVerify();
+        } catch (err) {
+            reply.code(401).send({ message: 'Invalid or missing token' });
+        }
+    });
+    fastify.decorate('isAdmin', async function(request, reply) {
+        if (request.user && request.user.role === 'admin') {
+            return;
+        } else {
+            reply.code(403).send({ message: 'Forbidden: Admins only' });
+        }
+    });
+    fastify.register(jwtPlugin);
     fastify.register(chatbotModule);
     fastify.register(notificationModule);
     fastify.register(rideModule);
