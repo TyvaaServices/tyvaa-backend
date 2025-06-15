@@ -10,7 +10,7 @@ app.register(router, {prefix: '/api/v1'});
 module.exports = async function (fastify, opts) {
     fastify.register(router, { prefix: '/api/v1' });
 
-    cron.schedule('* * * * *', async () => {
+    cron.schedule('* 9 * * *', async () => {
         fastify.log.info('Running recurring ride generation cron job...');
         try {
             await generateRecurringRides();
