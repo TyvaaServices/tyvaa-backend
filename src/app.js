@@ -9,7 +9,6 @@ import auditModule from './modules/audit-module/server.js';
 import dotenv from 'dotenv';
 import cors from '@fastify/cors';
 import sequelize from './config/db.js';
-import { User, RideModel, Booking, RideInstance, DriverApplication, Payment, AuditAction, AuditLog, PassengerProfile, DriverProfile } from './config/index.js';
 import swaggerConfig from './config/swagger.js';
 import rateLimit from '@fastify/rate-limit';
 import compress from '@fastify/compress';
@@ -45,7 +44,7 @@ async function buildApp() {
     });
     fastify.decorate('isAdmin', async function (request, reply) {
         if (request.user && request.user.role === 'admin') {
-            return;
+
         } else {
             reply.code(403).send({message: 'Forbidden: Admins only'});
         }
@@ -89,7 +88,7 @@ buildApp()
             await sequelize.sync({force: true, logging: false});
             fastify.log.info(`Server listening at ${address}`);
         });
-        ;
+
 
         const shutdown = async () => {
             try {

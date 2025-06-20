@@ -1,5 +1,4 @@
 import rideService from '../services/rideService.js';
-import { User, RideInstance } from './../../../config/index.js';
 
 const rideController = {
     getAllRides: async (req, reply) => {
@@ -68,6 +67,6 @@ const rideController = {
         return reply.send({message: 'Ride completed'});
     },
 
-  };
+};
 
 export default rideController;

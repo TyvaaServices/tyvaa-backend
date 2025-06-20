@@ -1,4 +1,4 @@
-import {pino}from 'pino';
+import {pino} from 'pino';
 import fs from 'fs';
 import path from 'path';
 
@@ -9,15 +9,15 @@ const isProd = process.env.NODE_ENV === 'production';
 
 function createLogger(serviceName = 'default-service') {
     const logDir = path.resolve(__dirname, '../../', 'logs');
-    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, {recursive: true});
 
     const logFile = path.join(logDir, `${serviceName}.log`);
-    const fileStream = pino.destination({ dest: logFile, sync: false });
+    const fileStream = pino.destination({dest: logFile, sync: false});
 
     if (isProd) {
         return pino(
             {
-                base: { service: serviceName },
+                base: {service: serviceName},
             },
             fileStream
         );
@@ -37,12 +37,12 @@ function createLogger(serviceName = 'default-service') {
             },
             {
                 target: 'pino/file',
-                options: { destination: logFile, mkdir: true },
+                options: {destination: logFile, mkdir: true},
                 level: 'info',
             },
         ],
     });
-    return pino({ base: { service: serviceName } }, prettyTransport);
+    return pino({base: {service: serviceName}}, prettyTransport);
 }
 
 export default createLogger;

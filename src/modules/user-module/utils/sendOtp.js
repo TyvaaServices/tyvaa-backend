@@ -1,4 +1,4 @@
-async function sendOtpEmail(email, otp, transporter,logger) {
+async function sendOtpEmail(email, otp, transporter, logger) {
     try {
         await transporter.sendMail({
             from: process.env.SMTP_FROM || "no-reply@tyvaa.live",
@@ -13,4 +13,5 @@ async function sendOtpEmail(email, otp, transporter,logger) {
         throw err;
     }
 }
+
 module.exports = sendOtpEmail;

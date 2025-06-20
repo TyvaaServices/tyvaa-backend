@@ -1,5 +1,5 @@
 import sequelize from './../../../config/db.js';
-import { DataTypes } from "sequelize";
+import {DataTypes} from "sequelize";
 
 const AuditLog = sequelize.define('AuditLog', {
     id: {
@@ -7,7 +7,7 @@ const AuditLog = sequelize.define('AuditLog', {
         primaryKey: true,
         autoIncrement: true,
     },
-    entityId:{
+    entityId: {
         type: DataTypes.INTEGER,
         allowNull: true,
     },

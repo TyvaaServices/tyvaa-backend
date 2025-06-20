@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import {DataTypes} from 'sequelize';
 import sequelize from '#config/db.js';
 
 
@@ -13,7 +13,7 @@ const DriverProfile = sequelize.define("ProfilChauffeur", {
         allowNull: true,
         defaultValue: 0.0,
     },
-    statusProfile:{
+    statusProfile: {
         type: DataTypes.ENUM('Active', 'Suspended'),
         allowNull: false,
     },

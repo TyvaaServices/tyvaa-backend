@@ -1,5 +1,6 @@
-import { getMessaging } from "firebase-admin/messaging";
+import {getMessaging} from "firebase-admin/messaging";
 import createLogger from './../../../utils/logger.js';
+
 const logger = createLogger('notification-router');
 
 async function sendFCM(token, title, body, data) {

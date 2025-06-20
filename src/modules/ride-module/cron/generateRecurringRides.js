@@ -1,6 +1,6 @@
-import { Op } from 'sequelize';
-import { RideModel, RideInstance } from '../../../config/index.js';
+import {RideInstance, RideModel} from '../../../config/index.js';
 import createLogger from '../../../utils/logger.js';
+
 const logger = createLogger('ride-cron');
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

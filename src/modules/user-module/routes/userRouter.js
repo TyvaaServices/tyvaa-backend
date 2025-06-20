@@ -1,42 +1,42 @@
 import {userControllerFactory} from "./../controllers/userController.js";
 
 async function userRoutes(fastify, opts) {
-  const userController = userControllerFactory(fastify);
+    const userController = userControllerFactory(fastify);
 
-  fastify.get("/users", userController.getAllUsers);
-  fastify.post("/users/request-login-otp", userController.requestLoginOtp);
-  fastify.post(
-    "/users/request-register-otp",
-    userController.requestRegisterOtp
-  );
-  fastify.post("/users/login", userController.login);
-  fastify.get("/users/:id", userController.getUserById);
-  fastify.post("/users/register", userController.createUser);
-  fastify.put("/users/:id", userController.updateUser);
-  fastify.delete("/users/:id", userController.deleteUser);
-  fastify.post("/users/:id/fcm-token", userController.updateFcmToken);
-  fastify.post("/users/:id/update-location", userController.updateLocation);
+    fastify.get("/users", userController.getAllUsers);
+    fastify.post("/users/request-login-otp", userController.requestLoginOtp);
+    fastify.post(
+        "/users/request-register-otp",
+        userController.requestRegisterOtp
+    );
+    fastify.post("/users/login", userController.login);
+    fastify.get("/users/:id", userController.getUserById);
+    fastify.post("/users/register", userController.createUser);
+    fastify.put("/users/:id", userController.updateUser);
+    fastify.delete("/users/:id", userController.deleteUser);
+    fastify.post("/users/:id/fcm-token", userController.updateFcmToken);
+    fastify.post("/users/:id/update-location", userController.updateLocation);
 
-  fastify.post(
-    "/users/driver-application",
-    { preValidation: [fastify.authenticate] },
-    userController.submitDriverApplication
-  );
-  fastify.get(
-    "/users/driver-application/status",
-    { preValidation: [fastify.authenticate] },
-    userController.getDriverApplicationStatus
-  );
-  fastify.get(
-    "/admin/driver-applications",
-    { preValidation: [fastify.authenticate, fastify.isAdmin] },
-    userController.getAllDriverApplications
-  );
-  fastify.patch(
-    "/admin/driver-applications/:id/review",
-    { preValidation: [fastify.authenticate, fastify.isAdmin] },
-    userController.reviewDriverApplication
-  );
+    fastify.post(
+        "/users/driver-application",
+        {preValidation: [fastify.authenticate]},
+        userController.submitDriverApplication
+    );
+    fastify.get(
+        "/users/driver-application/status",
+        {preValidation: [fastify.authenticate]},
+        userController.getDriverApplicationStatus
+    );
+    fastify.get(
+        "/admin/driver-applications",
+        {preValidation: [fastify.authenticate, fastify.isAdmin]},
+        userController.getAllDriverApplications
+    );
+    fastify.patch(
+        "/admin/driver-applications/:id/review",
+        {preValidation: [fastify.authenticate, fastify.isAdmin]},
+        userController.reviewDriverApplication
+    );
 }
 
 export default userRoutes;

@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import {DataTypes} from 'sequelize';
 import sequelize from '#config/db.js';
 
 const User = sequelize.define('User', {
@@ -43,10 +43,10 @@ const User = sequelize.define('User', {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
-    isAdmin: {
-            type:DataTypes.BOOLEAN,
+        isAdmin: {
+            type: DataTypes.BOOLEAN,
             defaultValue: false,
-    },
+        },
         latitude: {
             type: DataTypes.STRING,
             allowNull: true,
@@ -57,7 +57,6 @@ const User = sequelize.define('User', {
         },
     },
 )
-
 
 
 export default User;

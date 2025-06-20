@@ -6,8 +6,9 @@
  */
 
 import {genkit} from 'genkit';
-import {googleAI, gemini20FlashExp} from '@genkit-ai/googleai';
+import {gemini20FlashExp, googleAI} from '@genkit-ai/googleai';
 import dotenv from 'dotenv';
+
 dotenv.config();
 const plugins = [];
 
@@ -46,4 +47,4 @@ if (process.env.NODE_ENV === 'test') {
     });
 }
 
-export { ai };
+export {ai};

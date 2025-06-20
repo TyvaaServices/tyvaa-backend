@@ -1,5 +1,5 @@
 import bookingService from '../services/bookingService.js';
-import { User, RideInstance } from './../../../config/index.js';
+import {RideInstance, User} from './../../../config/index.js';
 
 const bookingController = {
     getAllBookings: async (req, reply) => {
@@ -31,24 +31,24 @@ const bookingController = {
     },
     bookRide: async (req, reply) => {
         try {
-            const { userId, rideInstanceId, seatsToBook } = req.body;
+            const {userId, rideInstanceId, seatsToBook} = req.body;
             const user = await User.findByPk(userId);
-            if (!user) return reply.code(404).send({ error: 'User not found' });
+            if (!user) return reply.code(404).send({error: 'User not found'});
             const rideInstance = await RideInstance.findByPk(rideInstanceId);
-            if (!rideInstance) return reply.code(404).send({ error: 'RideInstance not found' });
-            const booking = await bookingService.bookRide({ user, rideInstance, seatsToBook });
+            if (!rideInstance) return reply.code(404).send({error: 'RideInstance not found'});
+            const booking = await bookingService.bookRide({user, rideInstance, seatsToBook});
             return reply.code(201).send(booking);
         } catch (err) {
-            return reply.code(400).send({ error: err.message });
+            return reply.code(400).send({error: err.message});
         }
     },
     cancelBooking: async (req, reply) => {
         try {
             const booking = await bookingService.cancelBooking(req.params.bookingId);
-            if (!booking) return reply.code(404).send({ error: 'Booking not found or already cancelled' });
-            return reply.send({ message: 'Booking cancelled', booking });
+            if (!booking) return reply.code(404).send({error: 'Booking not found or already cancelled'});
+            return reply.send({message: 'Booking cancelled', booking});
         } catch (err) {
-            return reply.code(400).send({ error: err.message });
+            return reply.code(400).send({error: err.message});
         }
     },
 };

@@ -8,10 +8,10 @@ const AuditAction = sequelize.define('AuditAction', {
         autoIncrement: true,
     },
     actionType: {
-        type: DataTypes.ENUM('create', 'update', 'delete', 'view','exportsData','login', 'logout'),
+        type: DataTypes.ENUM('create', 'update', 'delete', 'view', 'exportsData', 'login', 'logout'),
         allowNull: false,
     },
-    codeAction:{
+    codeAction: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
@@ -21,4 +21,4 @@ const AuditAction = sequelize.define('AuditAction', {
     timestamps: false,
 });
 
-export default { AuditAction};
+export default {AuditAction};

@@ -16,29 +16,29 @@ RideInstance.hasMany(Booking, {foreignKey: 'rideInstanceId'});
 
 Booking.belongsTo(PassengerProfile, {foreignKey: 'userId'});
 Booking.belongsTo(RideInstance, {foreignKey: 'rideInstanceId'});
-PassengerProfile.hasMany(Booking, { foreignKey: 'userId' });
+PassengerProfile.hasMany(Booking, {foreignKey: 'userId'});
 
-RideModel.belongsTo(DriverProfile, { foreignKey: 'driverId' });
-DriverProfile.hasMany(RideModel, { foreignKey: 'driverId' });
+RideModel.belongsTo(DriverProfile, {foreignKey: 'driverId'});
+DriverProfile.hasMany(RideModel, {foreignKey: 'driverId'});
 
-PassengerProfile.hasMany(DriverApplication, { foreignKey: 'userId' });
-DriverApplication.belongsTo(PassengerProfile, { foreignKey: 'userId', as: 'passengerProfile' });
+PassengerProfile.hasMany(DriverApplication, {foreignKey: 'userId'});
+DriverApplication.belongsTo(PassengerProfile, {foreignKey: 'userId', as: 'passengerProfile'});
 
-Payment.belongsTo(Booking,{ foreignKey: 'bookingId' });
-Booking.hasOne(Payment, { foreignKey: 'bookingId' });
+Payment.belongsTo(Booking, {foreignKey: 'bookingId'});
+Booking.hasOne(Payment, {foreignKey: 'bookingId'});
 
-User.hasMany(AuditLog, { foreignKey: 'userId' });
+User.hasMany(AuditLog, {foreignKey: 'userId'});
 
-export { 
-  User, 
-  RideModel, 
-  Booking, 
-  RideInstance, 
-  // RideRating, 
-  DriverApplication, 
-  Payment, 
-  AuditAction, 
-  AuditLog, 
-  PassengerProfile,
-  DriverProfile
+export {
+    User,
+    RideModel,
+    Booking,
+    RideInstance,
+    // RideRating,
+    DriverApplication,
+    Payment,
+    AuditAction,
+    AuditLog,
+    PassengerProfile,
+    DriverProfile
 };

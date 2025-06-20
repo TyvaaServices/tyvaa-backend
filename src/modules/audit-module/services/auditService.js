@@ -1,22 +1,22 @@
 import AuditLog from '../models/auditLog.js';
 import AuditAction from '../models/actionType.js';
-import { z } from 'zod';
+import {z} from 'zod';
 
 // Validation schema for audit log data
 const auditLogSchema = z.object({
-  entityId: z.number().optional(),
-  entityType: z.string().min(1, { message: "Entity type is required" }),
-  description: z.string().min(1, { message: "Description is required" }),
-  actionTypeId: z.number({ message: "Action type ID is required" }),
-  ipAddress: z.string().optional()
+    entityId: z.number().optional(),
+    entityType: z.string().min(1, {message: "Entity type is required"}),
+    description: z.string().min(1, {message: "Description is required"}),
+    actionTypeId: z.number({message: "Action type ID is required"}),
+    ipAddress: z.string().optional()
 });
 
 // Validation schema for action type data
 const actionTypeSchema = z.object({
-  actionType: z.enum(['create', 'update', 'delete', 'view', 'exportsData', 'login', 'logout'], {
-    message: "Action type must be one of: create, update, delete, view, exportsData, login, logout"
-  }),
-  codeAction: z.string().min(1, { message: "Code action is required" })
+    actionType: z.enum(['create', 'update', 'delete', 'view', 'exportsData', 'login', 'logout'], {
+        message: "Action type must be one of: create, update, delete, view, exportsData, login, logout"
+    }),
+    codeAction: z.string().min(1, {message: "Code action is required"})
 });
 
 /**

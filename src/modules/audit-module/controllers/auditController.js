@@ -1,9 +1,5 @@
 import auditService from '../services/auditService.js';
-import {
-  createAuditLogSchema,
-  getAuditLogByIdSchema,
-  createActionTypeSchema
-} from '../validations/auditValidation.js';
+import {createActionTypeSchema, createAuditLogSchema, getAuditLogByIdSchema} from '../validations/auditValidation.js';
 
 async function createAuditLog(request, reply) {
     try {
@@ -51,9 +47,9 @@ async function getAllAuditLogs(request, reply) {
 
 async function getAuditLogById(request, reply) {
     try {
-        const { id } = request.params;
+        const {id} = request.params;
 
-        const validationResult = getAuditLogByIdSchema.safeParse({ id: parseInt(id) });
+        const validationResult = getAuditLogByIdSchema.safeParse({id: parseInt(id)});
         if (!validationResult.success) {
             return reply.code(400).send({
                 success: false,

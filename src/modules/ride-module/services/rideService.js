@@ -1,5 +1,6 @@
-import { RideInstance, RideModel } from './../../../config/index.js';
+import {RideInstance, RideModel} from './../../../config/index.js';
 import createLogger from './../../../utils/logger.js';
+
 const logger = createLogger('ride-service');
 
 const rideService = {

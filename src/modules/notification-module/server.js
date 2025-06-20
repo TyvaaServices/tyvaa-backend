@@ -1,10 +1,11 @@
 import dotenv from 'dotenv'
-dotenv.config();
-import { initializeApp, cert } from 'firebase-admin/app';
+import {cert, initializeApp} from 'firebase-admin/app';
 import router from './routes/notificationRouter.js';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import {fileURLToPath} from 'url';
+
+dotenv.config();
 
 export default async function (fastify, opts) {
     const base64Key = process.env.FIREBASE_KEY_BASE64;
@@ -22,5 +23,5 @@ export default async function (fastify, opts) {
             });
         }
     }
-    fastify.register(router, { prefix: '/api/v1' });
+    fastify.register(router, {prefix: '/api/v1'});
 };

@@ -1,4 +1,4 @@
-import { DataTypes } from 'sequelize';
+import {DataTypes} from 'sequelize';
 import sequelize from '../config/serviceAccountKey.json';
 
 const User = sequelize.define('User', {
