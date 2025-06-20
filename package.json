@@ -6,14 +6,18 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "jest"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest"
   },
   "type": "module",
   "imports": {
     "#utils/*": "./src/utils/*",
     "#config/*": "./src/config/*",
     "#user-modules/*": "./src/user-modules/*",
-    "#booking-modules/*": "./src/booking-modules/*"
+    "#booking-modules/*": "./src/booking-modules/*",
+    "#chatbot-modules/*": "./src/chatbot-modules/*",
+    "#notification-modules/*": "./src/notification-modules/*",
+    "#payment-modules/*": "./src/payment-modules/*",
+    "#chatbotRoutes": "./src/chatbot-modules/routes/*"
   },
   "dependencies": {
     "@fastify/compress": "^8.0.3",
