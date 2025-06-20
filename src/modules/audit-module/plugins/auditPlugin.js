@@ -1,7 +1,7 @@
-const fp = require('fastify-plugin');
-const AuditLog = require('../models/auditLog');
+import fp from 'fastify-plugin';
+import AuditLog from '../models/auditLog.js';
 
-module.exports = fp(async function (fastify, opts) {
+const auditPlugin = fp(async function (fastify, opts) {
     const auditLogBuffer = [];
 
     async function flushAuditLogs() {
@@ -33,3 +33,5 @@ module.exports = fp(async function (fastify, opts) {
         });
     });
 });
+
+export default auditPlugin;

@@ -1,11 +1,11 @@
-const fastify = require('fastify');
-const app = fastify({logger: true});
-const router = require('./routes/bookingRouter');
-require('dotenv').config();
+import fastify from 'fastify';
+import router from './routes/bookingRouter.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
+const app = fastify({logger: true});
 app.register(router, {prefix: '/api/v1'});
 
-module.exports = async function (fastify, opts) {
+export default async function (fastify, opts) {
     fastify.register(router, { prefix: '/api/v1' });
-
 };

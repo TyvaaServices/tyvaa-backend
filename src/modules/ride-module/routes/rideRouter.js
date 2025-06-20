@@ -1,4 +1,4 @@
-const rideController = require('../controllers/rideController');
+import rideController from '../controllers/rideController.js';
 
 async function rideRoutes(fastify, opts) {
     fastify.get('/rides', rideController.getAllRides);
@@ -18,4 +18,4 @@ async function rideRoutes(fastify, opts) {
     fastify.delete('/ride-instances/:id', rideController.deleteRideInstance);
 }
 
-module.exports = rideRoutes;
+export default rideRoutes;

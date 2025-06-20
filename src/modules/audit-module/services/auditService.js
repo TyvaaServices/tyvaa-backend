@@ -1,6 +1,6 @@
-const AuditLog = require('../models/auditLog');
-const AuditAction = require('../models/actionType');
-const { z } = require('zod');
+import AuditLog from '../models/auditLog.js';
+import AuditAction from '../models/actionType.js';
+import { z } from 'zod';
 
 // Validation schema for audit log data
 const auditLogSchema = z.object({
@@ -143,7 +143,7 @@ async function createActionType(data) {
 }
 
 // Export the audit service
-module.exports = {
+export default {
     createAuditLog,
     getAllAuditLogs,
     getAuditLogById,

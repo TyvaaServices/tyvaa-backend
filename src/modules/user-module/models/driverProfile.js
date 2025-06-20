@@ -1,19 +1,19 @@
-const {DataTypes} = require('sequelize');
-const sequelize = require('./../../../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '#config/db.js';
 
 
-const profilChauffeur = sequelize.define("ProfilChauffeur", {
+const DriverProfile = sequelize.define("ProfilChauffeur", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
     },
-    noteChauffeur: {
+    driverNote: {
         type: DataTypes.FLOAT,
         allowNull: true,
         defaultValue: 0.0,
     },
-    statusProfil:{
+    statusProfile:{
         type: DataTypes.ENUM('Active', 'Suspended'),
         allowNull: false,
     },
@@ -23,4 +23,4 @@ const profilChauffeur = sequelize.define("ProfilChauffeur", {
         unique: true,
     },
 });
-module.exports = profilChauffeur;
+export default DriverProfile;

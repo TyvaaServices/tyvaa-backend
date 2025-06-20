@@ -1,5 +1,5 @@
-const {RideInstance, RideModel} = require('./../../../config');
-const createLogger = require('./../../../utils/logger');
+import { RideInstance, RideModel } from './../../../config/index.js';
+import createLogger from './../../../utils/logger.js';
 const logger = createLogger('ride-service');
 
 const rideService = {
@@ -79,4 +79,4 @@ const rideService = {
 
 };
 
-module.exports = rideService;
+export default rideService;

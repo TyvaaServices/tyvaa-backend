@@ -302,11 +302,11 @@ const swaggerOptions = {
 };
 
 const swaggerUiOptions = {
-  routePrefix: '/docs',
+  routePrefix: '/documentation',
   exposeRoute: true,
 };
 
-module.exports = {
+export default {
   options: swaggerOptions,
-  uiOptions: swaggerUiOptions,
+  uiOptions: swaggerUiOptions
 };

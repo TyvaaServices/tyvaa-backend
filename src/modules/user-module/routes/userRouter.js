@@ -1,4 +1,4 @@
-const userControllerFactory = require("./../controllers/userController");
+import {userControllerFactory} from "./../controllers/userController.js";
 
 async function userRoutes(fastify, opts) {
   const userController = userControllerFactory(fastify);
@@ -39,4 +39,4 @@ async function userRoutes(fastify, opts) {
   );
 }
 
-module.exports = userRoutes;
+export default userRoutes;

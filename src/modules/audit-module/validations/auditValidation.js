@@ -1,4 +1,4 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
 
 // Validation schema for audit log data
@@ -38,7 +38,9 @@ const createActionTypeSchema = z.object({
   codeAction: z.string().min(1, { message: "Code action is required" })
 }).passthrough();
 
-module.exports = {
+export {
+  auditLogSchema,
+  actionTypeSchema,
   createAuditLogSchema,
   getAuditLogByIdSchema,
   createActionTypeSchema

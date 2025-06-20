@@ -1,6 +1,5 @@
-const {DataTypes} = require('sequelize');
-const sequelize = require('./../../../config/db');
-const DriverApplication = require('./driverApplication');
+import { DataTypes } from 'sequelize';
+import sequelize from '#config/db.js';
 
 const User = sequelize.define('User', {
         id: {
@@ -61,4 +60,4 @@ const User = sequelize.define('User', {
 
 
 
-module.exports = User;
+export default User;

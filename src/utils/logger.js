@@ -1,11 +1,14 @@
-const pino = require('pino');
-const fs = require('fs');
-const path = require('path');
+import {pino}from 'pino';
+import fs from 'fs';
+import path from 'path';
+
+// Use import.meta.url to get the directory in ES modules
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 const isProd = process.env.NODE_ENV === 'production';
 
 function createLogger(serviceName = 'default-service') {
-    const logDir = path.resolve(`${__dirname}/../../`, 'logs');
+    const logDir = path.resolve(__dirname, '../../', 'logs');
     if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
 
     const logFile = path.join(logDir, `${serviceName}.log`);
@@ -42,4 +45,4 @@ function createLogger(serviceName = 'default-service') {
     return pino({ base: { service: serviceName } }, prettyTransport);
 }
 
-module.exports = createLogger;
+export default createLogger;

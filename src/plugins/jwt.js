@@ -1,7 +1,7 @@
-const fp = require("fastify-plugin");
-const fastifyJwt = require("@fastify/jwt");
+import fp from "fastify-plugin";
+import fastifyJwt from "@fastify/jwt";
 
-module.exports = fp(async function (fastify, opts) {
+export default fp(async function (fastify, opts) {
   fastify.register(fastifyJwt, {
     secret: process.env.JWT_SECRET || "supersecret",
   });

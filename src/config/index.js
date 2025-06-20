@@ -1,35 +1,44 @@
-const RideInstance = require('./../modules/ride-module/models/rideInstance');
-const RideModel = require('./../modules/ride-module/models/rideModel');
-const Booking = require('./../modules/booking-module/models/booking');
-// const RideRating = require('./../modules/rideRating-module/models/rideRating');
-const User = require('./../modules/user-module/models/user');
-const Payment = require('./../modules/payment-module/models/payment');
-
-const AuditLog = require('./../modules/audit-module/models/auditLog');
-const AuditAction = require('./../modules/audit-module/models/actionType');
-const passengerProfile = require('./../modules/user-module/models/passengerProfile');
-const driverProfile = require('./../modules/user-module/models/driverProfile');
-const DriverApplication = require('./../modules/user-module/models/driverApplication');
+import RideInstance from './../modules/ride-module/models/rideInstance.js';
+import RideModel from './../modules/ride-module/models/rideModel.js';
+import Booking from './../modules/booking-module/models/booking.js';
+// import RideRating from './../modules/rideRating-module/models/rideRating.js';
+import User from './../modules/user-module/models/user.js';
+import Payment from './../modules/payment-module/models/payment.js';
+import AuditLog from './../modules/audit-module/models/auditLog.js';
+import AuditAction from './../modules/audit-module/models/actionType.js';
+import PassengerProfile from './../modules/user-module/models/passengerProfile.js';
+import DriverProfile from './../modules/user-module/models/driverProfile.js';
+import DriverApplication from './../modules/user-module/models/driverApplication.js';
 
 RideModel.hasMany(RideInstance, {foreignKey: 'rideId'});
 RideInstance.belongsTo(RideModel, {foreignKey: 'rideId'});
 RideInstance.hasMany(Booking, {foreignKey: 'rideInstanceId'});
 
-Booking.belongsTo(passengerProfile, {foreignKey: 'userId'});
+Booking.belongsTo(PassengerProfile, {foreignKey: 'userId'});
 Booking.belongsTo(RideInstance, {foreignKey: 'rideInstanceId'});
-passengerProfile.hasMany(Booking, { foreignKey: 'userId' });
+PassengerProfile.hasMany(Booking, { foreignKey: 'userId' });
 
-RideModel.belongsTo(driverProfile, { foreignKey: 'driverId' });
-driverProfile.hasMany(RideModel, { foreignKey: 'driverId' });
+RideModel.belongsTo(DriverProfile, { foreignKey: 'driverId' });
+DriverProfile.hasMany(RideModel, { foreignKey: 'driverId' });
 
-passengerProfile.hasMany(DriverApplication, { foreignKey: 'userId' });
-DriverApplication.belongsTo(passengerProfile, { foreignKey: 'userId', as: 'passengerProfile' });
+PassengerProfile.hasMany(DriverApplication, { foreignKey: 'userId' });
+DriverApplication.belongsTo(PassengerProfile, { foreignKey: 'userId', as: 'passengerProfile' });
 
 Payment.belongsTo(Booking,{ foreignKey: 'bookingId' });
 Booking.hasOne(Payment, { foreignKey: 'bookingId' });
 
 User.hasMany(AuditLog, { foreignKey: 'userId' });
 
-module.exports = {RideInstance, RideModel,User, Booking, Payment,AuditLog,AuditAction,DriverApplication,passengerProfile,driverProfile};
-
-
+export { 
+  User, 
+  RideModel, 
+  Booking, 
+  RideInstance, 
+  // RideRating, 
+  DriverApplication, 
+  Payment, 
+  AuditAction, 
+  AuditLog, 
+  PassengerProfile,
+  DriverProfile
+};

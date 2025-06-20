@@ -5,9 +5,10 @@
  * Exports a single `ai` instance for use throughout the application.
  */
 
-const {genkit} = require('genkit');
-const {googleAI, gemini20FlashExp} = require('@genkit-ai/googleai');
-
+import {genkit} from 'genkit';
+import {googleAI, gemini20FlashExp} from '@genkit-ai/googleai';
+import dotenv from 'dotenv';
+dotenv.config();
 const plugins = [];
 
 // Create a mock AI instance for tests
@@ -45,4 +46,4 @@ if (process.env.NODE_ENV === 'test') {
     });
 }
 
-module.exports = {ai};
+export { ai };

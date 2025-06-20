@@ -1,5 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../../../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '#config/db.js';
 
 const DriverApplication = sequelize.define('DriverApplication', {
   id: {
@@ -30,5 +30,4 @@ const DriverApplication = sequelize.define('DriverApplication', {
   timestamps: true,
 });
 
-module.exports = DriverApplication;
-
+export default DriverApplication;

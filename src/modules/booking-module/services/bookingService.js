@@ -1,5 +1,5 @@
-const {Booking} = require('./../../../config');
-const createLogger = require('./../../../utils/logger');
+import {Booking} from './../../../config/index.js';
+import createLogger from './../../../utils/logger.js';
 const logger = createLogger('booking-service');
 
 const bookingService = {
@@ -48,5 +48,4 @@ const bookingService = {
     },
 };
 
-module.exports = bookingService;
-
+export default bookingService;

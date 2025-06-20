@@ -1,5 +1,5 @@
-const {getMessaging} = require("firebase-admin/messaging");
-const createLogger = require('./../../../utils/logger');
+import { getMessaging } from "firebase-admin/messaging";
+import createLogger from './../../../utils/logger.js';
 const logger = createLogger('notification-router');
 
 async function sendFCM(token, title, body, data) {
@@ -55,4 +55,4 @@ async function router(fastify, options) {
 //       "route": "/test-screen"
 // }
 // }
-module.exports = router;
+export default router;

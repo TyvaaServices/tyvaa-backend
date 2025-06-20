@@ -1,16 +1,25 @@
-const fastify = require('fastify')({logger: true});
-const chatbotModule = require('./modules/chatbot-module/server');
-const notificationModule = require('./modules/notification-module/server');
-const rideModule = require('./modules/ride-module/server');
-const userModule = require('./modules/user-module/server');
-const bookingModule = require('./modules/booking-module/server');
-const rideRatingModule = require('./modules/rideRating-module/server');
-const paymentModule = require('./modules/payment-module/server');
-const auditModule = require('./modules/audit-module/server');
-require('dotenv').config();
+import Fastify from 'fastify';
+import chatbotModule from './modules/chatbot-module/server.js';
+import notificationModule from './modules/notification-module/server.js';
+import rideModule from './modules/ride-module/server.js';
+import userModule from './modules/user-module/server.js';
+import bookingModule from './modules/booking-module/server.js';
+import paymentModule from './modules/payment-module/server.js';
+import auditModule from './modules/audit-module/server.js';
+import dotenv from 'dotenv';
+import cors from '@fastify/cors';
+import sequelize from './config/db.js';
+import { User, RideModel, Booking, RideInstance, DriverApplication, Payment, AuditAction, AuditLog, PassengerProfile, DriverProfile } from './config/index.js';
+import swaggerConfig from './config/swagger.js';
+import rateLimit from '@fastify/rate-limit';
+import compress from '@fastify/compress';
+import fastifyJwt from '@fastify/jwt';
 
+dotenv.config();
 
-fastify.register(require('@fastify/cors'),{
+const fastify = Fastify({logger: true});
+
+fastify.register(cors, {
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -18,13 +27,6 @@ fastify.register(require('@fastify/cors'),{
     credentials: true,
     maxAge: 86400 // 24 hours
 });
-const sequelize = require('./config/db');
-const {User, RideModel, Booking, RideInstance, RideRating,DriverApplication,Payment,AuditAction,AuditLog,passengerProfile,driverProfile} = require('./config');
-const swaggerConfig = require("./config/swagger");
-const rateLimit = require('@fastify/rate-limit');
-
-const compress = require('@fastify/compress');
-const fastifyJwt = require('@fastify/jwt');
 
 async function buildApp() {
     fastify.register(fastifyJwt, {secret: process.env.JWT_SECRET || 'your-secret-key'});
@@ -54,10 +56,9 @@ async function buildApp() {
     fastify.register(userModule);
     fastify.register(bookingModule);
     fastify.register(paymentModule);
-    fastify.register(rideRatingModule);
     fastify.register(auditModule);
-    fastify.register(require('@fastify/swagger'), swaggerConfig.options);
-    fastify.register(require('@fastify/swagger-ui'), swaggerConfig.uiOptions);
+    fastify.register(await import('@fastify/swagger'), swaggerConfig.options);
+    fastify.register(await import('@fastify/swagger-ui'), swaggerConfig.uiOptions);
     fastify.register(compress, {global: true});
     fastify.register(rateLimit, {
         max: 100,
@@ -85,7 +86,7 @@ buildApp()
                 fastify.log.error(err);
                 process.exit(1);
             }
-            await sequelize.sync({alter: true, logging: false});
+            await sequelize.sync({force: true, logging: false});
             fastify.log.info(`Server listening at ${address}`);
         });
         ;

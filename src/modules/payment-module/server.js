@@ -1,5 +1,7 @@
-const router = require('./routes/paymentRouter');
-require('dotenv').config();
-module.exports = async function (fastify, opts) {
-    fastify.register(router, { prefix: '/api/v1/payments' });
+import paymentRoutes from './routes/paymentRouter.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+export default async function (fastify, opts) {
+    fastify.register(paymentRoutes, { prefix: '/api/v1/payments' });
 };

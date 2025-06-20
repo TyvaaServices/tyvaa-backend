@@ -1,9 +1,9 @@
-const auditService = require('../services/auditService');
-const {
+import auditService from '../services/auditService.js';
+import {
   createAuditLogSchema,
   getAuditLogByIdSchema,
   createActionTypeSchema
-} = require('../validations/auditValidation');
+} from '../validations/auditValidation.js';
 
 async function createAuditLog(request, reply) {
     try {
@@ -127,7 +127,7 @@ async function createActionType(request, reply) {
     }
 }
 
-module.exports = {
+export {
     createAuditLog,
     getAllAuditLogs,
     getAuditLogById,

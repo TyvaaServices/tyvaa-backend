@@ -1,7 +1,7 @@
-const rideService = require('../services/rideService');
-const { User,RideInstance } = require('./../../../config/index');
+import rideService from '../services/rideService.js';
+import { User, RideInstance } from './../../../config/index.js';
 
-module.exports = {
+const rideController = {
     getAllRides: async (req, reply) => {
         const rides = await rideService.getAllRides();
         return reply.send(rides);
@@ -69,3 +69,5 @@ module.exports = {
     },
 
   };
+
+export default rideController;

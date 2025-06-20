@@ -1,7 +1,7 @@
-const bookingService = require('../services/bookingService');
-const { User,RideInstance } = require('./../../../config/index');
+import bookingService from '../services/bookingService.js';
+import { User, RideInstance } from './../../../config/index.js';
 
-module.exports = {
+const bookingController = {
     getAllBookings: async (req, reply) => {
         const bookings = await bookingService.getAllBookings();
         return reply.send(bookings);
@@ -43,8 +43,14 @@ module.exports = {
         }
     },
     cancelBooking: async (req, reply) => {
-        const cancelled = await bookingService.cancelBooking(req.params.bookingId);
-        if (!cancelled) return reply.code(404).send({error: 'Booking not found or already cancelled'});
-        return reply.send({message: 'Booking cancelled'});
+        try {
+            const booking = await bookingService.cancelBooking(req.params.bookingId);
+            if (!booking) return reply.code(404).send({ error: 'Booking not found or already cancelled' });
+            return reply.send({ message: 'Booking cancelled', booking });
+        } catch (err) {
+            return reply.code(400).send({ error: err.message });
+        }
     },
 };
+
+export default bookingController;

@@ -1,4 +1,4 @@
-const auditController = require('../controllers/auditController');
+import * as auditController from '../controllers/auditController.js';
 
 function auditRoutes(fastify, options, done) {
   // Audit Logs routes
@@ -13,4 +13,4 @@ function auditRoutes(fastify, options, done) {
   done();
 }
 
-module.exports = auditRoutes;
+export default auditRoutes;

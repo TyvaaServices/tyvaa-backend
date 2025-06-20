@@ -1,4 +1,4 @@
-const bookingController = require('../controllers/bookingController');
+import bookingController from '../controllers/bookingController.js';
 
 async function rideRoutes(fastify, opts) {
 
@@ -12,4 +12,4 @@ async function rideRoutes(fastify, opts) {
     fastify.post('/bookings/:bookingId/cancel', bookingController.cancelBooking);
 }
 
-module.exports = rideRoutes;
+export default rideRoutes;

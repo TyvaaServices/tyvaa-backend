@@ -1,9 +1,9 @@
 'use strict';
-require('dotenv').config();
+import dotenv from 'dotenv';
+import chatbotRoutes from './routes/chatbotRoutes.js';
 
-const chatbotRoutes = require('./routes/chatbotRoutes');
+dotenv.config();
 
-
-module.exports = async function (fastify, opts) {
+export default async function (fastify, opts) {
     fastify.register(chatbotRoutes, { prefix: '/api/v1/support' });
 };

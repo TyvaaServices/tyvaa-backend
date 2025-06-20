@@ -1,7 +1,9 @@
-const userRoutes = require("./routes/userRouter");
+import userRoutes from "./routes/userRouter.js";
+import dotenv from "dotenv";
+dotenv.config();
+import multipart from "@fastify/multipart";
 
-require("dotenv").config();
-module.exports = async function (fastify, opts) {
-  fastify.register(require("@fastify/multipart"));
+export default async function (fastify, opts) {
+  fastify.register(multipart);
   fastify.register(userRoutes, { prefix: "/api/v1" });
-};
+}

@@ -1,14 +1,20 @@
-const { User, DriverApplication, passengerProfile: PassengerProfiler, driverProfile: ProfilChauffeur } = require("./../../../config/index");
-const createLogger = require("./../../../utils/logger");
+import { User, DriverApplication, PassengerProfile, DriverProfile } from "#config/index.js";
+import createLogger from "#utils/logger.js";
 const logger = createLogger("user-controller");
-const pump = require("pump");
-const RedisCache = require("./../../../utils/redisCache");
-const mailer = require("./../../../utils/mailer");
+import pump from "pump";
+import RedisCache from "#utils/redisCache.js";
+import mailer from "#utils/mailer.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Store OTPs in-memory for demo; use Redis or DB in production
 const otpStore = {};
 
-module.exports = (fastify) => ({
+export const userControllerFactory = (fastify) => ({
   getAllDriverApplications: async (req, reply) => {
     try {
       const applications = await DriverApplication.findAll({
@@ -37,7 +43,7 @@ module.exports = (fastify) => ({
     }
     try {
       const application = await DriverApplication.findByPk(id, {
-        include: [{ model: PassengerProfiler, as: "passengerProfile" }],
+        include: [{ model: PassengerProfile, as: "passengerProfile" }],
       });
       if (!application) {
         return reply.status(404).send({ error: "Application not found" });
@@ -48,9 +54,9 @@ module.exports = (fastify) => ({
       if (status === "approved" && application.passengerProfile) {
         // Create driver profile for this user if not exists
         const userId = application.passengerProfile.userId;
-        let driver = await ProfilChauffeur.findOne({ where: { userId } });
+        let driver = await DriverProfile.findOne({ where: { userId } });
         if (!driver) {
-          driver = await ProfilChauffeur.create({ userId, statusProfil: "Active" });
+          driver = await DriverProfile.create({ userId, statusProfil: "Active" });
         } else {
           driver.statusProfil = "Active";
           await driver.save();
@@ -238,9 +244,9 @@ module.exports = (fastify) => ({
       const user = await User.create({ phoneNumber, fullName, dateOfBirth, sexe, email });
       logger.info(`User created successfully with ID: ${user.id}`);
       if (profileType === "driver") {
-        await ProfilChauffeur.create({ userId: user.id, statusProfil: "Active" });
-      }else if (profileType === "passenger") {
-        await PassengerProfiler.create({ userId: user.id });
+        await DriverProfile.create({ userId: user.id, statusProfile: "Active" });
+      } else if (profileType === "passenger") {
+        await PassengerProfile.create({ userId: user.id });
       }
       const token = fastify.signToken({ id: user.id, phoneNumber: user.phoneNumber });
       return reply.status(201).send({ user, token });
@@ -285,8 +291,6 @@ module.exports = (fastify) => ({
       }
 
       if (profileImageBuffer && profileImageFilename) {
-        const fs = require("fs");
-        const path = require("path");
         const uploadDir = path.join(__dirname, "..", "uploads");
         const filePath = path.join(uploadDir, profileImageFilename);
 
@@ -403,7 +407,7 @@ module.exports = (fastify) => ({
   submitDriverApplication: async (req, reply) => {
     const userId = req.user.id;
     try {
-      const passenger = await PassengerProfiler.findOne({ where: { userId } });
+      const passenger = await PassengerProfile.findOne({ where: { userId } });
       if (!passenger) {
         return reply.status(400).send({ error: "Passenger profile not found." });
       }
@@ -415,8 +419,6 @@ module.exports = (fastify) => ({
       let pdfPath = null;
       for await (const part of parts) {
         if (part.file && part.fieldname === "pdf") {
-          const fs = require("fs");
-          const path = require("path");
           const uploadDir = path.join(__dirname, "..", "uploads");
           fs.mkdirSync(uploadDir, { recursive: true });
           const filename = `driver_application_${userId}_${Date.now()}.pdf`;
@@ -486,6 +488,7 @@ module.exports = (fastify) => ({
 
 function generateOTP() {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  logger.debug(`Generated OTP: ${otp}`); 
+  logger.debug(`Generated OTP: ${otp}`);
   return otp;
 }
+

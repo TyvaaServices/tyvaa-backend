@@ -1,8 +1,8 @@
-const paymentController = require('../controllers/paymentController');
+import paymentController from '../controllers/paymentController.js';
 
 async function paymentRoutes(fastify, opts) {
    fastify.post('/pay', paymentController.createPayment);
    fastify.get('/', paymentController.getAllPayment);
 }
 
-module.exports = paymentRoutes;
+export default paymentRoutes;

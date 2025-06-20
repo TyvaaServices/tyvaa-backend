@@ -1,5 +1,5 @@
-const sequelize = require('./../../../config/db');
-const {DataTypes} = require("sequelize");
+import sequelize from './../../../config/db.js';
+import {DataTypes} from "sequelize";
 
 const AuditAction = sequelize.define('AuditAction', {
     id: {
@@ -21,4 +21,4 @@ const AuditAction = sequelize.define('AuditAction', {
     timestamps: false,
 });
 
-module.exports= AuditAction;
+export default { AuditAction};

@@ -1,5 +1,5 @@
-const {DataTypes} = require('sequelize');
-const sequelize = require('./../../../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '#config/db.js';
 
 
 const PassengerProfile = sequelize.define("PassengerProfile", {
@@ -8,7 +8,7 @@ const PassengerProfile = sequelize.define("PassengerProfile", {
         primaryKey: true,
         autoIncrement: true,
     },
-    notePassager: {
+    passengerNote: {
         type: DataTypes.FLOAT,
         allowNull: true,
         defaultValue: 0.0,
@@ -19,4 +19,4 @@ const PassengerProfile = sequelize.define("PassengerProfile", {
         unique: true,
     },
 });
-module.exports = PassengerProfile;
+export default PassengerProfile;

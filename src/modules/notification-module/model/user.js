@@ -1,5 +1,5 @@
-const {DataTypes} = require('sequelize');
-const sequelize = require('../config/serviceAccountKey.json');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/serviceAccountKey.json';
 
 const User = sequelize.define('User', {
     id: {
@@ -12,11 +12,9 @@ const User = sequelize.define('User', {
         allowNull: false,
         unique: true,
         validate: {
-            is: /^\+?[1-9]\d{1,14}$/, // E.164 format
+            is: /^\+?[1-9]\d{1,14}$/,
         },
     },
+});
 
-})
-
-module.exports = User;
-
+export default User;

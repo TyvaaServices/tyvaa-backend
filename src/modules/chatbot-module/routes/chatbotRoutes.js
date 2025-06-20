@@ -1,8 +1,8 @@
 'use strict';
 
-const {getSupportChatResponse} = require('../config/ai/flows/support-chat-flow'); // Adjust path as needed
-const {z} = require('zod');
-const {zodToJsonSchema} = require('zod-to-json-schema');
+import { getSupportChatResponse } from '../config/ai/flows/support-chat-flow.js'; // Adjust path as needed
+import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const ChatRequestSchema = z.object({
     message: z.string().min(1, 'Message cannot be empty.'),
@@ -29,34 +29,28 @@ const chatSchema = {
             description: 'Successful chatbot reply',
             type: 'object',
             properties: {
-                reply: {type: 'string'},
+                reply: { type: 'string' },
             },
         },
         400: {
-            description: 'Validation error',
+            description: 'Invalid request',
             type: 'object',
             properties: {
-                error: {type: 'string'},
-                message: {type: 'string'},
-                issues: {type: 'array', items: {type: 'object'}},
+                error: { type: 'string' },
             },
         },
         500: {
-            description: 'Internal error',
+            description: 'Server error',
             type: 'object',
             properties: {
-                error: {type: 'string'},
+                error: { type: 'string' },
             },
         },
     },
 };
 
-async function chatbotRoutes(fastify, options) {
-    // Disable automatic validation by setting schema validation to false
-    fastify.post('/chat', {
-        schema: chatSchema,
-        validatorCompiler: () => () => ({error: null}), // Disable automatic validation
-    }, async (request, reply) => {
+export default async function (fastify, opts) {
+    fastify.post('/chatbot', { schema: chatSchema }, async (request, reply) => {
         try {
             // Validate input schema manually
             const validationResult = ChatRequestSchema.safeParse(request.body);
@@ -102,5 +96,3 @@ async function chatbotRoutes(fastify, options) {
         }
     });
 }
-
-module.exports = chatbotRoutes;
