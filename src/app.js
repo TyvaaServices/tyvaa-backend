@@ -1,4 +1,4 @@
-const fastify = require('fastify')({ logger: true });
+const fastify = require('fastify')({logger: true});
 const chatbotModule = require('./modules/chatbot-module/server');
 const notificationModule = require('./modules/notification-module/server');
 const rideModule = require('./modules/ride-module/server');
@@ -6,9 +6,20 @@ const userModule = require('./modules/user-module/server');
 const bookingModule = require('./modules/booking-module/server');
 const rideRatingModule = require('./modules/rideRating-module/server');
 const paymentModule = require('./modules/payment-module/server');
+const auditModule = require('./modules/audit-module/server');
 require('dotenv').config();
+
+
+fastify.register(require('@fastify/cors'),{
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'X-Requested-With'],
+    credentials: true,
+    maxAge: 86400 // 24 hours
+});
 const sequelize = require('./config/db');
-const {User, RideModel, Booking, RideInstance,RideRating} = require('./config/index');
+const {User, RideModel, Booking, RideInstance, RideRating,DriverApplication,Payment,AuditAction,AuditLog,passengerProfile,driverProfile} = require('./config');
 const swaggerConfig = require("./config/swagger");
 const rateLimit = require('@fastify/rate-limit');
 
@@ -16,19 +27,25 @@ const compress = require('@fastify/compress');
 const fastifyJwt = require('@fastify/jwt');
 
 async function buildApp() {
-    fastify.register(fastifyJwt, { secret: process.env.JWT_SECRET || 'your-secret-key' });
-    fastify.decorate('authenticate', async function(request, reply) {
+    fastify.register(fastifyJwt, {secret: process.env.JWT_SECRET || 'your-secret-key'});
+
+
+    fastify.decorate('signToken', function (payload) {
+        return this.jwt.sign(payload);
+    });
+
+    fastify.decorate('authenticate', async function (request, reply) {
         try {
             await request.jwtVerify();
         } catch (err) {
-            reply.code(401).send({ message: 'Invalid or missing token' });
+            reply.code(401).send({message: 'Invalid or missing token'});
         }
     });
-    fastify.decorate('isAdmin', async function(request, reply) {
+    fastify.decorate('isAdmin', async function (request, reply) {
         if (request.user && request.user.role === 'admin') {
             return;
         } else {
-            reply.code(403).send({ message: 'Forbidden: Admins only' });
+            reply.code(403).send({message: 'Forbidden: Admins only'});
         }
     });
     fastify.register(chatbotModule);
@@ -38,6 +55,7 @@ async function buildApp() {
     fastify.register(bookingModule);
     fastify.register(paymentModule);
     fastify.register(rideRatingModule);
+    fastify.register(auditModule);
     fastify.register(require('@fastify/swagger'), swaggerConfig.options);
     fastify.register(require('@fastify/swagger-ui'), swaggerConfig.uiOptions);
     fastify.register(compress, {global: true});
@@ -48,12 +66,21 @@ async function buildApp() {
             return req.headers['x-forwarded-for'] || req.ip;
         },
     });
+    fastify.addHook('onRequest', async (request, reply) => {
+        if (request.method !== 'OPTIONS') {
+            request.log.info({url: request.url, method: request.method}, 'Incoming request');
+        }
+    });
+    fastify.addHook('onResponse', (request, reply) => {
+        request.log.info({url: request.url, method: request.method, statusCode: reply.statusCode}, 'Response sent');
+    });
+
 }
 
 buildApp()
     .then(() => {
         let server;
-        fastify.listen({ port: process.env.PORT || 3000, host: '0.0.0.0' }, async (err, address) => {
+        fastify.listen({port: process.env.PORT || 3000, host: '0.0.0.0'}, async (err, address) => {
             if (err) {
                 fastify.log.error(err);
                 process.exit(1);
