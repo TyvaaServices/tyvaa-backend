@@ -24,10 +24,6 @@ const User = sequelize.define('User', {
             type: DataTypes.STRING,
             allowNull: true,
         },
-        isOnline: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
         profileImage: {
             type: DataTypes.STRING,
             allowNull: true,
@@ -43,24 +39,15 @@ const User = sequelize.define('User', {
         email: {
             type: DataTypes.STRING,
             allowNull: true,
-
         },
-        carImage: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        isDriver: {
+        isActive: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
-        isVerified: {
-            type: DataTypes.BOOLEAN,
+    isAdmin: {
+            type:DataTypes.BOOLEAN,
             defaultValue: false,
-        },
-        isBlocked: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
+    },
         latitude: {
             type: DataTypes.STRING,
             allowNull: true,

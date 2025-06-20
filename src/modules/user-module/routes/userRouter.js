@@ -18,7 +18,8 @@ async function userRoutes(fastify, opts) {
   fastify.post("/users/:id/update-location", userController.updateLocation);
 
   fastify.post(
-    "/users/driver-application",{ preValidation: [fastify.authenticate] },
+    "/users/driver-application",
+    { preValidation: [fastify.authenticate] },
     userController.submitDriverApplication
   );
   fastify.get(
@@ -26,8 +27,16 @@ async function userRoutes(fastify, opts) {
     { preValidation: [fastify.authenticate] },
     userController.getDriverApplicationStatus
   );
-
-
+  fastify.get(
+    "/admin/driver-applications",
+    { preValidation: [fastify.authenticate, fastify.isAdmin] },
+    userController.getAllDriverApplications
+  );
+  fastify.patch(
+    "/admin/driver-applications/:id/review",
+    { preValidation: [fastify.authenticate, fastify.isAdmin] },
+    userController.reviewDriverApplication
+  );
 }
 
 module.exports = userRoutes;
