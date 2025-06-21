@@ -1,31 +1,20 @@
-import {DriverApplication, DriverProfile, PassengerProfile, User} from "#config/index.js";
 import createLogger from "#utils/logger.js";
 import pump from "pump";
-import RedisCache from "#utils/redisCache.js";
 import fs from "fs";
 import path from "path";
 import {fileURLToPath} from "url";
+import {userFacade} from "../facades/userFacade.js";
 
 const logger = createLogger("user-controller");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Store OTPs in-memory for demo; use Redis or DB in production
-const otpStore = {};
 
 export const userControllerFactory = (fastify) => ({
     getAllDriverApplications: async (req, reply) => {
         try {
-            const applications = await DriverApplication.findAll({
-                include: [
-                    {
-                        model: PassengerProfile,
-                        as: "passengerProfile",
-                        include: [{model: User, as: "user", attributes: {exclude: ["fcmToken"]}}],
-                    },
-                ],
-            });
+            const applications = await userFacade.findAllDriverApplications();
             return reply.send({applications});
         } catch (error) {
             return reply.status(500).send({
@@ -42,24 +31,21 @@ export const userControllerFactory = (fastify) => ({
             return reply.status(400).send({error: "Invalid status"});
         }
         try {
-            const application = await DriverApplication.findByPk(id, {
-                include: [{model: PassengerProfile, as: "passengerProfile"}],
-            });
+            const application = await userFacade.findDriverApplicationById(id);
             if (!application) {
                 return reply.status(404).send({error: "Application not found"});
             }
             application.status = status;
             application.comments = comments;
-            await application.save();
+            await userFacade.saveDriverApplication(application);
             if (status === "approved" && application.passengerProfile) {
-                // Create driver profile for this user if not exists
                 const userId = application.passengerProfile.userId;
-                let driver = await DriverProfile.findOne({where: {userId}});
+                let driver = await userFacade.findDriverProfileByUserId(userId);
                 if (!driver) {
-                    driver = await DriverProfile.create({userId, statusProfil: "Active"});
+                    driver = await userFacade.createDriverProfile({userId, statusProfil: "Active"});
                 } else {
                     driver.statusProfil = "Active";
-                    await driver.save();
+                    await userFacade.saveUser(driver);
                 }
             }
             return reply.send({application});
@@ -71,12 +57,10 @@ export const userControllerFactory = (fastify) => ({
         }
     },
     getAllUsers: async (req, reply) => {
-        const {id} = req.params;
-
         logger.info("getAllUsers endpoint called");
         try {
             logger.debug("Attempting to retrieve all users from database");
-            const users = await User.findAll();
+            const users = await userFacade.findAllUsers();
             logger.info(`Retrieved ${users.length} users successfully`);
             logger.debug(`User data: ${JSON.stringify(users)}`);
             return reply.send(users);
@@ -90,7 +74,7 @@ export const userControllerFactory = (fastify) => ({
         const {id} = req.params;
         logger.info(`getUserById called for user ID: ${id}`);
         try {
-            const user = await User.findByPk(id);
+            const user = await userFacade.getUserByIdWithProfiles(id);
             if (!user) {
                 logger.warn(`No user found with ID: ${id}`);
                 return reply.status(404).send({error: "User not found"});
@@ -113,42 +97,18 @@ export const userControllerFactory = (fastify) => ({
             logger.warn(`Invalid email domain for email: ${email}`);
             return reply.status(400).send({error: "Invalid email domain"});
         }
-
-        logger.info(`Requesting login OTP for phone number: ${phoneNumber}`);
         try {
-            let user;
-            if (email) {
-                logger.info(`Requesting login OTP for email: ${email}`);
-                user = await User.findOne({where: {email}});
-                if (!user) {
-                    logger.warn(`No user found with email ${email}`);
-                    return reply.status(404).send({error: "User not found"});
-                }
-            } else {
-                user = await User.findOne({where: {phoneNumber}});
-                if (!user) {
-                    logger.warn(`No user found with phone number ${phoneNumber}`);
-                    return reply.status(404).send({error: "User not found"});
-                }
+            const result = await userFacade.requestLoginOtp({phoneNumber, email, generateOTP});
+            if (result.error) {
+                logger.warn(result.error);
+                return reply.status(404).send({error: result.error});
             }
-            if (!user) {
-                logger.warn(`No user found with phone number ${phoneNumber}`);
-                return reply.status(404).send({error: "User not found"});
-            }
-            const otp = generateOTP();
-            if (phoneNumber) {
-                await RedisCache.set(`otp:${phoneNumber}`, otp, 300);
-            } else if (email) {
-                await RedisCache.set(`otp:${email}`, otp, 300);
-            }
-            logger.info(`OTP generated for login: ${otp}`);
-            // TODO: Send OTP via SMS in production
-            return reply.send({success: true, otp});
+            // TODO: Send OTP via SMS/email in production
+            logger.info(`OTP generated for login: ${result.otp}`);
+            return reply.send({success: true, otp: result.otp});
         } catch (error) {
             logger.error(`Error requesting login OTP: ${error.message}`);
-            return reply
-                .status(500)
-                .send({error: "Failed to request OTP", message: error.message});
+            return reply.status(500).send({error: "Failed to request OTP", message: error.message});
         }
     },
 
@@ -167,34 +127,17 @@ export const userControllerFactory = (fastify) => ({
             return reply.status(400).send({error: "OTP is required"});
         }
         try {
-            let user;
-            let otpKey;
-            if (email) {
-                logger.info(`Login attempt with email: ${email}`);
-                user = await User.findOne({where: {email}});
-                otpKey = `otp:${email}`;
-            } else {
-                logger.info(`Login attempt with phone number: ${phoneNumber}`);
-                user = await User.findOne({where: {phoneNumber}});
-                otpKey = `otp:${phoneNumber}`;
+            const result = await userFacade.loginWithOtp({phoneNumber, email, otp});
+            if (result.error) {
+                logger.warn(result.error);
+                return reply.status(401).send({error: result.error});
             }
-            if (!user) {
-                logger.warn("No user found for provided credentials");
-                return reply.status(404).send({error: "User not found"});
-            }
-            const storedOtp = await RedisCache.get(otpKey);
-            logger.debug(`Stored OTP for ${otpKey}: ${storedOtp}`);
-            console.log(`Stored OTP for ${otpKey}: ${storedOtp}`);
-            if (!storedOtp || storedOtp !== otp) {
-                logger.warn("Invalid OTP for login");
-                return reply.status(401).send({error: "Invalid OTP"});
-            }
-            await RedisCache.del(otpKey);
+            const user = result.user;
             const token = fastify.signToken({
                 id: user.id,
                 phoneNumber: user.phoneNumber,
                 email: user.email,
-                isDriver: user.isDriver,
+                isAdmin: user.isAdmin,
             });
             logger.info(`Login successful for user ${user.id}`);
             return reply.send({user, token});
@@ -205,65 +148,64 @@ export const userControllerFactory = (fastify) => ({
     },
 
     requestRegisterOtp: async (req, reply) => {
-        const {phoneNumber} = req.body;
-        logger.info(`Requesting register OTP for phone number: ${phoneNumber}`);
+        const {phoneNumber, email} = req.body;
+        if (!phoneNumber && !email) {
+            logger.warn("Phone number or email is missing in request");
+            return reply.status(400).send({error: "Phone number or email are required"});
+        }
         try {
-            const existingUser = await User.findOne({where: {phoneNumber}});
-            if (existingUser) {
-                logger.warn(`User already exists with phone number ${phoneNumber}`);
-                return reply.status(400).send({error: "User already exists"});
+            const result = await userFacade.requestRegisterOtp({phoneNumber, email, generateOTP});
+            if (result.error) {
+                logger.warn(result.error);
+                return reply.status(400).send({error: result.error});
             }
-            const otp = generateOTP();
-            await RedisCache.set(`otp:${phoneNumber}`, otp, 300);
-            logger.info(`OTP generated for registration: ${otp}`);
-            // TODO: Send OTP via SMS in production
-            return reply.send({success: true, otp});
+            // TODO: Send OTP via SMS/email in production
+            logger.info(`OTP generated for registration: ${result.otp}`);
+            return reply.send({success: true, otp: result.otp});
         } catch (error) {
             logger.error(`Error requesting register OTP: ${error.message}`);
-            return reply
-                .status(500)
-                .send({error: "Failed to request OTP", message: error.message});
+            return reply.status(500).send({error: "Failed to request OTP", message: error.message});
         }
     },
 
     createUser: async (req, reply) => {
         const {phoneNumber, fullName, dateOfBirth, sexe, email, otp, profileType} = req.body;
-        logger.info(`Creating new user with phone number: ${phoneNumber}`);
+        if (!phoneNumber && !email) {
+            logger.warn("Phone number or email is missing in registration request");
+            return reply.status(400).send({error: "Phone number or email are required"});
+        }
+        if (!otp) {
+            logger.warn("OTP is missing in registration request");
+            return reply.status(400).send({error: "OTP is required"});
+        }
         try {
-            const existingUser = await User.findOne({where: {phoneNumber}});
-            if (existingUser) {
-                logger.warn(`User already exists with phone number ${phoneNumber}`);
-                return reply.status(400).send({error: "User already exists"});
+            const userData = {phoneNumber, fullName, dateOfBirth, sexe, email};
+            const result = await userFacade.registerWithOtp({phoneNumber, email, otp, userData});
+            if (result.error) {
+                logger.warn(result.error);
+                return reply.status(400).send({error: result.error});
             }
-            const storedOtp = await RedisCache.get(`otp:${phoneNumber}`);
-            if (!otp || storedOtp !== otp) {
-                logger.warn(`Invalid OTP for registration for phone number ${phoneNumber}`);
-                return reply.status(401).send({error: "Invalid OTP"});
-            }
-            await RedisCache.del(`otp:${phoneNumber}`);
-            const user = await User.create({phoneNumber, fullName, dateOfBirth, sexe, email});
-            logger.info(`User created successfully with ID: ${user.id}`);
+            const user = result.user;
             if (profileType === "driver") {
-                await DriverProfile.create({userId: user.id, statusProfile: "Active"});
+                await userFacade.createDriverProfile({userId: user.id, statusProfil: "Active"});
             } else if (profileType === "passenger") {
-                await PassengerProfile.create({userId: user.id});
+                await userFacade.createPassengerProfile({userId: user.id});
             }
-            const token = fastify.signToken({id: user.id, phoneNumber: user.phoneNumber});
+            const token = fastify.signToken({id: user.id, phoneNumber: user.phoneNumber, isAdmin: user.isAdmin});
+            logger.info(`User created successfully with ID: ${user.id}`);
             return reply.status(201).send({user, token});
         } catch (error) {
-            logger.error(`Error creating user with phone ${phoneNumber}: ${error.message}`);
+            logger.error(`Error creating user: ${error.message}`);
             return reply.status(500).send({error: "Failed to create user", message: error.message});
         }
     },
     updateUser: async (req, reply) => {
         const {id} = req.params;
         logger.info(`Updating user with ID: ${id}`);
-
         const parts = req.parts();
         const fields = {};
         let profileImageBuffer = null;
         let profileImageFilename = null;
-
         for await (const part of parts) {
             if (part.file) {
                 if (part.fieldname === "profile_image") {
@@ -275,61 +217,17 @@ export const userControllerFactory = (fastify) => ({
                 fields[part.fieldname] = part.value;
             }
         }
-
         try {
-            const user = await User.findByPk(id);
+            const uploadDir = path.join(__dirname, "..", "uploads");
+            const user = await userFacade.updateUserProfileImage(id, fields, profileImageBuffer, profileImageFilename, uploadDir);
             if (!user) {
                 logger.warn(`Update failed: No user found with ID ${id}`);
                 return reply.status(404).send({error: "User not found"});
             }
-
-            for (const key in fields) {
-                if (fields.hasOwnProperty(key) && key in user) {
-                    logger.debug(`Updating ${key} to ${fields[key]}`);
-                    user[key] = fields[key];
-                }
-            }
-
-            if (profileImageBuffer && profileImageFilename) {
-                const uploadDir = path.join(__dirname, "..", "uploads");
-                const filePath = path.join(uploadDir, profileImageFilename);
-
-                fs.mkdirSync(uploadDir, {recursive: true});
-                fs.writeFileSync(filePath, profileImageBuffer);
-
-                user.profileImage = `/uploads/${profileImageFilename}`;
-            }
-
-            await user.save();
             return reply.send({user});
         } catch (err) {
             logger.error(`Error updating user ${id}: ${err.message}`);
             return reply.status(500).send({error: "Server error"});
-        }
-    },
-
-    deleteUser: async (req, reply) => {
-        const {id} = req.params;
-        logger.info(`Deleting user with ID: ${id}`);
-
-        try {
-            logger.debug(`Looking up user with ID: ${id}`);
-            const user = await User.findByPk(id);
-
-            if (!user) {
-                logger.warn(`Deletion failed: No user found with ID ${id}`);
-                return reply.status(404).send({error: "User not found"});
-            }
-
-            logger.debug(`User found, proceeding with deletion of user ${id}`);
-            await user.destroy();
-
-            logger.info(`User ${id} deleted successfully`);
-            return reply.status(204).send();
-        } catch (error) {
-            logger.error(`Error deleting user ${id}: ${error.message}`);
-            logger.debug(`Error stack: ${error.stack}`);
-            return reply.status(500).send({error: "Failed to delete user"});
         }
     },
 
@@ -338,23 +236,15 @@ export const userControllerFactory = (fastify) => ({
         const {fcmToken} = req.body;
         logger.info(`Updating FCM token for user ${id}`);
         logger.debug(`New FCM token: ${fcmToken}`);
-
         try {
-            logger.debug(`Looking up user with ID: ${id}`);
-            const user = await User.findByPk(id);
-
-            if (!user) {
-                logger.warn(`Update failed: No user found with ID ${id}`);
-                return reply.status(404).send({error: "User not found"});
+            const result = await userFacade.updateFcmTokenFacade(id, fcmToken);
+            if (result.error) {
+                logger.warn(`Update failed: ${result.error}`);
+                return reply.status(404).send({error: result.error});
             }
-
-            logger.debug(`User found, updating FCM token for user ${id}`);
-            user.fcmToken = fcmToken;
-            await user.save();
-
             logger.info(`FCM token updated successfully for user ${id}`);
-            logger.debug(`Updated user data: ${JSON.stringify(user)}`);
-            return reply.send({user});
+            logger.debug(`Updated user data: ${JSON.stringify(result.user)}`);
+            return reply.send({user: result.user});
         } catch (error) {
             logger.error(`Error updating FCM token for user ${id}: ${error.message}`);
             logger.debug(`Error stack: ${error.stack}`);
@@ -367,36 +257,15 @@ export const userControllerFactory = (fastify) => ({
         const {location} = req.body;
         logger.info(`Updating location for user ${id}`);
         logger.debug(`New location data: ${JSON.stringify(location)}`);
-
         try {
-            logger.debug(`Looking up user with ID: ${id}`);
-            const user = await User.findByPk(id);
-
-            if (!user) {
-                logger.warn(`Update failed: No user found with ID ${id}`);
-                return reply.status(404).send({error: "User not found"});
+            const result = await userFacade.updateLocationFacade(id, location);
+            if (result.error) {
+                logger.warn(`Update failed: ${result.error}`);
+                return reply.status(404).send({error: result.error});
             }
-
-            logger.debug(`User found, updating location for user ${id}`);
-            logger.debug(
-                `Previous location - lat: ${user.latitude}, long: ${user.longitude}`
-            );
-            logger.debug(
-                `New location - lat: ${location.latitude}, long: ${location.longitude}`
-            );
-
-            user.latitude = location.latitude;
-            user.longitude = location.longitude;
-            await user.save();
-
             logger.info(`Location updated successfully for user ${id}`);
-            logger.debug(`Updated user data: ${JSON.stringify(user)}`);
-
-            return reply.send({
-                success: true,
-                user,
-                message: "Location updated successfully",
-            });
+            logger.debug(`Updated user data: ${JSON.stringify(result.user)}`);
+            return reply.send({success: true, user: result.user, message: "Location updated successfully"});
         } catch (error) {
             logger.error(`Error updating location for user ${id}: ${error.message}`);
             logger.debug(`Error stack: ${error.stack}`);
@@ -404,43 +273,57 @@ export const userControllerFactory = (fastify) => ({
         }
     },
 
+    deleteUser: async (req, reply) => {
+        const {id} = req.params;
+        logger.info(`Deleting user with ID: ${id}`);
+        try {
+            const result = await userFacade.deleteUserFacade(id);
+            if (result.error) {
+                logger.warn(`Deletion failed: ${result.error}`);
+                return reply.status(404).send({error: result.error});
+            }
+            logger.info(`User ${id} deleted successfully`);
+            return reply.status(204).send();
+        } catch (error) {
+            logger.error(`Error deleting user ${id}: ${error.message}`);
+            logger.debug(`Error stack: ${error.stack}`);
+            return reply.status(500).send({error: "Failed to delete user"});
+        }
+    },
+
+    blockUser: async (req, reply) => {
+        const {id} = req.params;
+        logger.info(`Blocking user with ID: ${id}`);
+        try {
+            const result = await userFacade.blockUserFacade(id);
+            if (result.error) {
+                logger.warn(`Block failed: ${result.error}`);
+                return reply.status(404).send({error: result.error});
+            }
+            logger.info(`User ${id} blocked successfully`);
+            return reply.send(result.user);
+        } catch (e) {
+            logger.error(`Error blocking user ${id}: ${e.message}`);
+            return reply.status(500).send({error: "Failed to block user"});
+        }
+    },
+
     submitDriverApplication: async (req, reply) => {
         const userId = req.user.id;
         try {
-            const passenger = await PassengerProfile.findOne({where: {userId}});
-            if (!passenger) {
-                return reply.status(400).send({error: "Passenger profile not found."});
-            }
-            const existing = await DriverApplication.findOne({where: {userId: passenger.id, status: "pending"}});
-            if (existing) {
-                return reply.status(400).send({error: "You already have a pending application."});
-            }
-            const parts = req.parts();
-            let pdfPath = null;
-            for await (const part of parts) {
-                if (part.file && part.fieldname === "pdf") {
-                    const uploadDir = path.join(__dirname, "..", "uploads");
-                    fs.mkdirSync(uploadDir, {recursive: true});
-                    const filename = `driver_application_${userId}_${Date.now()}.pdf`;
-                    const filePath = path.join(uploadDir, filename);
-                    const writeStream = fs.createWriteStream(filePath);
-                    await new Promise((resolve, reject) => {
-                        pump(part.file, writeStream, (err) => {
-                            if (err) reject(err);
-                            else resolve();
-                        });
-                    });
-                    pdfPath = `/uploads/${filename}`;
-                }
-            }
-            if (!pdfPath) {
-                return reply.status(400).send({error: "PDF file is required."});
-            }
-            const application = await DriverApplication.create({
-                userId: passenger.id, // Link to passengerProfile
-                documents: pdfPath,
+            const uploadDir = path.join(__dirname, "..", "uploads");
+            const result = await userFacade.submitDriverApplication({
+                userId,
+                parts: req.parts(),
+                uploadDir,
+                pump,
+                fs,
+                path
             });
-            return reply.status(201).send({application});
+            if (result.error) {
+                return reply.status(400).send({error: result.error});
+            }
+            return reply.status(201).send({application: result.application});
         } catch (error) {
             logger.error(`Error in submitDriverApplication: ${error.message}`);
             logger.debug(error.stack);
@@ -451,43 +334,14 @@ export const userControllerFactory = (fastify) => ({
     getDriverApplicationStatus: async (req, reply) => {
         const userId = req.user.id;
         try {
-            const passenger = await PassengerProfiler.findOne({where: {userId}});
-            if (!passenger) {
-                return reply.send({status: "none", comments: null});
-            }
-            const application = await DriverApplication.findOne({
-                where: {userId: passenger.id},
-                order: [["createdAt", "DESC"]]
-            });
-            if (!application) {
-                return reply.send({status: "none", comments: null});
-            }
-            return reply.send({status: application.status, comments: application.comments || null});
+            const result = await userFacade.getDriverApplicationStatus(userId);
+            return reply.send(result);
         } catch (error) {
             logger.error(`Error fetching driver application status: ${error.message}`);
             return reply.status(500).send({error: "Failed to fetch application status", message: error.message});
         }
     },
 
-    blockUser: async (req, reply) => {
-        const {id} = req.params;
-        logger.info(`Blocking user with ID: ${id}`);
-        try {
-            const user = await User.findByPk(id);
-            if (!user) {
-                logger.warn(`Block failed: No user found with ID ${id}`);
-                return reply.status(404).send({error: "User not found"});
-            }
-            user.isBlocked = true;
-            await user.save();
-            logger.info(`User ${id} blocked successfully`);
-            return reply.send(user);
-
-        } catch (e) {
-            logger.error(`Error blocking user ${id}: ${e.message}`);
-            return reply.status(500).send({error: "Failed to block user"});
-        }
-    }
 });
 
 function generateOTP() {
@@ -495,4 +349,3 @@ function generateOTP() {
     logger.debug(`Generated OTP: ${otp}`);
     return otp;
 }
-
