@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "sonar": "docker compose up -d sonarqube",
+    "sonar:analyze": "npm run test:coverage && sonar-scanner"
   },
   "type": "module",
   "imports": {
@@ -51,6 +54,7 @@
   },
   "devDependencies": {
     "jest": "^30.0.2",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "sonarqube-scanner": "^3.3.0"
   }
 }

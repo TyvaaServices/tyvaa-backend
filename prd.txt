@@ -1,0 +1,217 @@
+# Tyvaa Admin Panel Product Requirements (PRD)
+
+## 1. Overview
+This document describes the requirements and backend model reference for building the Tyvaa ride-sharing admin panel (Vue.js + Element Plus recommended). It is designed for rapid development, clarity, and ease of use by Dakar-based admins.
+
+---
+
+## 2. System Context
+- **Domain:** Ride-sharing platform for Dakar, Senegal.
+- **Audience:** Internal admin team (not end-users).
+- **Purpose:** Manage users, drivers, applications, rides, bookings, payments, notifications, and audit logs.
+- **API Base URL:** `https://api.tyvaa.com/api/v1/admin`
+- **Primary Color:** `#6a0dad` (for buttons, links, highlights).
+
+---
+
+## 3. UI/UX Layout & Navigation
+### 3.1 Layout
+- **Sidebar:** Persistent, collapsible, icons + labels for each section.
+- **Header:** Shows current admin, notifications, quick links, logout.
+- **Main Content:** Responsive, card/table-based views.
+- **Modals/Drawers:** For quick actions (approve, reject, edit, etc.).
+- **Theme:** Clean SaaS look, light/dark mode toggle.
+
+### 3.2 Navigation
+- **Sidebar Links:**
+  - Dashboard
+  - Users
+  - Drivers
+  - Driver Applications
+  - Rides
+  - Bookings
+  - Payments
+  - Analytics
+  - Notifications
+  - Settings
+- **Breadcrumbs:** Show current location.
+- **Global Search:** Users, rides, bookings, etc.
+
+### 3.3 Tables & Lists
+- Pagination, sorting, filtering on all lists.
+- Bulk actions (block users, approve applications, etc.).
+
+### 3.4 Forms & Validation
+- For editing user/driver/ride details, sending notifications, etc.
+- Client/server validation, clear error messages.
+
+### 3.5 Accessibility & Responsiveness
+- Responsive (desktop-first, mobile-friendly).
+- Keyboard navigation, ARIA labels, color contrast.
+
+---
+
+## 4. Security
+- **JWT Authentication:** All API requests require admin JWT.
+- **Role Checks:** Only admins access the panel; sensitive actions require super-admin.
+- **Audit Logging:** All admin actions are logged.
+- **Rate Limiting:** Prevent brute-force on login/sensitive endpoints.
+
+---
+
+## 5. Backend Models & API Endpoints Reference
+### 5.1 Models (from UML & codebase)
+- **User:** id, phoneNumber, fullName, email, fcmToken, isOnline, profileImage, sexe, dateOfBirth, isAdmin, isActive, dateCreated, password
+  - A user can have one or more profiles (PassengerProfile, DriverProfile, AdminProfile)
+  - If `isAdmin` is true, the user is an admin and can access the admin panel
+- **PassengerProfile:** id, userId, passengerRating
+- **DriverProfile:** id, userId, licenseNumber, vehicleDetails, driverRating, status
+- **AdminProfile:** id, userId, adminRole (super-admin, moderator, etc.)
+- **CandidatureChauffeur (DriverApplication):** id, idUtilisateur, statut, dateSoumission, dateValidation, raison
+- **TrajetModel (RideModel):** id, origine, destination, heureDepartPlanifiee, joursRecurrence, recurrent
+- **TrajetInstance (RideInstance):** id, dateReelle, statut, chauffeurId, trajetModelId
+- **Reservation (Booking):** id, dateReservation, statut
+- **Paiement (Payment):** id, montant, statut
+- **JournalAudit (AuditLog):** id, action, idUtilisateur, date
+- **Message, Chatbot, Enums** (see UML for details)
+
+### 5.2 Main API Endpoints (REST)
+- **Users:**
+  - `GET /users` — List users
+  - `GET /users/:id` — User details
+  - `POST /users/register` — Create user
+  - `PUT /users/:id` — Update user
+  - `DELETE /users/:id` — Delete user
+  - `POST /users/driver-application` — Submit driver application
+  - `GET /users/driver-application/status` — Get driver application status
+- **Admin:**
+  - `POST /admin/request-login-otp` — Request OTP
+  - `POST /admin/login` — Login
+  - `GET /admin/driver-applications` — List all driver applications
+  - `PATCH /admin/driver-applications/:id/review` — Review driver application
+- **Rides:**
+  - `GET /rides` — List rides
+  - `GET /rides/:id` — Ride details
+  - `POST /rides` — Create ride
+  - `PUT /rides/:id` — Update ride
+  - `DELETE /rides/:id` — Delete ride
+  - `POST /rides/:id/accept` — Accept ride
+  - `POST /rides/:id/reject` — Reject ride
+  - `POST /rides/:id/complete` — Complete ride
+- **Ride Instances:**
+  - `GET /ride-instances` — List ride instances
+  - `GET /ride-instances/:id` — Ride instance details
+  - `POST /ride-instances` — Create ride instance
+  - `PUT /ride-instances/:id` — Update ride instance
+  - `DELETE /ride-instances/:id` — Delete ride instance
+- **Bookings:**
+  - `GET /bookings` — List bookings
+  - `GET /bookings/:id` — Booking details
+  - `POST /bookings` — Create booking
+  - `PUT /bookings/:id` — Update booking
+  - `DELETE /bookings/:id` — Delete booking
+  - `POST /bookings/book` — Book a ride
+  - `POST /bookings/:bookingId/cancel` — Cancel booking
+- **Payments:**
+  - `POST /pay` — Create payment
+  - `GET /` — List all payments
+- **Notifications:**
+  - `POST /send-notification` — Send notification (FCM)
+
+### 5.3 Admin Panel Usage Notes
+- Each model has a CRUD table/view.
+- Driver applications: Approve/reject, view documents, add comments.
+- Rides: Manage, accept/reject/complete, see ride instances.
+- Bookings: View, cancel, see user/ride linkage.
+- Payments: Track, verify, manage status.
+- Notifications: Send to users/drivers, see logs.
+- All actions are logged for audit.
+
+### 5.4 Frontend Integration
+- Use endpoints above for data tables, forms, and actions.
+- Use model fields for table columns and form fields.
+- Reference this section for backend/frontend alignment.
+
+---
+
+## 6. Admin Panel Constraints & Dakar Context
+- **Admins do NOT:**
+  - Create/edit rides for users
+  - Make payments/bookings as users
+  - Rate/review rides
+  - Register as drivers
+  - Use the app as a regular user
+- **Stats:** Only actionable, Dakar-only (no global/multi-city)
+- **Speed:** Prioritize core CRUD, approval, moderation features
+- **Design:** Simple, clean, fast (use UI kit, minimal custom graphics)
+- **Language:** Clear French or English (Dakar admin team)
+- **Security:** All endpoints require admin authentication
+
+---
+
+## 7. Developer Notes
+- Focus on MVP: build core features first, polish later
+- Use model/endpoint reference for all CRUD/moderation screens
+- UI: whitespace, clear tables, simple forms, easy navigation
+- Dakar context: all addresses, maps, analytics for Dakar only
+- Document assumptions/shortcuts for MVP
+- Use ready-made UI components for speed (Element Plus, etc.)
+- Primary color: `#6a0dad` for buttons/links
+
+---
+
+## 8. Example User Flow: Approving a Driver Application
+1. Admin logs in via email/OTP
+2. Navigates to "Driver Applications"
+3. Sees list of pending applications
+4. Clicks application for details (documents, comments, user info)
+5. Clicks "Approve" or "Reject" (with optional comments)
+6. User is notified, application status updated
+
+---
+
+## 9. Example Table: Users
+| Name           | Email             | Phone        | Status  | Role   | Actions         |
+|----------------|-------------------|--------------|---------|--------|-----------------|
+| Ouly Diallo    | ouly@cheikh.com   | +12345678901 | Active  | Rider  | View, Block     |
+| Cheikh Traore  | cheikh@ouly.com   | +12345678902 | Blocked | Driver | View, Reinstate |
+
+---
+
+## 10. Extensibility
+- Modular codebase for new features
+- Theming for white-labeling
+- i18n ready
+
+---
+
+## 11. UML Class Diagram Reference
+See `class.diagram` for full backend model structure and relationships.
+
+---
+
+## 12. Framework Recommendation
+- **Vue.js + Element Plus** (recommended for speed, dashboard features, and ready-made components)
+- Use primary color `#6a0dad` for all primary actions
+
+---
+
+## 13. Assumptions
+- All data/actions are for Dakar only
+- Admins are internal staff, not end-users
+- MVP: focus on CRUD, moderation, approval, and audit
+- Use backend API as source of truth
+
+---
+
+## 14. Quick Start for AI Developers
+- Use this doc and `class.diagram` for all backend/frontend mapping
+- Use ready-made Element Plus components for tables, forms, modals, etc.
+- Use API endpoints as described
+- Secure all requests with JWT
+- Use `#6a0dad` for primary color
+- Prioritize speed and clarity over custom design
+
+---
+
+*Last updated: 2025-06-20*

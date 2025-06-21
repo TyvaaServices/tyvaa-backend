@@ -21,14 +21,19 @@ PassengerProfile.hasMany(Booking, {foreignKey: 'userId'});
 RideModel.belongsTo(DriverProfile, {foreignKey: 'driverId'});
 DriverProfile.hasMany(RideModel, {foreignKey: 'driverId'});
 
-PassengerProfile.hasMany(DriverApplication, {foreignKey: 'userId'});
-DriverApplication.belongsTo(PassengerProfile, {foreignKey: 'userId', as: 'passengerProfile'});
+// Change association to use passengerProfileId for clarity
+PassengerProfile.hasMany(DriverApplication, {foreignKey: 'passengerProfileId'});
+DriverApplication.belongsTo(PassengerProfile, {foreignKey: 'passengerProfileId', as: 'passengerProfile'});
 
 Payment.belongsTo(Booking, {foreignKey: 'bookingId'});
 Booking.hasOne(Payment, {foreignKey: 'bookingId'});
 
 User.hasMany(AuditLog, {foreignKey: 'userId'});
+AuditLog.belongsTo(User, {foreignKey: 'userId', as: 'user'});
 
+User.hasOne(PassengerProfile, {foreignKey: 'userId', as: 'passengerProfile'});
+User.hasOne(DriverProfile, {foreignKey: 'userId', as: 'driverProfile'});
+PassengerProfile.belongsTo(User, {foreignKey: 'userId', as: 'user'});
 export {
     User,
     RideModel,

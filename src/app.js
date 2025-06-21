@@ -13,8 +13,14 @@ import swaggerConfig from './config/swagger.js';
 import rateLimit from '@fastify/rate-limit';
 import compress from '@fastify/compress';
 import fastifyJwt from '@fastify/jwt';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import {fileURLToPath} from 'url';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const fastify = Fastify({logger: true});
 
@@ -66,15 +72,10 @@ async function buildApp() {
             return req.headers['x-forwarded-for'] || req.ip;
         },
     });
-    fastify.addHook('onRequest', async (request, reply) => {
-        if (request.method !== 'OPTIONS') {
-            request.log.info({url: request.url, method: request.method}, 'Incoming request');
-        }
+    fastify.register(fastifyStatic, {
+        root: path.join(__dirname, 'modules/user-module/uploads'),
+        prefix: '/uploads/',
     });
-    fastify.addHook('onResponse', (request, reply) => {
-        request.log.info({url: request.url, method: request.method, statusCode: reply.statusCode}, 'Response sent');
-    });
-
 }
 
 buildApp()

@@ -1,6 +1,6 @@
-const sequelize = require('../src/config/db');
+import sequelize from '../src/config/db.js';
 
-const {User, RideModel, Booking, RideInstance, Payment, passengerProfile, driverProfile} = require('../src/config/index');
+import {User, RideModel, Booking, RideInstance, Payment, PassengerProfile, DriverProfile} from '../src/config/index.js';
 
 async function seed() {
   await sequelize.sync({ force: true,logging: false });
@@ -51,11 +51,25 @@ async function seed() {
 
   // Create passenger and driver profiles for each user (skip admins)
   const passengerProfiles = await Promise.all(users.map(user =>
-    user.isAdmin ? null : passengerProfile.create({ userId: user.id })
+    user.isAdmin ? null : PassengerProfile.create({ userId: user.id })
   ));
+  console.log('PassengerProfiles:', passengerProfiles.map(p => p && p.toJSON()));
   const driverProfiles = await Promise.all(users.map(user =>
-    user.isAdmin ? null : driverProfile.create({ userId: user.id, statusProfil: 'Active' })
+    user.isAdmin ? null : DriverProfile.create({ userId: user.id, statusProfile: 'Active' })
   ));
+
+  // Add driver applications for each passenger profile (skip admins)
+  const { DriverApplication } = await import('../src/config/index.js');
+  const driverApplications = await Promise.all(passengerProfiles.map((profile, idx) => {
+    if (!profile) return null;
+    return DriverApplication.create({
+      passengerProfileId: profile.id,
+      documents: `/uploads/sample_doc_${idx + 1}.pdf`,
+      status: 'pending',
+      comments: null
+    });
+  }));
+  console.log('DriverApplications:', driverApplications.map(a => a && a.toJSON()));
 
   const rideModels = await RideModel.bulkCreate([
     {

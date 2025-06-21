@@ -1,8 +1,8 @@
 import AuditLog from '../models/auditLog.js';
 import AuditAction from '../models/actionType.js';
 import {z} from 'zod';
+import {User} from "#config/index.js";
 
-// Validation schema for audit log data
 const auditLogSchema = z.object({
     entityId: z.number().optional(),
     entityType: z.string().min(1, {message: "Entity type is required"}),
@@ -51,7 +51,6 @@ async function createAuditLog(data) {
  */
 async function logAuthentication(data) {
     try {
-        // Find the appropriate action type ID
         const actionType = await AuditAction.findOne({
             where: {
                 actionType: data.action // 'login' or 'logout'
@@ -87,7 +86,12 @@ async function logAuthentication(data) {
 async function getAllAuditLogs() {
     try {
         return await AuditLog.findAll({
-            order: [['timestamp', 'DESC']]
+            order: [['timestamp', 'DESC']],
+            include: [{
+                model: User,
+                as: 'user',
+                // attributes: ['id', 'fullName', 'email']
+            }]
         });
     } catch (error) {
         console.error(`Failed to fetch audit logs: ${error.message}`);

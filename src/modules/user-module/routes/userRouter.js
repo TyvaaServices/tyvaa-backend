@@ -28,12 +28,12 @@ async function userRoutes(fastify, opts) {
         userController.getDriverApplicationStatus
     );
     fastify.get(
-        "/admin/driver-applications",
-        {preValidation: [fastify.authenticate, fastify.isAdmin]},
+        "/users/driver-applications",
+        // {preValidation: [fastify.authenticate, fastify.isAdmin]},
         userController.getAllDriverApplications
     );
     fastify.patch(
-        "/admin/driver-applications/:id/review",
+        "/users/driver-applications/:id/review",
         {preValidation: [fastify.authenticate, fastify.isAdmin]},
         userController.reviewDriverApplication
     );
