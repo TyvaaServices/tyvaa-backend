@@ -1,0 +1,20 @@
+{
+  "watch": ["src"],
+  "ext": "js,json",
+  "ignore": [
+    "logs/*",
+    "coverage/*",
+    "lcov-report/*",
+    ".nyc_output/*",
+    "seeder/*",
+    "tests/*",
+    "*.log",
+    "*.log.*",
+    "package.json",
+    "package-lock.json",
+    "yarn.lock",
+    "Dockerfile",
+    "docker-compose.yaml",
+    "src/modules/notification-module/temp_service_account.json"
+  ]
+}

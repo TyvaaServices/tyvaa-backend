@@ -1,0 +1,185 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam class {
+    BackgroundColor White
+    ArrowColor DarkSlateGray
+    BorderColor Black
+}
+
+title Ride-Sharing System UML Class Diagram
+
+class Utilisateur {
+  - id: Integer
+  - nom: String
+  - email: String
+  - telephone: String
+  - fcmToken: String
+  - imageDeProfil: String
+  - sexe: String
+  - motDePasse: String
+  - estAdmin: Boolean
+  - estActif: Boolean
+  - dateCreation: DateTime
+}
+
+class ProfilPassager {
+  - id: Integer
+  - idUtilisateur: Integer
+  - notePassager: Double
+
+  + reserverTrajet(origine: String, destination: String): Reservation
+  ' Finds an available TrajetInstance matching criteria, creates and returns Reservation with PENDING status
+}
+
+class ProfilChauffeur {
+  - id: Integer
+  - idUtilisateur: Integer
+  - numeroPermis: String
+  - detailsVehicule: String
+  - noteChauffeur: Double
+  - statut: StatutChauffeur
+
+  + publierTrajet(): Trajet
+  '  Creates a new TrajetModel and returns it
+
+  + terminerTrajet(trajetId: Integer): Trajet
+  ' Marks the specified TrajetInstance as COMPLETED
+}
+
+class CandidatureChauffeur {
+  - id: Integer
+  - idUtilisateur: Integer
+  - statut: StatutDemande
+  - dateSoumission: DateTime
+  - dateValidation: DateTime
+  - raison: String
+}
+
+class TrajetModel {
+  - id: Integer
+  - origine: String
+  - destination: String
+  - heureDepartPlanifiee: DateTime
+  - joursRecurrence: List<JourSemaine>
+  - recurrent: Boolean
+}
+
+class Message {
+  - id : Integer
+  - contenu : String
+  - estUtilisateur : Boolean
+}
+
+class Chatbot {
+  - id : Integer
+  - sexe : Sexe
+}
+
+class TrajetInstance {
+  - id: Integer
+  - dateReelle: DateTime
+  - statut: StatutTrajet
+  - chauffeurId: Integer
+  - trajetModelId: Integer
+}
+
+class Reservation {
+  - id: Integer
+  - dateReservation: DateTime
+  - statut: StatutReservation
+
+  + annuler(): StatutReservation
+  ' Updates reservation status to CANCELED and returns new status
+}
+
+class Paiement {
+  - id: Integer
+  - montant: Integer
+  - statut: StatutPaiement
+
+  + payer(methode: MethodePaiement): StatutPaiement
+  ' Attempts payment; updates and returns new payment status (PAID, FAILED, etc.)
+}
+
+class JournalAudit {
+  - id: Integer
+  - action: String
+  - idUtilisateur: Integer
+  - date: DateTime
+
+  + enregistrerAction(action: String): JournalAudit
+  ' Creates and stores a new journal entry with action and current timestamp
+}
+
+' Enums
+enum StatutDemande {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StatutChauffeur {
+  ACTIVE
+  INACTIVE
+  PENDING_APPROVAL
+}
+
+enum Sexe {
+  Female
+  Male
+}
+
+enum StatutTrajet {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum JourSemaine {
+  LUNDI
+  MARDI
+  MERCREDI
+  JEUDI
+  VENDREDI
+  SAMEDI
+  DIMANCHE
+}
+
+enum StatutReservation {
+  CONFIRMED
+  PENDING
+  CANCELED
+}
+
+enum StatutPaiement {
+  PAID
+  FAILED
+  REFUNDED
+}
+
+
+' Associations
+Utilisateur "1" *--> "0..1" ProfilPassager
+Utilisateur "1" *--> "0..1" ProfilChauffeur
+CandidatureChauffeur --> "1" ProfilPassager
+Reservation "*" --> "1" TrajetInstance
+Reservation "1" *--> "1" Paiement
+Utilisateur "1" --> "*" JournalAudit
+Utilisateur "1" *--> "*" Message
+Chatbot "1" --> "*" Message
+ProfilChauffeur "1" --> "*" TrajetModel
+ProfilPassager "*" --> "1" Reservation
+
+TrajetModel "1" *-- "1..*" TrajetInstance: creer
+' Enum usage relationships (simulated)
+ProfilChauffeur --> StatutChauffeur : statut
+CandidatureChauffeur --> StatutDemande : statut
+TrajetInstance --> StatutTrajet : statut
+Reservation --> StatutReservation : statut
+Paiement --> StatutPaiement : statut
+TrajetModel "1" --> "*" JourSemaine : joursRecurrence
+Utilisateur --> Sexe : Sexe
+Chatbot --> Sexe : Sexe
+
+@enduml

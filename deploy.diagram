@@ -1,0 +1,62 @@
+@startuml Tyvaa_Backend_Deployment_Diagram
+!theme aws-orange
+skinparam componentStyle uml2
+skinparam nodesep 20
+skinparam ranksep 30
+skinparam monochrome false
+
+title Tyvaa Backend Deployment on Koyeb
+
+legend right
+<font color=#0000FF>Blue = Core Services</font>
+<font color=#008000>Green = Managed Services</font>
+<font color=#FFA500>Orange = Payment Providers</font>
+endlegend
+
+cloud "Public Internet" as internet {
+  node "Mobile App" as mobile #blue
+  node "Web Frontend" as web #blue
+}
+
+node "Koyeb Platform" as koyeb {
+  component "Tyvaa Backend" as app #blue
+
+  database "Environment Config" as env #white {
+    [Environment Variables] as vars
+  }
+}
+
+database "Neon PostgreSQL" as neon #lightgreen
+database "Upstash Redis" as upstash #lightgreen
+
+cloud "Payment Processors" as payment {
+  [Wave Money] as wave #orange
+  [Orange Money] as orange #orange
+}
+
+cloud "Third-Party Services" as thirdparty {
+  [Firebase Cloud Messaging] as fcm #lightblue
+  [Twilio SMS API] as twilio #lightblue
+  [Google Genkit AI] as genkit #lightblue
+  [SMTP Email Service] as smtp #lightblue
+}
+
+' Connections
+internet --> koyeb : HTTPS (443)
+mobile --> koyeb
+web --> koyeb
+
+app --> neon : Sequelize Connection\n(SSL)
+app --> upstash : Redis Client\n(TLS)
+
+app --> fcm : Push Notifications
+app --> twilio : SMS Alerts
+app --> genkit : Chatbot AI
+app --> smtp : Transactional Emails
+
+app --> wave : Payment API
+app --> orange : Payment API
+
+vars ..> app : Configuration
+
+@enduml

@@ -12,6 +12,8 @@ services/notification-service/config/serviceAccountKey.json
 .turbo/*
 coverage/
 ServiceAccountKey.json
+docker-compose.yaml
+terraform*
 
 
 
@@ -37,3 +39,22 @@ Thumbs.db
 
 # Turbo repo cache
 turbo/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Editor swap files
+*.swp
+*.swo
+
+# Python/pytest cache
+.pytest_cache/
+.cache/
+
+# Miscellaneous
+.history
+.nyc_output/
+lcov-report/
+*.pid

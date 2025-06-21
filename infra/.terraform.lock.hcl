@@ -1,0 +1,25 @@
+# This file is maintained automatically by "terraform init".
+# Manual edits may be lost in future updates.
+
+provider "registry.terraform.io/koyeb/koyeb" {
+  version     = "0.1.2"
+  constraints = "0.1.2"
+  hashes = [
+    "h1:3GvHrlxpG9QGyJGWBiyWwRlXgX0SLGejtxW9H9/6dCY=",
+    "zh:03263e6637948f7009fa72b9df79e33d3b483902468c13937ac33af5e6b4a010",
+    "zh:04e994811244fa6f2dbf1a3ce27caff1e5a429b70d00dc1f8b3344dd6affc2de",
+    "zh:1595ad1b2103c119b0118472cad6b7addfb162c126d88ced721914cf68b29579",
+    "zh:598ae26970f148ba9a6ad9062f2a549a33fdf9090b0939bcc6b76456f0479243",
+    "zh:68ddc7b4261f5f9b00e88b885e64f00537d35ab8b1c1ebd6969aa526c2130f49",
+    "zh:783c720618e45b3f6a8c490e856eed47dc98b2880b7f4ea4c9cfe5bf901bbab2",
+    "zh:7ed68092580bbe8098d2145c21aeeb68a21536b2acb73959f82f478aec69fc81",
+    "zh:9524e22c459343befb1ac17278a9194004d468020822cb945e5d77317bc05aa5",
+    "zh:bb4e1bfc476bc00d4dea577cf6455f5c804d7499c37a09e9b1dae9ef00001448",
+    "zh:bdb19c1b385b8cc6bc36d2594f8925d4c642c7be0e6d605e451e618060a09397",
+    "zh:d6573bc18554e431ca8c4583b613842e262e8bbafa392a80278bea54336f1696",
+    "zh:dc354e5b32b5c053257409ad9728920ebeb5e209db3a346393dbcd572d7d90f1",
+    "zh:df682d148d141b5a2c34648ff4059cc8c5fa95f8bc0b044d5809a19e00bb32d1",
+    "zh:e875f862c1d9717211061c809449b0cb50cb513b85564bfe36da693307ca3dcc",
+    "zh:f569b65999264a9416862bca5cd2a6177d94ccb0424f3a4ef424428912b9cb3c",
+  ]
+}
