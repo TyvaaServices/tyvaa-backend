@@ -1,5 +1,12 @@
 # Tyvaa Backend – Modular Monolith Architecture
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=alert_status&token=267c4b6405798133f0059b7d78abe552e9949afa)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=bugs&token=267c4b6405798133f0059b7d78abe552e9949afa)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=code_smells&token=267c4b6405798133f0059b7d78abe552e9949afa)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=sqale_rating&token=267c4b6405798133f0059b7d78abe552e9949afa)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=security_rating&token=267c4b6405798133f0059b7d78abe552e9949afa)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=vulnerabilities&token=267c4b6405798133f0059b7d78abe552e9949afa)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=sqale_index&token=267c4b6405798133f0059b7d78abe552e9949afa)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
 ## Overview
 This repository contains the backend for **Tyvaa**, a ridesharing platform for Senegal. The backend is implemented as a modular monolith using **Fastify** (Node.js), with each domain (user, booking, ride, chatbot, notification, etc.) organized as a separate module under a unified codebase. This approach provides clear separation of concerns and scalability, while simplifying deployment and local development compared to a distributed microservices setup.
 
