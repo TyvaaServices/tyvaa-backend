@@ -133,6 +133,20 @@ async function seed() {
     },
   ]);
 
+  // --- AuditAction seeding ---
+  const { default: AuditAction } = await import('../src/modules/audit-module/models/actionType.js');
+  const auditActions = [
+    { actionType: 'create', codeAction: 'CREATE' },
+    { actionType: 'update', codeAction: 'UPDATE' },
+    { actionType: 'delete', codeAction: 'DELETE' },
+    { actionType: 'view', codeAction: 'VIEW' },
+    { actionType: 'exportsData', codeAction: 'EXPORTS_DATA' },
+    { actionType: 'login', codeAction: 'LOGIN' },
+    { actionType: 'logout', codeAction: 'LOGOUT' },
+  ];
+  await AuditAction.bulkCreate(auditActions, { ignoreDuplicates: true });
+  console.log('Seeded audit_actions:', auditActions);
+
   console.log('Seeding completed!');
   process.exit();
 }

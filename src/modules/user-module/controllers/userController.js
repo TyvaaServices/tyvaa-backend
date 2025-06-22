@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import {fileURLToPath} from "url";
 import {userFacade} from "../facades/userFacade.js";
+import auditService from '../../audit-module/services/auditService.js';
 
 const logger = createLogger("user-controller");
 
@@ -63,6 +64,14 @@ export const userControllerFactory = (fastify) => ({
             const users = await userFacade.findAllUsers();
             logger.info(`Retrieved ${users.length} users successfully`);
             logger.debug(`User data: ${JSON.stringify(users)}`);
+            // Audit log for viewing all users
+            auditService.logAction({
+                entityType: 'user',
+                entityId: null,
+                action: 'view',
+                description: `Viewed all users (${users.length})`,
+                ipAddress: req.ip
+            });
             return reply.send(users);
         } catch (error) {
             logger.error(`Error retrieving users: ${error.message}`);

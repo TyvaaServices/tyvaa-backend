@@ -69,5 +69,7 @@ export const userService = {
     async createDriverProfile(data) {
         return DriverProfile.create(data);
     },
+    async findAllUsers() {
+        return User.findAll({include: [{model: PassengerProfile, as: 'passengerProfile'}, {model: DriverProfile, as: 'driverProfile'}]});
+    },
 };
-

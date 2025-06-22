@@ -35,14 +35,15 @@
     "@genkit-ai/googleai": "^1.13.0",
     "@upstash/redis": "^1.35.0",
     "axios": "^1.10.0",
+    "bull": "^4.16.5",
     "dotenv": "^16.5.0",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.1",
     "firebase-admin": "^13.4.0",
     "genkit": "^1.13.0",
-    "node-cron": "^4.1.0",
+    "node-cron": "^4.1.1",
     "nodemailer": "^7.0.3",
-    "pg": "^8.16.1",
+    "pg": "^8.16.2",
     "pg-hstore": "^2.3.4",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
@@ -55,6 +56,6 @@
   "devDependencies": {
     "jest": "^30.0.2",
     "nodemon": "^3.1.10",
-    "sonarqube-scanner": "^3.3.0"
+    "sonarqube-scanner": "^3.5.0"
   }
 }

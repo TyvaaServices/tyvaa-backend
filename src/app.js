@@ -16,7 +16,7 @@ import fastifyJwt from '@fastify/jwt';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 import {fileURLToPath} from 'url';
-
+import './modules/audit-module/services/auditLogWorker.js';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +30,7 @@ fastify.register(cors, {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['Content-Length', 'X-Requested-With'],
     credentials: true,
-    maxAge: 86400 // 24 hours
+    maxAge: 86400
 });
 
 async function buildApp() {
@@ -86,7 +86,7 @@ buildApp()
                 fastify.log.error(err);
                 process.exit(1);
             }
-            await sequelize.sync({force: true, logging: false});
+            await sequelize.sync({alter: true, logging: false});
             fastify.log.info(`Server listening at ${address}`);
         });
 

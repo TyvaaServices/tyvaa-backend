@@ -2,9 +2,11 @@ import AuditLog from '../models/auditLog.js';
 import AuditAction from '../models/actionType.js';
 import {z} from 'zod';
 import {User} from "#config/index.js";
+import redisCache from '../../../utils/redisCache.js';
+import auditLogQueue from '../../../utils/auditLogQueue.js';
 
 const auditLogSchema = z.object({
-    entityId: z.number().optional(),
+    entityId: z.number().nullable().optional(),
     entityType: z.string().min(1, {message: "Entity type is required"}),
     description: z.string().min(1, {message: "Description is required"}),
     actionTypeId: z.number({message: "Action type ID is required"}),
@@ -19,6 +21,22 @@ const actionTypeSchema = z.object({
     codeAction: z.string().min(1, {message: "Code action is required"})
 });
 
+
+async function getActionTypeId(action) {
+    const cacheKey = `actionTypeId:${action}`;
+    let actionTypeId = await redisCache.get(cacheKey);
+    if (actionTypeId) {
+        return actionTypeId;
+    }
+    const actionType = await AuditAction.findOne({ where: { actionType: action } });
+    if (!actionType) {
+        throw new Error(`Action type '${action}' not found`);
+    }
+    actionTypeId = actionType.id;
+    await redisCache.set(cacheKey, actionTypeId, 3600); // cache for 1 hour
+    return actionTypeId;
+}
+
 /**
  * Create a new audit log entry
  * @param {Object} data - The audit log data
@@ -31,10 +49,11 @@ async function createAuditLog(data) {
         if (!validationResult.success) {
             throw new Error(`Audit log validation failed: ${JSON.stringify(validationResult.error.errors)}`);
         }
-
-        return await AuditLog.create(validationResult.data);
+        // Enqueue the log instead of writing directly
+        await auditLogQueue.add(validationResult.data);
+        return { enqueued: true };
     } catch (error) {
-        console.error(`Failed to create audit log: ${error.message}`);
+        console.error(`Failed to enqueue audit log: ${error.message}`);
         throw error;
     }
 }
@@ -51,15 +70,7 @@ async function createAuditLog(data) {
  */
 async function logAuthentication(data) {
     try {
-        const actionType = await AuditAction.findOne({
-            where: {
-                actionType: data.action // 'login' or 'logout'
-            }
-        });
-
-        if (!actionType) {
-            throw new Error(`Action type '${data.action}' not found`);
-        }
+        const actionTypeId = await getActionTypeId(data.action); // use cache
 
         // Create description based on success/failure
         const actionDesc = data.action === 'login' ? 'Login' : 'Logout';
@@ -70,7 +81,7 @@ async function logAuthentication(data) {
             entityId: data.entityId,
             entityType: data.entityType,
             description: description,
-            actionTypeId: actionType.id,
+            actionTypeId: actionTypeId,
             ipAddress: data.ipAddress
         });
     } catch (error) {
@@ -146,6 +157,33 @@ async function createActionType(data) {
     }
 }
 
+/**
+ * Log any action (create, update, delete, view, exportsData, login, logout)
+ * @param {Object} data - Action log data
+ * @param {string} data.entityType - Entity type (e.g., 'user', 'booking', etc.)
+ * @param {number} data.entityId - Entity ID
+ * @param {string} data.action - Action type (must be one of the allowed ENUM)
+ * @param {string} data.description - Description of the action
+ * @param {string} [data.ipAddress] - IP address (optional)
+ * @returns {Promise<Object>} The created audit log
+ */
+async function logAction(data) {
+    try {
+        const actionTypeId = await getActionTypeId(data.action); // use cache
+
+        return await createAuditLog({
+            entityId: data.entityId,
+            entityType: data.entityType,
+            description: data.description,
+            actionTypeId: actionTypeId,
+            ipAddress: data.ipAddress
+        });
+    } catch (error) {
+        console.error(`Failed to log action: ${error.message}`);
+        throw error;
+    }
+}
+
 // Export the audit service
 export default {
     createAuditLog,
@@ -153,5 +191,6 @@ export default {
     getAuditLogById,
     getAllActionTypes,
     createActionType,
-    logAuthentication
+    logAuthentication,
+    logAction
 };

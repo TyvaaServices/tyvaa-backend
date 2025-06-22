@@ -21,4 +21,4 @@ const AuditAction = sequelize.define('AuditAction', {
     timestamps: false,
 });
 
-export default {AuditAction};
+export default AuditAction;
