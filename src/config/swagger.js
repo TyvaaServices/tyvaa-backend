@@ -26,6 +26,23 @@ const swaggerOptions = {
                 description: "Enter 'Bearer {token}' to access protected routes",
             },
         },
+        parameters: {
+            id: {
+                name: 'id',
+                in: 'path',
+                required: true,
+                type: 'integer',
+                description: 'Resource identifier'
+            }
+        },
+        responses: {
+            NotFound: {
+                description: 'Resource not found'
+            },
+            Deleted: {
+                description: 'Resource deleted'
+            }
+        },
         paths: {
             '/health': {
                 get: {
@@ -68,31 +85,31 @@ const swaggerOptions = {
                 get: {
                     tags: ['Users'],
                     summary: 'Get user by ID',
-                    parameters: [{in: 'path', name: 'id', required: true, type: 'integer'}],
+                    parameters: [{$ref: '#/swagger/parameters/id'}],
                     responses: {
                         '200': {description: 'User found', schema: {$ref: '#/definitions/User'}},
-                        '404': {description: 'User not found'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
                 put: {
                     tags: ['Users'],
                     summary: 'Update user by ID',
                     parameters: [
-                        {in: 'path', name: 'id', required: true, type: 'integer'},
+                        {$ref: '#/swagger/parameters/id'},
                         {in: 'body', name: 'user', schema: {$ref: '#/definitions/User'}},
                     ],
                     responses: {
                         '200': {description: 'User updated', schema: {$ref: '#/definitions/User'}},
-                        '404': {description: 'User not found'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
                 delete: {
                     tags: ['Users'],
                     summary: 'Delete user by ID',
-                    parameters: [{in: 'path', name: 'id', required: true, type: 'integer'}],
+                    parameters: [{$ref: '#/swagger/parameters/id'}],
                     responses: {
-                        '200': {description: 'User deleted'},
-                        '404': {description: 'User not found'},
+                        '200': {$ref: '#/swagger/responses/Deleted'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
             },
@@ -120,31 +137,31 @@ const swaggerOptions = {
                 get: {
                     tags: ['Rides'],
                     summary: 'Get ride by ID',
-                    parameters: [{in: 'path', name: 'id', required: true, type: 'integer'}],
+                    parameters: [{$ref: '#/swagger/parameters/id'}],
                     responses: {
                         '200': {description: 'Ride found', schema: {$ref: '#/definitions/Ride'}},
-                        '404': {description: 'Ride not found'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
                 put: {
                     tags: ['Rides'],
                     summary: 'Update ride by ID',
                     parameters: [
-                        {in: 'path', name: 'id', required: true, type: 'integer'},
+                        {$ref: '#/swagger/parameters/id'},
                         {in: 'body', name: 'ride', schema: {$ref: '#/definitions/Ride'}},
                     ],
                     responses: {
                         '200': {description: 'Ride updated', schema: {$ref: '#/definitions/Ride'}},
-                        '404': {description: 'Ride not found'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
                 delete: {
                     tags: ['Rides'],
                     summary: 'Delete ride by ID',
-                    parameters: [{in: 'path', name: 'id', required: true, type: 'integer'}],
+                    parameters: [{$ref: '#/swagger/parameters/id'}],
                     responses: {
-                        '200': {description: 'Ride deleted'},
-                        '404': {description: 'Ride not found'},
+                        '200': {$ref: '#/swagger/responses/Deleted'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
             },
@@ -172,31 +189,31 @@ const swaggerOptions = {
                 get: {
                     tags: ['Bookings'],
                     summary: 'Get booking by ID',
-                    parameters: [{in: 'path', name: 'id', required: true, type: 'integer'}],
+                    parameters: [{$ref: '#/swagger/parameters/id'}],
                     responses: {
                         '200': {description: 'Booking found', schema: {$ref: '#/definitions/Booking'}},
-                        '404': {description: 'Booking not found'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
                 put: {
                     tags: ['Bookings'],
                     summary: 'Update booking by ID',
                     parameters: [
-                        {in: 'path', name: 'id', required: true, type: 'integer'},
+                        {$ref: '#/swagger/parameters/id'},
                         {in: 'body', name: 'booking', schema: {$ref: '#/definitions/Booking'}},
                     ],
                     responses: {
                         '200': {description: 'Booking updated', schema: {$ref: '#/definitions/Booking'}},
-                        '404': {description: 'Booking not found'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
                 delete: {
                     tags: ['Bookings'],
                     summary: 'Delete booking by ID',
-                    parameters: [{in: 'path', name: 'id', required: true, type: 'integer'}],
+                    parameters: [{$ref: '#/swagger/parameters/id'}],
                     responses: {
-                        '200': {description: 'Booking deleted'},
-                        '404': {description: 'Booking not found'},
+                        '200': {$ref: '#/swagger/responses/Deleted'},
+                        '404': {$ref: '#/swagger/responses/NotFound'},
                     },
                 },
             },
