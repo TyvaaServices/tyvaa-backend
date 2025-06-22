@@ -1,5 +1,4 @@
 import {
-    DriverApplication,
     DriverProfile,
     PassengerProfile,
     User,
@@ -9,11 +8,14 @@ import fs from "fs";
 import path from "path";
 import pump from "pump";
 import createLogger from "#utils/logger.js";
+import { randomInt } from 'crypto';
 
 const logger = createLogger("user-service");
 
+
+
 function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return randomInt(100000, 1000000).toString(); // returns a 6-digit number
 }
 
 export const userService = {
@@ -73,7 +75,7 @@ export const userService = {
                 const filePath = path.join(uploadDir, filename);
                 const writeStream = fs.createWriteStream(filePath);
                 await new Promise((resolve, reject) => {
-                    pump(part.file, writeStream, (err) => err ? reject(err) : resolve());
+                    pump(part.file, writeStream, (err) =>  err);
                 });
                 logger.info("Saved driver application PDF", { userId, filePath });
                 return `/uploads/${filename}`;

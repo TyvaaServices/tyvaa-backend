@@ -1,12 +1,17 @@
-import {Redis} from '@upstash/redis';
+import Redis from 'ioredis';
 
 class RedisCache {
-    z
-
     constructor() {
+        if (RedisCache.instance) {
+            throw new Error("Use RedisCache.getInstance() to get the single instance of this class.");
+        }
+        this.redis = Redis.fromEnv();
+        RedisCache.instance = this;
+    }
+
+    static getInstance() {
         if (!RedisCache.instance) {
-            this.redis = Redis.fromEnv();
-            RedisCache.instance = this;
+            RedisCache.instance = new RedisCache();
         }
         return RedisCache.instance;
     }

@@ -1,8 +1,8 @@
-import { auditQueue } from "./../Queues/auditQueue.js";
 import { validateAuditLog } from "./../validations/auditValidation.js";
 import AuditAction from "./../models/actionType.js"; // or however you're exporting it
 import RedisCache from "#utils/redisCache.js";
-
+import createLogger from  "#utils/logger.js";
+const logger = createLogger("auditService");
 const ACTION_CACHE_TTL = 86400; // 1 day
 
 async function getActionTypeId(action) {
@@ -24,10 +24,26 @@ export const auditService = {
      * Enqueue log entry
      */
     log: async ({ entityId, entityType, description, action, ipAddress }) => {
-        const actionTypeId = await getActionTypeId(action);
-        const logEntry = validateAuditLog({ entityId, entityType, description, actionTypeId, ipAddress });
+       try {
+           const parsedEntityId = entityId ? parseInt(entityId, 10) : undefined;
+           if (entityId && isNaN(parsedEntityId)) {
+               logger.warn("Invalid entityId: must be a number. Proceeding without it.", { entityId });
+           }
 
-        await auditQueue.add(logEntry); // queued to Redis
+            await getActionTypeId(action);
+           validateAuditLog({entityId: parsedEntityId, entityType, description, actionTypeId, ipAddress});
+
+           logger.info("Successfully enqueued audit log.", { action, entityType });
+       }catch (e){
+              logger.error(`Failed to log audit entry: ${e.message}`, {
+                  error: e,
+                  entityId,
+                  entityType,
+                  action,
+                  ipAddress
+              });
+              // Do not re-throw, as audit logging failure should not fail the main request.
+       }
     },
 
     /**

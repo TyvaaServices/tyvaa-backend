@@ -1,7 +1,8 @@
 import {
     DriverApplication,
     DriverProfile,
-    User
+    User,
+    PassengerProfile // <-- Added import
 } from "#config/index.js";
 import {userService} from "./../services/userService.js";
 import createLogger from "#utils/logger.js";

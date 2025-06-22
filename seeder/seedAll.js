@@ -1,6 +1,6 @@
-const sequelize = require('../src/config/db');
+import sequelize from '#config/db.js';
 
-const {User, RideModel, Booking, RideInstance, Payment, passengerProfile, driverProfile} = require('../src/config/index');
+import {User, RideModel, Booking, RideInstance, Payment, PassengerProfile, DriverProfile,DriverApplication,AuditAction} from '#config/index.js';
 
 async function seed() {
   await sequelize.sync({ force: true,logging: false });
@@ -51,11 +51,21 @@ async function seed() {
 
   // Create passenger and driver profiles for each user (skip admins)
   const passengerProfiles = await Promise.all(users.map(user =>
-    user.isAdmin ? null : passengerProfile.create({ userId: user.id })
+    user.isAdmin ? null : PassengerProfile.create({ userId: user.id })
   ));
   const driverProfiles = await Promise.all(users.map(user =>
-    user.isAdmin ? null : driverProfile.create({ userId: user.id, statusProfil: 'Active' })
+    user.isAdmin ? null : DriverProfile.create({ userId: user.id, statusProfile: 'Active' })
   ));
+
+  await AuditAction.bulkCreate([
+    { actionType: 'create', codeAction: 'C' },
+    { actionType: 'update', codeAction: 'U' },
+    { actionType: 'delete', codeAction: 'D' },
+    { actionType: 'view', codeAction: 'V' },
+    { actionType: 'exportsData', codeAction: 'E' },
+    { actionType: 'login', codeAction: 'L' },
+    { actionType: 'logout', codeAction: 'O' },
+  ]);
 
   const rideModels = await RideModel.bulkCreate([
     {
@@ -119,11 +129,39 @@ async function seed() {
     },
   ]);
 
-  console.log('Seeding completed!');
-  process.exit();
+  // Seed AuditAction types
+
+
+   await Promise.all(users.map(user =>
+    user.isAdmin ? null : DriverApplication.create({
+      status: 'pending',
+      applicationDate: new Date(),
+      documents: 'license.pdf',
+      comments: 'Initial application',
+      userId: user.id
+    })
+  ));
+
+
+
+  // Seed audit actions
+  await AuditAction.bulkCreate([
+    { actionType: 'create', codeAction: 'CREATE' },
+    { actionType: 'update', codeAction: 'UPDATE' },
+    { actionType: 'delete', codeAction: 'DELETE' },
+    { actionType: 'view', codeAction: 'VIEW' },
+    { actionType: 'exportsData', codeAction: 'EXPORTS_DATA' },
+    { actionType: 'login', codeAction: 'LOGIN' },
+    { actionType: 'logout', codeAction: 'LOGOUT' },
+  ]);
 }
 
-seed().catch((err) => {
-  console.error('Seeding failed:', err);
-  process.exit(1);
-});
+seed()
+  .then(() => {
+    console.log('Seeding successful!');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Seeding failed:', error);
+    process.exit(1);
+  });

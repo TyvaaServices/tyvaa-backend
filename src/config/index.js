@@ -1,7 +1,6 @@
 import RideInstance from './../modules/ride-module/models/rideInstance.js';
 import RideModel from './../modules/ride-module/models/rideModel.js';
 import Booking from './../modules/booking-module/models/booking.js';
-// import RideRating from './../modules/rideRating-module/models/rideRating.js';
 import User from './../modules/user-module/models/user.js';
 import Payment from './../modules/payment-module/models/payment.js';
 import AuditLog from './../modules/audit-module/models/auditLog.js';
@@ -34,7 +33,6 @@ export {
     RideModel,
     Booking,
     RideInstance,
-    // RideRating,
     DriverApplication,
     Payment,
     AuditAction,

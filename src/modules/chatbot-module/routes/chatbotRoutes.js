@@ -73,7 +73,7 @@ export default async function (fastify, opts) {
 
             const output = await getSupportChatResponse(input);
 
-            if (!output || !output.response) {
+            if (!output?.response) {
                 throw new Error('Invalid response from chatbot flow.');
             }
 

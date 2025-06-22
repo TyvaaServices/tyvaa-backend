@@ -14,6 +14,7 @@
     "#config/*": "./src/config/*",
     "#user-modules/*": "./src/user-modules/*",
     "#audit-modules/*": "./src/audit-modules/*",
+    "#logAuddit": "./src/modules/audit-modules/services/auditService.js",
     "#booking-modules/*": "./src/booking-modules/*",
     "#chatbot-modules/*": "./src/chatbot-modules/*",
     "#notification-modules/*": "./src/notification-modules/*",
@@ -48,8 +49,7 @@
     "sequelize": "^6.37.7",
     "twilio": "^5.7.1",
     "zod": "^3.25.67",
-    "zod-to-json-schema": "^3.24.5",
-    "bull": "^4.16.5"
+    "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
     "jest": "^30.0.2",

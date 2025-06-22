@@ -13,7 +13,6 @@ import swaggerConfig from './config/swagger.js';
 import rateLimit from '@fastify/rate-limit';
 import compress from '@fastify/compress';
 import fastifyJwt from '@fastify/jwt';
-import "./workers/auditWorker.js"; // will auto-start the Bull consumer
 
 dotenv.config();
 
@@ -25,7 +24,7 @@ fastify.register(cors, {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['Content-Length', 'X-Requested-With'],
     credentials: true,
-    maxAge: 86400 // 24 hours
+    maxAge: 86400
 });
 
 async function buildApp() {
@@ -40,13 +39,12 @@ async function buildApp() {
         try {
             await request.jwtVerify();
         } catch (err) {
+            fastify.log.error('JWT verification failed:', err);
             reply.code(401).send({message: 'Invalid or missing token'});
         }
     });
     fastify.decorate('isAdmin', async function (request, reply) {
-        if (request.user && request.user.role === 'admin') {
-
-        } else {
+        if (!request.user && request.user.role === 'admin') {
             reply.code(403).send({message: 'Forbidden: Admins only'});
         }
     });
@@ -67,26 +65,18 @@ async function buildApp() {
             return req.headers['x-forwarded-for'] || req.ip;
         },
     });
-    fastify.addHook('onRequest', async (request, reply) => {
-        if (request.method !== 'OPTIONS') {
-            request.log.info({url: request.url, method: request.method}, 'Incoming request');
-        }
-    });
-    fastify.addHook('onResponse', (request, reply) => {
-        request.log.info({url: request.url, method: request.method, statusCode: reply.statusCode}, 'Response sent');
-    });
+
 
 }
 
 buildApp()
     .then(() => {
-        let server;
         fastify.listen({port: process.env.PORT || 3000, host: '0.0.0.0'}, async (err, address) => {
             if (err) {
                 fastify.log.error(err);
                 process.exit(1);
             }
-            await sequelize.sync({force: true, logging: false});
+            await sequelize.sync({alter: true, logging: false});
             fastify.log.info(`Server listening at ${address}`);
         });
 

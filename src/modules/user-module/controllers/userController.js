@@ -39,7 +39,9 @@ export const userControllerFactory = (fastify) => ({
     getAllUsers: async (req, reply) => {
         try {
             const users = await userFacade.getAllUsers();
+
             logger.info("Fetched all users", { count: users.length });
+
             return reply.send(users);
         } catch (error) {
             logger.error("Failed to retrieve users", { error: error.message });
@@ -74,7 +76,7 @@ export const userControllerFactory = (fastify) => ({
             return reply.send({ success: true, otp });
         } catch (error) {
             logger.warn("Failed to request login OTP", { phoneNumber, email, error: error.message });
-            return reply.status(404).send({ error: error.message });
+            return reply.status(401).send({ error: error.message });
         }
     },
 
@@ -86,6 +88,10 @@ export const userControllerFactory = (fastify) => ({
 
         try {
             const user = await userFacade.login({ phoneNumber, email, otp });
+            if (!user) {
+                logger.warn("User not found for login", { phoneNumber, email });
+                return reply.status(404).send({ error: "User not found" });
+            }
             const token = fastify.signToken({
                 id: user.id,
                 phoneNumber: user.phoneNumber,
