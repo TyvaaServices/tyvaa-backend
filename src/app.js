@@ -13,6 +13,7 @@ import swaggerConfig from './config/swagger.js';
 import rateLimit from '@fastify/rate-limit';
 import compress from '@fastify/compress';
 import fastifyJwt from '@fastify/jwt';
+import "./workers/auditWorker.js"; // will auto-start the Bull consumer
 
 dotenv.config();
 
