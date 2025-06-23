@@ -1,8 +1,8 @@
 // src/seeders/rbacSeeder.js
 import sequelize from '#config/db.js';
-import User from '../modules/user-module/models/user.js'; // Needed for context if we assign default roles
-import Role from '../modules/user-module/models/role.js';
-import Permission from '../modules/user-module/models/permission.js';
+import User from '../src/modules/user-module/models/user.js'; // Needed for context if we assign default roles
+import Role from '../src/modules/user-module/models/role.js';
+import Permission from '../src/modules/user-module/models/permission.js';
 
 const permissionsData = [
     // User/Passenger specific
@@ -172,7 +172,10 @@ async function seedDatabase() {
 }
 
 // If this script is run directly (e.g., `node src/seeders/rbacSeeder.js`)
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (
+    import.meta.url === `file://${process.argv[1]}` &&
+    process.env.NODE_ENV !== 'test'
+) {
     console.log('Running RBAC Seeder...');
     seedDatabase().then(() => {
         console.log('Seeder finished. Exiting.');

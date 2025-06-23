@@ -7,7 +7,7 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "test": "node --experimental-vm-modules node_modules/.bin/jest ",
-    "seed:rbac": "node src/seeders/rbacSeeder.js"
+    "seed:rbac": "node seeders/rbacSeeder.js"
   },
   "type": "module",
   "imports": {
