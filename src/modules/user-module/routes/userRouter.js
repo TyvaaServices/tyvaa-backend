@@ -29,14 +29,43 @@ async function userRoutes(fastify, opts) {
     );
     fastify.get(
         "/admin/driver-applications",
-        {preValidation: [fastify.authenticate, fastify.isAdmin]},
+        // Assuming 'voir_candidatures' is appropriate.
+        // SUPERVISEUR or ADMINISTRATEUR should have this.
+        { preValidation: [fastify.authenticate, fastify.checkPermission('voir_candidatures')] },
         userController.getAllDriverApplications
     );
     fastify.patch(
         "/admin/driver-applications/:id/review",
-        {preValidation: [fastify.authenticate, fastify.isAdmin]},
+        // Assuming 'valider_candidature' is the correct permission.
+        // SUPERVISEUR or ADMINISTRATEUR should have this.
+        { preValidation: [fastify.authenticate, fastify.checkPermission('valider_candidature')] },
         userController.reviewDriverApplication
     );
+
+    // --- RBAC Admin Routes ---
+    // Import admin controller functions
+    const adminCtrl = await import('../controllers/adminController.js');
+
+    // Role Management
+    fastify.post("/admin/roles", { preValidation: [fastify.authenticate, fastify.checkPermission('gerer_roles')] }, adminCtrl.createRole);
+    fastify.get("/admin/roles", { preValidation: [fastify.authenticate, fastify.checkPermission('gerer_roles')] }, adminCtrl.getAllRoles);
+    fastify.get("/admin/roles/:roleId", { preValidation: [fastify.authenticate, fastify.checkPermission('gerer_roles')] }, adminCtrl.getRoleById);
+    fastify.delete("/admin/roles/:roleId", { preValidation: [fastify.authenticate, fastify.checkPermission('gerer_roles')] }, adminCtrl.deleteRole);
+
+    // Permission Management
+    // Typically, managing permissions themselves is a very high-level admin task.
+    fastify.post("/admin/permissions", { preValidation: [fastify.authenticate, fastify.checkPermission('gerer_permissions')] }, adminCtrl.createPermission);
+    fastify.get("/admin/permissions", { preValidation: [fastify.authenticate, fastify.checkPermission('gerer_permissions')] }, adminCtrl.getAllPermissions);
+
+    // Role-Permission Assignment
+    fastify.post("/admin/roles/:roleId/permissions/:permissionId", { preValidation: [fastify.authenticate, fastify.checkPermission('gerer_roles')] }, adminCtrl.assignPermissionToRole);
+    fastify.delete("/admin/roles/:roleId/permissions/:permissionId", { preValidation: [fastify.authenticate, fastify.checkPermission('gerer_roles')] }, adminCtrl.removePermissionFromRole);
+
+    // User-Role Assignment
+    fastify.get("/admin/users/:userId/roles", { preValidation: [fastify.authenticate, fastify.checkPermission('attribuer_roles')] }, adminCtrl.getUserRoles);
+    fastify.post("/admin/users/:userId/roles/:roleId", { preValidation: [fastify.authenticate, fastify.checkPermission('attribuer_roles')] }, adminCtrl.assignRoleToUser);
+    fastify.delete("/admin/users/:userId/roles/:roleId", { preValidation: [fastify.authenticate, fastify.checkPermission('attribuer_roles')] }, adminCtrl.removeRoleFromUser);
+
 }
 
 export default userRoutes;
