@@ -19,7 +19,7 @@ export default {
         '!src/modules/**/validations/**',
         '!src/modules/**/routes/**',
         '!src/modules/**/services/**',
-        // '!src/modules/**/cron/**',
+        'src/modules/**/cron/**',
         '!src/modules/**/server.js',
         '!src/plugins/**',
         '!**/seeder/**',
