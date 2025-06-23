@@ -1,0 +1,200 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing true
+skinparam class {
+    BackgroundColor White
+    ArrowColor DarkSlateGray
+    BorderColor Black
+}
+
+title Système de Covoiturage - Diagramme UML (avec Rôles et Permissions)
+
+class Utilisateur {
+  - id: Integer
+  - nom: String
+  - email: String
+  - telephone: String
+  - fcmToken: String
+  - avatar: String
+  - sexe: String
+  - motDePasse: String
+  - estActif: Boolean
+  - dateCreation: DateTime
+
+  + aLeRole(role: Role): Boolean
+  + aLaPermission(permission: Permission): Boolean
+}
+
+class Role {
+  - id: Integer
+  - nom: String
+}
+
+class Permission {
+  - id: Integer
+  - nom: String
+  - description: String
+}
+
+Utilisateur "1" *-- "*" Role
+Role "1" *-- "*" Permission
+
+class ProfilPassager {
+  - id: Integer
+  - idUtilisateur: Integer
+  - note: Double
+
+  + reserverTrajet(origine: String, destination: String): Reservation
+  ' Nécessite permission: reserver_trajet
+}
+
+class ProfilChauffeur {
+  - id: Integer
+  - idUtilisateur: Integer
+  - numeroPermis: String
+  - vehicule: String
+  - note: Double
+  - statut: StatutChauffeur
+
+  + publierTrajet(): TrajetModele
+  ' Nécessite permission: publier_trajet
+
+  + terminerTrajet(idTrajet: Integer): TrajetInstance
+  ' Nécessite permission: terminer_trajet
+}
+
+class CandidatureChauffeur {
+  - id: Integer
+  - idUtilisateur: Integer
+  - statut: StatutDemande
+  - soumiseLe: DateTime
+  - valideeLe: DateTime
+  - raison: String
+}
+
+class TrajetModele {
+  - id: Integer
+  - origine: String
+  - destination: String
+  - heurePrevue: DateTime
+  - joursRecurrence: List<JourSemaine>
+  - estRecurrent: Boolean
+}
+
+class Message {
+  - id : Integer
+  - contenu : String
+  - estUtilisateur : Boolean
+}
+
+class Chatbot {
+  - id : Integer
+  - sexe : Sexe
+}
+
+class TrajetInstance {
+  - id: Integer
+  - dateReelle: DateTime
+  - statut: StatutTrajet
+  - idChauffeur: Integer
+  - idModele: Integer
+}
+
+class Reservation {
+  - id: Integer
+  - dateReservation: DateTime
+  - statut: StatutReservation
+
+  + annuler(): StatutReservation
+  ' Nécessite permission: annuler_reservation
+}
+
+class Paiement {
+  - id: Integer
+  - montant: Integer
+  - statut: StatutPaiement
+
+  + payer(methode: MethodePaiement): StatutPaiement
+}
+
+class JournalAudit {
+  - id: Integer
+  - action: String
+  - idUtilisateur: Integer
+  - date: DateTime
+
+  + enregistrer(action: String): JournalAudit
+  ' Nécessite permission: acces_audit
+}
+
+' Enums
+enum StatutDemande {
+  EN_ATTENTE
+  APPROUVEE
+  REJETEE
+}
+
+enum StatutChauffeur {
+  ACTIF
+  INACTIF
+  EN_ATTENTE_VALIDATION
+}
+
+enum Sexe {
+  FEMME
+  HOMME
+}
+
+enum StatutTrajet {
+  PLANIFIE
+  EN_COURS
+  TERMINE
+}
+
+enum JourSemaine {
+  LUNDI
+  MARDI
+  MERCREDI
+  JEUDI
+  VENDREDI
+  SAMEDI
+  DIMANCHE
+}
+
+enum StatutReservation {
+  CONFIRMEE
+  EN_ATTENTE
+  ANNULEE
+}
+
+enum StatutPaiement {
+  PAYE
+  ECHEC
+  REMBOURSE
+}
+
+
+' Associations
+Utilisateur "1" *--> "0..1" ProfilPassager
+Utilisateur "1" *--> "0..1" ProfilChauffeur
+CandidatureChauffeur --> "1" ProfilPassager
+Reservation "*" --> "1" TrajetInstance
+Reservation "1" *--> "1" Paiement
+Utilisateur "1" --> "*" JournalAudit
+Utilisateur "1" *--> "*" Message
+Chatbot "1" --> "*" Message
+ProfilChauffeur "1" --> "*" TrajetModele
+ProfilPassager "*" --> "1" Reservation
+
+TrajetModele "1" *-- "1..*" TrajetInstance: creer
+
+ProfilChauffeur --> StatutChauffeur : statut
+CandidatureChauffeur --> StatutDemande : statut
+TrajetInstance --> StatutTrajet : statut
+Reservation --> StatutReservation : statut
+Paiement --> StatutPaiement : statut
+TrajetModele "1" --> "*" JourSemaine : joursRecurrence
+Utilisateur --> Sexe : sexe
+Chatbot --> Sexe : sexe
+
+@enduml

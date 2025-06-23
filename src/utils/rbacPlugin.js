@@ -1,4 +1,3 @@
-// src/utils/rbacPlugin.js
 import fp from 'fastify-plugin';
 
 async function rbacPlugin(fastify, opts) {
@@ -12,16 +11,10 @@ async function rbacPlugin(fastify, opts) {
     fastify.decorate('checkPermission', function(requiredPermission) {
         return async function(request, reply) {
             if (!request.user) {
-                // This should ideally be caught by fastify.authenticate first
                 request.log.warn('RBAC: No user found on request. Ensure authentication runs before permission check.');
                 return reply.status(401).send({ message: 'Unauthorized. Authentication required.' });
             }
 
-            // request.user is the payload from JWT, which might just be an ID.
-            // We need the full User model instance to call `hasPermission`.
-            // This assumes `fastify.authenticate` populates `request.user` with an object that has an `id`.
-            // Or, if `fastify.authenticate` already fetches the full user model instance, this is simpler.
-            // For now, let's assume `request.user` contains at least the user's ID.
 
             const User = fastify.models.User; // Assuming models are attached to fastify instance
             if (!User) {
@@ -41,11 +34,9 @@ async function rbacPlugin(fastify, opts) {
                 request.log.info(`RBAC: User ${userInstance.id} denied access to resource requiring permission '${requiredPermission}'.`);
                 return reply.status(403).send({ message: `Forbidden. Required permission: '${requiredPermission}'.` });
             }
-            // If permission check passes, continue to the route handler
         };
     });
 
-    // Optional: A decorator to check for a specific role (less granular than permissions but can be useful)
     fastify.decorate('checkRole', function(requiredRole) {
         return async function(request, reply) {
             if (!request.user) {
@@ -72,24 +63,16 @@ async function rbacPlugin(fastify, opts) {
     });
 }
 
-export default fp(rbacPlugin, {
-    name: 'rbac-plugin',
-    dependencies: ['fastify-jwt' ] // Ensure JWT authentication runs first
-});
+export default fp(rbacPlugin, { dependencies: ['@fastify/jwt'] });
 
-// Helper to make models accessible via fastify instance (e.g., fastify.models.User)
-// This should be registered in app.js
 export const modelsPlugin = fp(async function(fastify, opts) {
-    // Import models here
     const User = (await import('../modules/user-module/models/user.js')).default;
     const Role = (await import('../modules/user-module/models/role.js')).default;
     const Permission = (await import('../modules/user-module/models/permission.js')).default;
-    // Add other models if they need to be globally accessible via fastify.models
 
     fastify.decorate('models', {
         User,
         Role,
         Permission,
-        // ... other models
     });
 });

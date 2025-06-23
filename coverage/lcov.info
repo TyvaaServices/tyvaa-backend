@@ -73,7 +73,7 @@ LH:33
 BRDA:53,0,0,0
 BRDA:53,0,1,0
 BRDA:62,1,0,2
-BRDA:62,1,1,2
+BRDA:62,1,1,0
 BRDA:63,2,0,1
 BRDA:63,2,1,1
 BRDA:67,3,0,0
@@ -83,7 +83,7 @@ BRDA:73,4,1,0
 BRDA:93,5,0,0
 BRDA:93,5,1,2
 BRF:12
-BRH:6
+BRH:5
 end_of_record
 TN:
 SF:src/modules/booking-module/controllers/bookingController.js
