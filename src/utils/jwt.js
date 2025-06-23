@@ -1,5 +1,5 @@
-const fp = require('fastify-plugin');
-const fastifyJWT = require('@fastify/jwt');
+import fp from'fastify-plugin';
+import fastifyJWT from '@fastify/jwt';
 
 function jwtPlugin(fastify, opts, done) {
     fastify.register(fastifyJWT, {
@@ -18,7 +18,13 @@ function jwtPlugin(fastify, opts, done) {
         return this.jwt.sign(payload, options);
     });
 
+    fastify.decorate('isAdmin', async function (request, reply) {
+        if (!request.user || request.user.role !== 'admin') {
+            return reply.code(403).send({ error: 'Forbidden', message: 'Admin only' });
+        }
+    });
+
     done();
 }
 
-module.exports = fp(jwtPlugin);
+export default fp(jwtPlugin);

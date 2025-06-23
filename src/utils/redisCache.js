@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import {Redis} from '@upstash/redis';
 
 class RedisCache {
     constructor() {
@@ -43,4 +43,6 @@ class RedisCache {
     }
 }
 
-export default new RedisCache();
+const redisCacheInstance = new RedisCache();
+export default redisCacheInstance;
+export { RedisCache };

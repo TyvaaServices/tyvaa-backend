@@ -13,5 +13,4 @@ async function sendOtpEmail(email, otp, transporter, logger) {
         throw err;
     }
 }
-
-module.exports = sendOtpEmail;
+export default sendOtpEmail;
