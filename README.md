@@ -1,6 +1,7 @@
 # Tyvaa Backend – Modular Monolith Architecture
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=alert_status&token=20e96f50fb626ffe0d4642e94c92d998de83b4a8)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=coverage&token=20e96f50fb626ffe0d4642e94c92d998de83b4a8)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=bugs&token=20e96f50fb626ffe0d4642e94c92d998de83b4a8)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=code_smells&token=20e96f50fb626ffe0d4642e94c92d998de83b4a8)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=TyvaaServices_tyvaa-backend&metric=sqale_index&token=20e96f50fb626ffe0d4642e94c92d998de83b4a8)](https://sonarcloud.io/summary/new_code?id=TyvaaServices_tyvaa-backend)
