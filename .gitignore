@@ -10,7 +10,6 @@ services/notification-service/config/serviceAccountKey.json
 .turbo
 .idea
 .turbo/*
-coverage/
 ServiceAccountKey.json
 docker-compose.yaml
 terraform*
