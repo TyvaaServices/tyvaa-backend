@@ -14,7 +14,7 @@ const mockRideFacade = {
 jest.unstable_mockModule('../../src/modules/ride-module/facades/rideFacade.js', () => ({
   default: mockRideFacade,
 }));
-import {describe, expect, jest} from '@jest/globals';
+import {afterAll, describe, expect, jest} from '@jest/globals';
 
 const reply = () => {
   const res = {};
@@ -211,5 +211,9 @@ describe('rideController', () => {
       expect(res.code).toHaveBeenCalledWith(404);
       expect(res.send).toHaveBeenCalledWith({ error: 'Ride not found' });
     });
+  });
+
+  afterAll(async () => {
+    jest.clearAllMocks();
   });
 });

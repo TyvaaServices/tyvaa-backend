@@ -57,4 +57,8 @@ describe('startServer', () => {
         const { startServer } = await import('../../src/app.js');
         await expect(startServer()).rejects.toThrow('fail');
     }, 15000);
+
+    afterAll(async () => {
+        jest.clearAllMocks();
+    });
 });

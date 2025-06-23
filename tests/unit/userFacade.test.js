@@ -379,4 +379,8 @@ describe('userFacade', () => {
     expect(result).toEqual({ status: 'approved', comments: null });
     expect(mockLogger.info).toHaveBeenCalledWith('Fetched driver application status', { userId: 1, status: 'approved' });
   });
+
+  afterAll(async () => {
+    jest.clearAllMocks();
+  });
 });

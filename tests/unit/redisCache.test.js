@@ -70,4 +70,8 @@ describe('RedisCache', () => {
     const result = await redisCacheInstance.getModel('key');
     expect(result).toBeNull();
   });
+
+  afterAll(async () => {
+    jest.clearAllMocks();
+  });
 });

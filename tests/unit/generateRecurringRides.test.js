@@ -72,4 +72,8 @@ describe('generateRecurringRides', () => {
     await expect(generateRecurringRides()).rejects.toThrow('db fail');
     expect(mockLogger.error).toHaveBeenCalledWith('Error generating recurring rides:', expect.any(Error));
   });
+
+  afterAll(async () => {
+    jest.clearAllMocks();
+  });
 });

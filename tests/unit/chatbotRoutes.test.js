@@ -82,4 +82,8 @@ describe('Chatbot Routes', () => {
         expect(response.statusCode).toBe(404);
     });
 
+    afterAll(async () => {
+        jest.clearAllMocks();
+    });
+
 });

@@ -23,5 +23,9 @@ describe('sendOtpEmail', () => {
         await expect(sendOtpEmail('fail@example.com', '654321', transporter, logger)).rejects.toThrow('fail');
         expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to send OTP email'));
     });
+
+    afterAll(async () => {
+        jest.clearAllMocks();
+    });
 });
 

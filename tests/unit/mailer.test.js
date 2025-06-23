@@ -19,4 +19,8 @@ describe('mailer', () => {
       auth: { user: 'user', pass: 'pass' },
     });
   });
+
+  afterAll(async () => {
+    jest.clearAllMocks();
+  });
 });

@@ -65,4 +65,8 @@ describe('jwt plugin', () => {
     const result = signTokenFn.call(fastify, { foo: 'bar' });
     expect(result).toBe('signed');
   });
+
+  afterAll(async () => {
+    jest.clearAllMocks();
+  });
 });

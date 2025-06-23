@@ -433,4 +433,7 @@ describe('userController', () => {
     });
   });
 
+  afterAll(async () => {
+    jest.clearAllMocks();
+  });
 });
