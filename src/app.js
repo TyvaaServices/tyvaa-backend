@@ -20,7 +20,7 @@ export async function buildApp() {
     fastify.get('/health', async (request, reply) => {
         return { status: 'ok' };
     });
-    fastify.register(cors, {
+    fastify.register(cors, { // Should be registered before routes that need CORS
         origin: '*',
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -28,7 +28,16 @@ export async function buildApp() {
         credentials: true,
         maxAge: 86400
     });
-    fastify.register(fastifyJwtPlugin);
+
+    // Register core utility plugins
+    fastify.register(fastifyJwtPlugin); // JWT authentication
+
+    // Register models and RBAC plugins
+    const { modelsPlugin, default: rbacPlugin } = await import('./utils/rbacPlugin.js');
+    fastify.register(modelsPlugin); // Makes models available via fastify.models
+    fastify.register(rbacPlugin);   // Adds fastify.checkPermission and fastify.checkRole
+
+    // Register application modules
     fastify.register(chatbotModule);
     fastify.register(notificationModule);
     fastify.register(rideModule);
