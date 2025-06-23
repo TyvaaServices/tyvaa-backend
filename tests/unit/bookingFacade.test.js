@@ -1,11 +1,27 @@
-// tests/unit/bookingFacade.test.js
-import { jest } from '@jest/globals';
-import bookingFacade from '../../src/modules/booking-module/facades/bookingFacade.js';
-// User and RideInstance are imported by the facade from config/index.js
-import { User, RideInstance } from '../../src/config/index.js';
+// --- Prevent Sequelize from connecting to a real DB during tests ---
+import { beforeEach, describe, jest } from '@jest/globals';
 
-// --- Mocking bookingService.js ---
-// Define jest.fn() for each function exported by bookingService
+jest.mock('sequelize', () => {
+    const ActualSequelize = jest.requireActual('sequelize');
+    class SequelizeMock extends ActualSequelize.Sequelize {
+        constructor() { super('sqlite::memory:'); }
+    }
+    return { ...ActualSequelize, Sequelize: SequelizeMock };
+});
+// --- Mock BookingModel and related models to prevent Sequelize DB calls ---
+jest.mock('../../src/modules/booking-module/models/booking.js', () => ({
+    __esModule: true,
+    default: { findByPk: jest.fn(), create: jest.fn(), update: jest.fn(), destroy: jest.fn() },
+}));
+jest.mock('../../src/modules/ride-module/models/rideInstance.js', () => ({
+    __esModule: true,
+    default: { findByPk: jest.fn(), create: jest.fn(), update: jest.fn(), destroy: jest.fn() },
+}));
+jest.mock('../../src/modules/user-module/models/user.js', () => ({
+    __esModule: true,
+    default: { findByPk: jest.fn(), create: jest.fn(), update: jest.fn(), destroy: jest.fn() },
+}));
+// --- Mock bookingService to prevent real DB logic if imported anywhere ---
 const mockGetAllBookings = jest.fn();
 const mockGetBookingById = jest.fn();
 const mockCreateBooking = jest.fn();
@@ -13,37 +29,35 @@ const mockUpdateBooking = jest.fn();
 const mockDeleteBooking = jest.fn();
 const mockBookRide = jest.fn();
 const mockCancelBooking = jest.fn();
-
-// Mock the entire bookingService.js module.
-// bookingFacade imports bookingService via default import: import bookingService from '...'
-// So, the mock factory must provide a `default` property.
-jest.mock('../../src/modules/booking-module/services/bookingService.js', () => {
-    // console.log('!!! JEST.MOCK FOR BOOKING SERVICE IS RUNNING !!!'); // Diagnostic
-    return {
-        __esModule: true,
-        default: {
-            getAllBookings: mockGetAllBookings,
-            getBookingById: mockGetBookingById,
-            createBooking: mockCreateBooking,
-            updateBooking: mockUpdateBooking,
-            deleteBooking: mockDeleteBooking,
-            bookRide: mockBookRide,
-            cancelBooking: mockCancelBooking,
-        }
-    };
-});
-
-// --- Mocking config/index.js (for User and RideInstance models) ---
-// This mock needs to be effective for when bookingFacade imports User and RideInstance
 const mockUserFindByPk = jest.fn();
 const mockRideInstanceFindByPk = jest.fn();
 
-jest.mock('../../src/config/index.js', () => ({
+jest.unstable_mockModule('../../src/modules/booking-module/services/bookingService.js', () => ({
+    __esModule: true,
+    default: {
+        getAllBookings: mockGetAllBookings,
+        getBookingById: mockGetBookingById,
+        createBooking: mockCreateBooking,
+        updateBooking: mockUpdateBooking,
+        deleteBooking: mockDeleteBooking,
+        bookRide: mockBookRide,
+        cancelBooking: mockCancelBooking,
+    },
+}));
+jest.unstable_mockModule('../../src/config/index.js', () => ({
     __esModule: true,
     User: { findByPk: mockUserFindByPk },
     RideInstance: { findByPk: mockRideInstanceFindByPk },
 }));
 
+// --- Patch global RideInstance for legacy service code expecting it as a global ---
+global.RideInstance = { findByPk: mockRideInstanceFindByPk };
+
+// tests/unit/bookingFacade.test.js
+let bookingFacade;
+beforeAll(async () => {
+    bookingFacade = (await import('../../src/modules/booking-module/facades/bookingFacade.js')).default;
+});
 
 describe('Booking Facade', () => {
     beforeEach(() => {

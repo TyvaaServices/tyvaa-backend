@@ -1,159 +1,302 @@
 // tests/unit/rideController.test.js
-import { jest } from '@jest/globals';
-import rideController from '../../src/modules/ride-module/controllers/rideController.js';
+import {describe, expect, jest} from '@jest/globals';
 
 // --- Mocking rideFacade.js ---
-const mockGetAllRides = jest.fn();
-const mockGetRideById = jest.fn();
-const mockCreateRide = jest.fn();
-const mockUpdateRide = jest.fn();
-const mockDeleteRide = jest.fn();
-const mockGetAllRideInstances = jest.fn();
-const mockGetRideInstanceById = jest.fn();
-const mockCreateRideInstance = jest.fn();
-const mockUpdateRideInstance = jest.fn();
-const mockDeleteRideInstance = jest.fn();
-const mockAcceptRide = jest.fn();
-const mockRejectRide = jest.fn();
-const mockCompleteRide = jest.fn();
+const mockRideFacade = {
+    getAllRides: jest.fn(),
+    getRideById: jest.fn(),
+    createRide: jest.fn(),
+    updateRide: jest.fn(),
+    deleteRide: jest.fn(),
+    getAllRideInstances: jest.fn(),
+    getRideInstanceById: jest.fn(),
+    createRideInstance: jest.fn(),
+    updateRideInstance: jest.fn(),
+    deleteRideInstance: jest.fn(),
+    acceptRide: jest.fn(),
+    rejectRide: jest.fn(),
+    completeRide: jest.fn(),
+};
 
-jest.mock('../../src/modules/ride-module/facades/rideFacade.js', () => ({
+jest.unstable_mockModule('../../src/modules/ride-module/facades/rideFacade.js', () => ({
     __esModule: true,
-    default: {
-        getAllRides: mockGetAllRides,
-        getRideById: mockGetRideById,
-        createRide: mockCreateRide,
-        updateRide: mockUpdateRide,
-        deleteRide: mockDeleteRide,
-        getAllRideInstances: mockGetAllRideInstances,
-        getRideInstanceById: mockGetRideInstanceById,
-        createRideInstance: mockCreateRideInstance,
-        updateRideInstance: mockUpdateRideInstance,
-        deleteRideInstance: mockDeleteRideInstance,
-        acceptRide: mockAcceptRide,
-        rejectRide: mockRejectRide,
-        completeRide: mockCompleteRide,
-    },
+    default: mockRideFacade,
+}));
+jest.unstable_mockModule('sequelize', () => ({
+    __esModule: true,
+    Sequelize: class {},
 }));
 
 describe('Ride Controller (with Facade)', () => {
     let mockRequest;
     let mockReply;
+    let rideController;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         mockRequest = { params: {}, body: {} };
         mockReply = {
             send: jest.fn().mockReturnThis(),
             code: jest.fn().mockReturnThis(),
+            status: jest.fn().mockReturnThis(),
         };
-
-        // Clear all facade mocks
-        mockGetAllRides.mockClear();
-        mockGetRideById.mockClear();
-        mockCreateRide.mockClear();
-        mockUpdateRide.mockClear();
-        mockDeleteRide.mockClear();
-        mockGetAllRideInstances.mockClear();
-        mockGetRideInstanceById.mockClear();
-        mockCreateRideInstance.mockClear();
-        mockUpdateRideInstance.mockClear();
-        mockDeleteRideInstance.mockClear();
-        mockAcceptRide.mockClear();
-        mockRejectRide.mockClear();
-        mockCompleteRide.mockClear();
+        Object.values(mockRideFacade).forEach(fn => fn.mockReset());
+        rideController = (await import('../../src/modules/ride-module/controllers/rideController.js')).default;
     });
 
-    // Helper to generate test cases for simple CRUD-like methods
-    const generateCrudTests = (methodName, mockFn, successStatusCode = 200, notFoundMsg = 'not found') => {
-        describe(methodName, () => {
-            it(`should call facade.${methodName} and return result`, async () => {
-                const mockResult = { id: '1', data: 'some data' };
-                mockRequest.params.id = '1'; // For getById, update, delete
-                mockRequest.body = { data: 'some data' }; // For create, update
-
-                mockFn.mockResolvedValue(mockResult);
-                await rideController[methodName](mockRequest, mockReply);
-
-                expect(mockFn).toHaveBeenCalled();
-                if (methodName.includes('ById') || methodName.includes('update') || methodName.includes('delete') || methodName.includes('Ride')) { // methods that take id
-                     if(methodName.includes('update')) expect(mockFn).toHaveBeenCalledWith('1', mockRequest.body);
-                     else expect(mockFn).toHaveBeenCalledWith('1');
-                } else if (methodName.includes('create')) {
-                     expect(mockFn).toHaveBeenCalledWith(mockRequest.body);
-                }
-
-
-                if (successStatusCode === 201 || successStatusCode === 200 && !methodName.startsWith('delete')) {
-                     expect(mockReply.send).toHaveBeenCalledWith(mockResult);
-                }
-                if (successStatusCode) {
-                    expect(mockReply.code).toHaveBeenCalledWith(successStatusCode);
-                } else { // For getAll type methods that don't call .code() for success
-                    expect(mockReply.send).toHaveBeenCalledWith(mockResult);
-                }
-            });
-
-            if (methodName.includes('ById') || methodName.startsWith('update') || methodName.startsWith('delete') || ['acceptRide', 'rejectRide', 'completeRide'].includes(methodName)) {
-                it('should return 404 if facade returns null/false (not found)', async () => {
-                    mockRequest.params.id = '1';
-                    mockFn.mockResolvedValue(methodName.startsWith('delete') ? false : null);
-                    await rideController[methodName](mockRequest, mockReply);
-                    expect(mockReply.code).toHaveBeenCalledWith(404);
-                    expect(mockReply.send).toHaveBeenCalledWith(expect.objectContaining({ error: expect.stringContaining(notFoundMsg) }));
-                });
-            }
-             // Generic error handling test (can be expanded if controller has more specific error handling)
-            it('should handle errors from facade', async () => {
-                mockRequest.params.id = '1'; // Default for methods needing it
-                mockRequest.body = { data: 'some data' };
-                mockFn.mockRejectedValue(new Error('Facade error'));
-
-                // Wrap in try-catch because the controller doesn't have explicit try-catch for all methods
-                try {
-                    await rideController[methodName](mockRequest, mockReply);
-                } catch(e) {
-                    // If controller re-throws or Fastify handles it, this might not be reached directly in reply
-                    // For now, check if not successful send
-                    expect(mockReply.send).not.toHaveBeenCalledWith(expect.objectContaining({ id: '1' }));
-                }
-                // This assertion might fail if controller doesn't catch and send error response
-                // For now, we assume a generic error would lead to not sending a success response.
-                // A more robust test would involve Fastify's error handling or explicit try-catch in controller.
-            });
+    describe('getAllRides', () => {
+        it('should return rides on success', async () => {
+            const rides = [{ id: 1 }, { id: 2 }];
+            mockRideFacade.getAllRides.mockResolvedValueOnce(rides);
+            await rideController.getAllRides(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith(rides);
         });
-    };
+        it('should throw on error', async () => {
+            mockRideFacade.getAllRides.mockRejectedValueOnce(new Error('fail'));
+            await expect(rideController.getAllRides(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
 
-    generateCrudTests('getAllRides', mockGetAllRides, 0, ''); // 0 for no .code() call on success
-    generateCrudTests('getRideById', mockGetRideById, 200, 'Ride not found');
-    generateCrudTests('createRide', mockCreateRide, 201, '');
-    generateCrudTests('updateRide', mockUpdateRide, 200, 'Ride not found');
-    generateCrudTests('deleteRide', mockDeleteRide, 200, 'Ride not found'); // Controller sends {message: 'Ride deleted'} on success
+    describe('getRideById', () => {
+        it('should return ride on success', async () => {
+            const ride = { id: 1 };
+            mockRideFacade.getRideById.mockResolvedValueOnce(ride);
+            mockRequest.params.id = '1';
+            await rideController.getRideById(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith(ride);
+        });
+        it('should return 404 if not found', async () => {
+            mockRideFacade.getRideById.mockResolvedValueOnce(null);
+            mockRequest.params.id = '1';
+            await rideController.getRideById(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Ride not found' });
+        });
+        it('should throw on error', async () => {
+            mockRideFacade.getRideById.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            await expect(rideController.getRideById(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
 
-    generateCrudTests('getAllRideInstances', mockGetAllRideInstances, 0, '');
-    generateCrudTests('getRideInstanceById', mockGetRideInstanceById, 200, 'RideInstance not found');
-    generateCrudTests('createRideInstance', mockCreateRideInstance, 201, '');
-    generateCrudTests('updateRideInstance', mockUpdateRideInstance, 200, 'RideInstance not found');
-    generateCrudTests('deleteRideInstance', mockDeleteRideInstance, 200, 'RideInstance not found'); // Controller sends {message: 'RideInstance deleted'}
+    describe('createRide', () => {
+        it('should create ride and return result', async () => {
+            const ride = { id: 1 };
+            mockRideFacade.createRide.mockResolvedValueOnce(ride);
+            mockRequest.body = { data: 'test' };
+            await rideController.createRide(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(201);
+            expect(mockReply.send).toHaveBeenCalledWith(ride);
+        });
+        it('should throw on error', async () => {
+            mockRideFacade.createRide.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.body = { data: 'test' };
+            await expect(rideController.createRide(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
 
-    generateCrudTests('acceptRide', mockAcceptRide, 200, 'Ride not found'); // Controller sends {message: 'Ride accepted'}
-    generateCrudTests('rejectRide', mockRejectRide, 200, 'Ride not found'); // Controller sends {message: 'Ride rejected'}
-    generateCrudTests('completeRide', mockCompleteRide, 200, 'Ride not found'); // Controller sends {message: 'Ride completed'}
+    describe('updateRide', () => {
+        it('should update ride and return result', async () => {
+            const ride = { id: 1 };
+            mockRideFacade.updateRide.mockResolvedValueOnce(ride);
+            mockRequest.params.id = '1';
+            mockRequest.body = { data: 'update' };
+            await rideController.updateRide(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith(ride);
+        });
+        it('should handle not found', async () => {
+            mockRideFacade.updateRide.mockResolvedValueOnce(null);
+            mockRequest.params.id = '1';
+            mockRequest.body = { data: 'update' };
+            await rideController.updateRide(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Ride not found' });
+        });
+        it('should throw on error', async () => {
+            mockRideFacade.updateRide.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            mockRequest.body = { data: 'update' };
+            await expect(rideController.updateRide(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
 
-    // Adjust success message tests for delete methods specifically if needed
-    describe('deleteRide specific response', () => {
-        it('should send success message on successful deletion', async () => {
-            mockRequest.params.id = 'r1';
-            mockDeleteRide.mockResolvedValue(true); // facade indicates success
+    describe('deleteRide', () => {
+        it('should return message on success', async () => {
+            mockRideFacade.deleteRide.mockResolvedValueOnce(true);
+            mockRequest.params.id = '1';
             await rideController.deleteRide(mockRequest, mockReply);
             expect(mockReply.send).toHaveBeenCalledWith({ message: 'Ride deleted' });
         });
+        it('should handle not found', async () => {
+            mockRideFacade.deleteRide.mockResolvedValueOnce(false);
+            mockRequest.params.id = '1';
+            await rideController.deleteRide(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Ride not found' });
+        });
+        it('should throw on error', async () => {
+            mockRideFacade.deleteRide.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            await expect(rideController.deleteRide(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
     });
-    describe('deleteRideInstance specific response', () => {
-        it('should send success message on successful deletion', async () => {
-            mockRequest.params.id = 'ri1';
-            mockDeleteRideInstance.mockResolvedValue(true); // facade indicates success
+
+    describe('getAllRideInstances', () => {
+        it('should return ride instances on success', async () => {
+            const rideInstances = [{ id: 1 }, { id: 2 }];
+            mockRideFacade.getAllRideInstances.mockResolvedValueOnce(rideInstances);
+            await rideController.getAllRideInstances(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith(rideInstances);
+        });
+        it('should handle errors', async () => {
+            mockRideFacade.getAllRideInstances.mockRejectedValueOnce(new Error('fail'));
+            await expect(rideController.getAllRideInstances(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
+
+    describe('getRideInstanceById', () => {
+        it('should return ride instance on success', async () => {
+            const rideInstance = { id: 1 };
+            mockRideFacade.getRideInstanceById.mockResolvedValueOnce(rideInstance);
+            mockRequest.params.id = '1';
+            await rideController.getRideInstanceById(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith(rideInstance);
+        });
+        it('should return 404 if not found', async () => {
+            mockRideFacade.getRideInstanceById.mockResolvedValueOnce(null);
+            mockRequest.params.id = '1';
+            await rideController.getRideInstanceById(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'RideInstance not found' });
+        });
+        it('should handle errors', async () => {
+            mockRideFacade.getRideInstanceById.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            await expect(rideController.getRideInstanceById(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
+
+    describe('createRideInstance', () => {
+        it('should create ride instance and return result', async () => {
+            const rideInstance = { id: 1 };
+            mockRideFacade.createRideInstance.mockResolvedValueOnce(rideInstance);
+            mockRequest.body = { data: 'test' };
+            await rideController.createRideInstance(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(201);
+            expect(mockReply.send).toHaveBeenCalledWith(rideInstance);
+        });
+        it('should handle errors', async () => {
+            mockRideFacade.createRideInstance.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.body = { data: 'test' };
+            await expect(rideController.createRideInstance(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
+
+    describe('updateRideInstance', () => {
+        it('should update ride instance and return result', async () => {
+            const rideInstance = { id: 1 };
+            mockRideFacade.updateRideInstance.mockResolvedValueOnce(rideInstance);
+            mockRequest.params.id = '1';
+            mockRequest.body = { data: 'update' };
+            await rideController.updateRideInstance(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith(rideInstance);
+        });
+        it('should handle not found', async () => {
+            mockRideFacade.updateRideInstance.mockResolvedValueOnce(null);
+            mockRequest.params.id = '1';
+            mockRequest.body = { data: 'update' };
+            await rideController.updateRideInstance(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'RideInstance not found' });
+        });
+        it('should handle errors', async () => {
+            mockRideFacade.updateRideInstance.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            mockRequest.body = { data: 'update' };
+            await expect(rideController.updateRideInstance(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
+
+    describe('deleteRideInstance', () => {
+        it('should return message on success', async () => {
+            mockRideFacade.deleteRideInstance.mockResolvedValueOnce(true);
+            mockRequest.params.id = '1';
             await rideController.deleteRideInstance(mockRequest, mockReply);
             expect(mockReply.send).toHaveBeenCalledWith({ message: 'RideInstance deleted' });
+        });
+        it('should handle not found', async () => {
+            mockRideFacade.deleteRideInstance.mockResolvedValueOnce(false);
+            mockRequest.params.id = '1';
+            await rideController.deleteRideInstance(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'RideInstance not found' });
+        });
+        it('should handle errors', async () => {
+            mockRideFacade.deleteRideInstance.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            await expect(rideController.deleteRideInstance(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
+
+    describe('acceptRide', () => {
+        it('should accept ride and return result', async () => {
+            mockRideFacade.acceptRide.mockResolvedValueOnce(true);
+            mockRequest.params.id = '1';
+            await rideController.acceptRide(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith({ message: 'Ride accepted' });
+        });
+        it('should handle not found', async () => {
+            mockRideFacade.acceptRide.mockResolvedValueOnce(false);
+            mockRequest.params.id = '1';
+            await rideController.acceptRide(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Ride not found' });
+        });
+        it('should handle errors', async () => {
+            mockRideFacade.acceptRide.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            await expect(rideController.acceptRide(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
+
+    describe('rejectRide', () => {
+        it('should reject ride and return result', async () => {
+            mockRideFacade.rejectRide.mockResolvedValueOnce(true);
+            mockRequest.params.id = '1';
+            await rideController.rejectRide(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith({ message: 'Ride rejected' });
+        });
+        it('should handle not found', async () => {
+            mockRideFacade.rejectRide.mockResolvedValueOnce(false);
+            mockRequest.params.id = '1';
+            await rideController.rejectRide(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Ride not found' });
+        });
+        it('should handle errors', async () => {
+            mockRideFacade.rejectRide.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            await expect(rideController.rejectRide(mockRequest, mockReply)).rejects.toThrow('fail');
+        });
+    });
+
+    describe('completeRide', () => {
+        it('should complete ride and return result', async () => {
+            mockRideFacade.completeRide.mockResolvedValueOnce(true);
+            mockRequest.params.id = '1';
+            await rideController.completeRide(mockRequest, mockReply);
+            expect(mockReply.send).toHaveBeenCalledWith({ message: 'Ride completed' });
+        });
+        it('should handle not found', async () => {
+            mockRideFacade.completeRide.mockResolvedValueOnce(false);
+            mockRequest.params.id = '1';
+            await rideController.completeRide(mockRequest, mockReply);
+            expect(mockReply.code).toHaveBeenCalledWith(404);
+            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Ride not found' });
+        });
+        it('should handle errors', async () => {
+            mockRideFacade.completeRide.mockRejectedValueOnce(new Error('fail'));
+            mockRequest.params.id = '1';
+            await expect(rideController.completeRide(mockRequest, mockReply)).rejects.toThrow('fail');
         });
     });
 });

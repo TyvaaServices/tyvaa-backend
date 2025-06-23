@@ -1,6 +1,5 @@
 // tests/unit/bookingController.test.js
-import { jest } from '@jest/globals';
-import bookingController from '../../src/modules/booking-module/controllers/bookingController.js';
+import {beforeEach, describe, expect, it, jest} from '@jest/globals';
 
 // --- Mocking bookingFacade.js ---
 const mockGetAllBookings = jest.fn();
@@ -11,7 +10,8 @@ const mockDeleteBooking = jest.fn();
 const mockBookRide = jest.fn();
 const mockCancelBooking = jest.fn();
 
-jest.mock('../../src/modules/booking-module/facades/bookingFacade.js', () => ({
+// ESM-compliant mocking for the facade
+jest.unstable_mockModule('../../src/modules/booking-module/facades/bookingFacade.js', () => ({
     __esModule: true,
     default: {
         getAllBookings: mockGetAllBookings,
@@ -27,8 +27,10 @@ jest.mock('../../src/modules/booking-module/facades/bookingFacade.js', () => ({
 describe('Booking Controller (with Facade)', () => {
     let mockRequest;
     let mockReply;
+    let bookingController;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        jest.resetModules();
         mockRequest = {
             params: {},
             body: {},
@@ -37,7 +39,6 @@ describe('Booking Controller (with Facade)', () => {
             send: jest.fn().mockReturnThis(),
             code: jest.fn().mockReturnThis(),
         };
-
         // Clear all facade mocks
         mockGetAllBookings.mockClear();
         mockGetBookingById.mockClear();
@@ -46,6 +47,8 @@ describe('Booking Controller (with Facade)', () => {
         mockDeleteBooking.mockClear();
         mockBookRide.mockClear();
         mockCancelBooking.mockClear();
+        // Import controller after mocks are set up (ESM compatible)
+        bookingController = (await import('../../src/modules/booking-module/controllers/bookingController.js')).default;
     });
 
     describe('getAllBookings', () => {
