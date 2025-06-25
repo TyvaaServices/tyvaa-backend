@@ -6,5 +6,5 @@ dotenv.config();
 
 export default async function (fastify, opts) {
     fastify.register(multipart);
-    fastify.register(userRoutes, {prefix: "/api/v1"});
+    fastify.register(userRoutes, { prefix: "/api/v1" });
 }

@@ -1,37 +1,44 @@
-import Fastify from 'fastify';
-import chatbotModule from './modules/chatbot-module/server.js';
-import notificationModule from './modules/notification-module/server.js';
-import rideModule from './modules/ride-module/server.js';
-import userModule from './modules/user-module/server.js';
-import bookingModule from './modules/booking-module/server.js';
-import paymentModule from './modules/payment-module/server.js';
-import dotenv from 'dotenv';
-import cors from '@fastify/cors';
-import swaggerConfig from './config/swagger.js';
-import rateLimit from '@fastify/rate-limit';
-import compress from '@fastify/compress';
-import fastifyJwtPlugin from './utils/jwt.js';
+import Fastify from "fastify";
+import dotenv from "dotenv";
+import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
+import compress from "@fastify/compress";
+import swaggerConfig from "./config/swagger.js";
 
 dotenv.config();
 
+const fastifyJwtPlugin = await import("./utils/jwt.js");
+const chatbotModule = (await import("./modules/chatbot-module/server.js"))
+    .default;
+const notificationModule = (
+    await import("./modules/notification-module/server.js")
+).default;
+const rideModule = (await import("./modules/ride-module/server.js")).default;
+const userModule = (await import("./modules/user-module/server.js")).default;
+const bookingModule = (await import("./modules/booking-module/server.js"))
+    .default;
+const paymentModule = (await import("./modules/payment-module/server.js"))
+    .default;
+const rbacPlugin = (await import("./utils/rbacPlugin.js")).default;
+const errorHandlerPlugin = (await import("./utils/errorHandler.js")).default;
+const swagger = (await import("@fastify/swagger")).default;
+const swaggerUi = (await import("@fastify/swagger-ui")).default;
+
 export async function buildApp() {
-    const fastify = Fastify({logger: true});
-    fastify.get('/health', async (request, reply) => {
-        return { status: 'ok' };
+    const fastify = Fastify({ logger: true });
+    fastify.get("/health", async (request, reply) => {
+        return { status: "ok" };
     });
     fastify.register(cors, {
-        origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-        exposedHeaders: ['Content-Length', 'X-Requested-With'],
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+        exposedHeaders: ["Content-Length", "X-Requested-With"],
         credentials: true,
-        maxAge: 86400
+        maxAge: 86400,
     });
 
     fastify.register(fastifyJwtPlugin);
-
-    const { modelsPlugin, default: rbacPlugin } = await import('./utils/rbacPlugin.js');
-    fastify.register(modelsPlugin);
     fastify.register(rbacPlugin);
     fastify.register(chatbotModule);
     fastify.register(notificationModule);
@@ -39,59 +46,67 @@ export async function buildApp() {
     fastify.register(userModule);
     fastify.register(bookingModule);
     fastify.register(paymentModule);
-    fastify.register(await import('@fastify/swagger'), swaggerConfig.options);
-    fastify.register(await import('@fastify/swagger-ui'), swaggerConfig.uiOptions);
-    fastify.register(compress, {global: true});
+    fastify.register(swagger, swaggerConfig.options);
+    fastify.register(swaggerUi, swaggerConfig.uiOptions);
+    fastify.register(compress, { global: true });
     fastify.register(rateLimit, {
         max: 100,
-        timeWindow: '1 minute',
-        keyGenerator: (req, res) => req.headers['x-forwarded-for'] || req.ip,
+        timeWindow: "1 minute",
+        keyGenerator: (req, res) => req.headers["x-forwarded-for"] || req.ip,
     });
+    fastify.register(errorHandlerPlugin);
     return fastify;
 }
 
 export async function startServer() {
     const fastify = await buildApp();
-    const sequelize = (await import('./config/db.js')).default;
+    const sequelize = (await import("./config/db.js")).default;
     return new Promise((resolve, reject) => {
-        fastify.listen({port: process.env.PORT || 3000, host: '0.0.0.0'}, async (err, address) => {
-            if (err) {
-                fastify.log.error(err);
-                reject(err);
-            }
-            if (process.env.NODE_ENV !== 'test') {
-                try {
-                    await sequelize.sync({ alter: true, logging: false });
-                    fastify.log.info('Database synchronized');
-                } catch (syncError) {
-                    fastify.log.error('Database sync failed:', syncError);
-                    return reject(syncError instanceof Error ? syncError : new Error(syncError));
+        fastify.listen(
+            { port: process.env.PORT || 3000, host: "0.0.0.0" },
+            async (err, address) => {
+                if (err) {
+                    fastify.log.error(err);
+                    reject(err);
+                }
+                if (process.env.NODE_ENV !== "test") {
+                    try {
+                        await sequelize.sync({ force: true, logging: false });
+                        fastify.log.info("Database synchronized");
+                    } catch (syncError) {
+                        fastify.log.error("Database sync failed:", syncError);
+                        return reject(
+                            syncError instanceof Error
+                                ? syncError
+                                : new Error(syncError)
+                        );
+                    }
+                }
+                fastify.log.info(`Server listening at ${address}`);
+                resolve(fastify);
+                if (process.env.NODE_ENV !== "test") {
+                    await fastify.ready();
+                    console.log(fastify.printRoutes());
                 }
             }
-            fastify.log.info(`Server listening at ${address}`);
-            resolve(fastify);
-            if (process.env.NODE_ENV !== 'test') {
-                await fastify.ready();
-                console.log(fastify.printRoutes());
-            }
-        });
+        );
         const shutdown = async () => {
             try {
                 await fastify.close();
                 setTimeout(() => process.exit(0), 200);
             } catch (err) {
-                fastify.log.error('Error during shutdown', err);
+                fastify.log.error("Error during shutdown", err);
                 process.exit(1);
             }
         };
-        process.on('SIGTERM', shutdown);
-        process.on('SIGINT', shutdown);
+        process.on("SIGTERM", shutdown);
+        process.on("SIGINT", shutdown);
     });
 }
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== "test") {
     startServer().catch((err) => {
-        console.error('Failed to start app:', err);
+        fastify.log.error("Failed to start server:", err);
         process.exit(1);
     });
 }

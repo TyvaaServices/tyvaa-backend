@@ -1,16 +1,16 @@
-import {getMessaging} from "firebase-admin/messaging";
-import createLogger from './../../../utils/logger.js';
+import { getMessaging } from "firebase-admin/messaging";
+import createLogger from "./../../../utils/logger.js";
 
-const logger = createLogger('notification-router');
+const logger = createLogger("notification-router");
 
 async function sendFCM(token, title, body, data) {
     const message = {
-        token: token,
+        token,
         notification: {
-            title: title,
-            body: body,
+            title,
+            body,
         },
-        data: data,
+        data,
         android: {
             priority: "high",
             notification: {
@@ -37,12 +37,12 @@ async function sendFCM(token, title, body, data) {
 
 async function router(fastify, options) {
     fastify.post("/send-notification", async (request, reply) => {
-        const {token, title, body, data} = request.body;
+        const { token, title, body, data } = request.body;
         if (!token || !title || !body) {
-            return reply.status(400).send({error: "Missing required fields"});
+            return reply.status(400).send({ error: "Missing required fields" });
         }
         await sendFCM(token, title, body, data || {});
-        reply.send({status: "Notification sent"});
+        reply.send({ status: "Notification sent" });
     });
 }
 

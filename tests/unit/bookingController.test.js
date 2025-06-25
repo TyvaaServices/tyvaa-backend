@@ -1,5 +1,5 @@
 // tests/unit/bookingController.test.js
-import {beforeEach, describe, expect, it, jest} from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 // --- Mocking bookingFacade.js ---
 const mockGetAllBookings = jest.fn();
@@ -10,20 +10,23 @@ const mockDeleteBooking = jest.fn();
 const mockBookRide = jest.fn();
 const mockCancelBooking = jest.fn();
 
-jest.unstable_mockModule('../../src/modules/booking-module/facades/bookingFacade.js', () => ({
-    __esModule: true,
-    default: {
-        getAllBookings: mockGetAllBookings,
-        getBookingById: mockGetBookingById,
-        createBooking: mockCreateBooking,
-        updateBooking: mockUpdateBooking,
-        deleteBooking: mockDeleteBooking,
-        bookRide: mockBookRide,
-        cancelBooking: mockCancelBooking,
-    },
-}));
+jest.unstable_mockModule(
+    "../../src/modules/booking-module/facades/bookingFacade.js",
+    () => ({
+        __esModule: true,
+        default: {
+            getAllBookings: mockGetAllBookings,
+            getBookingById: mockGetBookingById,
+            createBooking: mockCreateBooking,
+            updateBooking: mockUpdateBooking,
+            deleteBooking: mockDeleteBooking,
+            bookRide: mockBookRide,
+            cancelBooking: mockCancelBooking,
+        },
+    })
+);
 
-describe('Booking Controller (with Facade)', () => {
+describe("Booking Controller (with Facade)", () => {
     let mockRequest;
     let mockReply;
     let bookingController;
@@ -45,12 +48,16 @@ describe('Booking Controller (with Facade)', () => {
         mockDeleteBooking.mockClear();
         mockBookRide.mockClear();
         mockCancelBooking.mockClear();
-        bookingController = (await import('../../src/modules/booking-module/controllers/bookingController.js')).default;
+        bookingController = (
+            await import(
+                "../../src/modules/booking-module/controllers/bookingController.js"
+            )
+        ).default;
     });
 
-    describe('getAllBookings', () => {
-        it('should call facade.getAllBookings and return bookings', async () => {
-            const bookings = [{ id: 1, name: 'Booking 1' }];
+    describe("getAllBookings", () => {
+        it("should call facade.getAllBookings and return bookings", async () => {
+            const bookings = [{ id: 1, name: "Booking 1" }];
             mockGetAllBookings.mockResolvedValue(bookings);
             await bookingController.getAllBookings(mockRequest, mockReply);
             expect(mockGetAllBookings).toHaveBeenCalled();
@@ -58,9 +65,9 @@ describe('Booking Controller (with Facade)', () => {
         });
     });
 
-    describe('getBookingById', () => {
-        it('should call facade.getBookingById and return booking if found', async () => {
-            const booking = { id: 1, name: 'Test Booking' };
+    describe("getBookingById", () => {
+        it("should call facade.getBookingById and return booking if found", async () => {
+            const booking = { id: 1, name: "Test Booking" };
             mockRequest.params.id = 1;
             mockGetBookingById.mockResolvedValue(booking);
             await bookingController.getBookingById(mockRequest, mockReply);
@@ -68,18 +75,20 @@ describe('Booking Controller (with Facade)', () => {
             expect(mockReply.send).toHaveBeenCalledWith(booking);
         });
 
-        it('should return 404 if facade.getBookingById returns null', async () => {
+        it("should return 404 if facade.getBookingById returns null", async () => {
             mockRequest.params.id = 1;
             mockGetBookingById.mockResolvedValue(null);
             await bookingController.getBookingById(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(404);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Booking not found' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Booking not found",
+            });
         });
     });
 
-    describe('createBooking', () => {
-        it('should call facade.createBooking and return 201 with booking', async () => {
-            const newBookingData = { name: 'New Booking' };
+    describe("createBooking", () => {
+        it("should call facade.createBooking and return 201 with booking", async () => {
+            const newBookingData = { name: "New Booking" };
             const createdBooking = { id: 1, ...newBookingData };
             mockRequest.body = newBookingData;
             mockCreateBooking.mockResolvedValue(createdBooking);
@@ -89,56 +98,67 @@ describe('Booking Controller (with Facade)', () => {
             expect(mockReply.send).toHaveBeenCalledWith(createdBooking);
         });
 
-        it('should return 400 if facade.createBooking throws error without statusCode', async () => {
-            mockRequest.body = { name: 'New Booking' };
-            mockCreateBooking.mockRejectedValue(new Error('Facade error'));
+        it("should return 400 if facade.createBooking throws error without statusCode", async () => {
+            mockRequest.body = { name: "New Booking" };
+            mockCreateBooking.mockRejectedValue(new Error("Facade error"));
             await bookingController.createBooking(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(400);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Facade error' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Facade error",
+            });
         });
 
-        it('should return specific statusCode if facade.createBooking throws error with statusCode', async () => {
-            mockRequest.body = { name: 'New Booking' };
-            const facadeError = new Error('Specific facade error');
+        it("should return specific statusCode if facade.createBooking throws error with statusCode", async () => {
+            mockRequest.body = { name: "New Booking" };
+            const facadeError = new Error("Specific facade error");
             facadeError.statusCode = 409;
             mockCreateBooking.mockRejectedValue(facadeError);
             await bookingController.createBooking(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(409);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Specific facade error' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Specific facade error",
+            });
         });
     });
 
-    describe('updateBooking', () => {
-        it('should call facade.updateBooking and return booking', async () => {
-            const bookingUpdateData = { name: 'Updated Booking' };
+    describe("updateBooking", () => {
+        it("should call facade.updateBooking and return booking", async () => {
+            const bookingUpdateData = { name: "Updated Booking" };
             const updatedBooking = { id: 1, ...bookingUpdateData };
             mockRequest.params.id = 1;
             mockRequest.body = bookingUpdateData;
             mockUpdateBooking.mockResolvedValue(updatedBooking);
             await bookingController.updateBooking(mockRequest, mockReply);
-            expect(mockUpdateBooking).toHaveBeenCalledWith(1, bookingUpdateData);
+            expect(mockUpdateBooking).toHaveBeenCalledWith(
+                1,
+                bookingUpdateData
+            );
             expect(mockReply.send).toHaveBeenCalledWith(updatedBooking);
         });
 
-        it('should return 404 if facade.updateBooking returns null', async () => {
+        it("should return 404 if facade.updateBooking returns null", async () => {
             mockRequest.params.id = 1;
             mockUpdateBooking.mockResolvedValue(null);
             await bookingController.updateBooking(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(404);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Booking not found' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Booking not found",
+            });
         });
 
-        it('should handle errors from facade.updateBooking', async () => {
+        it("should handle errors from facade.updateBooking", async () => {
             mockRequest.params.id = 1;
-            mockUpdateBooking.mockRejectedValue(new Error('Update failed'));
+            mockUpdateBooking.mockRejectedValue(new Error("Update failed"));
             await bookingController.updateBooking(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(400);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Update failed' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Update failed",
+            });
         });
     });
 
-    describe('deleteBooking', () => {
-        it('should call facade.deleteBooking and return 204 if successful', async () => {
+    describe("deleteBooking", () => {
+        it("should call facade.deleteBooking and return 204 if successful", async () => {
             mockRequest.params.id = 1;
             mockDeleteBooking.mockResolvedValue(true);
             await bookingController.deleteBooking(mockRequest, mockReply);
@@ -147,18 +167,20 @@ describe('Booking Controller (with Facade)', () => {
             expect(mockReply.send).toHaveBeenCalled();
         });
 
-        it('should return 404 if facade.deleteBooking returns false', async () => {
+        it("should return 404 if facade.deleteBooking returns false", async () => {
             mockRequest.params.id = 1;
             mockDeleteBooking.mockResolvedValue(false);
             await bookingController.deleteBooking(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(404);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Booking not found or could not be deleted' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Booking not found or could not be deleted",
+            });
         });
     });
 
-    describe('bookRide', () => {
+    describe("bookRide", () => {
         const rideData = { userId: 1, rideInstanceId: 10, seatsToBook: 2 };
-        it('should call facade.bookRide and return 201 with booking', async () => {
+        it("should call facade.bookRide and return 201 with booking", async () => {
             const bookingResult = { id: 100, ...rideData };
             mockRequest.body = rideData;
             mockBookRide.mockResolvedValue(bookingResult);
@@ -168,50 +190,63 @@ describe('Booking Controller (with Facade)', () => {
             expect(mockReply.send).toHaveBeenCalledWith(bookingResult);
         });
 
-        it('should return 400 if facade.bookRide throws error without statusCode', async () => {
+        it("should return 400 if facade.bookRide throws error without statusCode", async () => {
             mockRequest.body = rideData;
-            mockBookRide.mockRejectedValue(new Error('Booking ride failed'));
+            mockBookRide.mockRejectedValue(new Error("Booking ride failed"));
             await bookingController.bookRide(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(400);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Booking ride failed' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Booking ride failed",
+            });
         });
 
-        it('should return specific statusCode if facade.bookRide throws error with statusCode', async () => {
+        it("should return specific statusCode if facade.bookRide throws error with statusCode", async () => {
             mockRequest.body = rideData;
-            const facadeError = new Error('User not found by facade');
+            const facadeError = new Error("User not found by facade");
             facadeError.statusCode = 404;
             mockBookRide.mockRejectedValue(facadeError);
             await bookingController.bookRide(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(404);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'User not found by facade' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "User not found by facade",
+            });
         });
     });
 
-    describe('cancelBooking', () => {
-        it('should call facade.cancelBooking and return message and booking', async () => {
-            const bookingId = 'booking123';
-            const cancelledBooking = { id: bookingId, status: 'cancelled' };
+    describe("cancelBooking", () => {
+        it("should call facade.cancelBooking and return message and booking", async () => {
+            const bookingId = "booking123";
+            const cancelledBooking = { id: bookingId, status: "cancelled" };
             mockRequest.params.bookingId = bookingId;
             mockCancelBooking.mockResolvedValue(cancelledBooking);
             await bookingController.cancelBooking(mockRequest, mockReply);
             expect(mockCancelBooking).toHaveBeenCalledWith(bookingId);
-            expect(mockReply.send).toHaveBeenCalledWith({ message: 'Booking cancelled successfully.', booking: cancelledBooking });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                message: "Booking cancelled successfully.",
+                booking: cancelledBooking,
+            });
         });
 
-        it('should return 404 if facade.cancelBooking returns null', async () => {
-            mockRequest.params.bookingId = 'booking123';
+        it("should return 404 if facade.cancelBooking returns null", async () => {
+            mockRequest.params.bookingId = "booking123";
             mockCancelBooking.mockResolvedValue(null);
             await bookingController.cancelBooking(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(404);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Booking not found or already cancelled' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Booking not found or already cancelled",
+            });
         });
 
-        it('should return 400 if facade.cancelBooking throws error', async () => {
-            mockRequest.params.bookingId = 'booking123';
-            mockCancelBooking.mockRejectedValue(new Error('Cancellation via facade failed'));
+        it("should return 400 if facade.cancelBooking throws error", async () => {
+            mockRequest.params.bookingId = "booking123";
+            mockCancelBooking.mockRejectedValue(
+                new Error("Cancellation via facade failed")
+            );
             await bookingController.cancelBooking(mockRequest, mockReply);
             expect(mockReply.code).toHaveBeenCalledWith(400);
-            expect(mockReply.send).toHaveBeenCalledWith({ error: 'Cancellation via facade failed' });
+            expect(mockReply.send).toHaveBeenCalledWith({
+                error: "Cancellation via facade failed",
+            });
         });
     });
 });

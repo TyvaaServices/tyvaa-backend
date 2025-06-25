@@ -1,27 +1,34 @@
-import fp from'fastify-plugin';
-import fastifyJWT from '@fastify/jwt';
+import fp from "fastify-plugin";
+import fastifyJWT from "@fastify/jwt";
+import { AuthenticationError } from "./customErrors.js";
 
 function jwtPlugin(fastify, opts, done) {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+        fastify.log.warn(
+            "JWT_SECRET environment variable is not set. Using a default, insecure secret. THIS IS NOT SUITABLE FOR PRODUCTION."
+        );
+    }
     fastify.register(fastifyJWT, {
-        secret: process.env.JWT_SECRET || 'supersecret',
+        secret: jwtSecret || "supersecret",
     });
 
-    fastify.decorate('authenticate', async function (request, reply) {
+    fastify.decorate("authenticate", async function (request, reply) {
         try {
             await request.jwtVerify();
         } catch (err) {
-            reply.code(401).send({error: 'Unauthorized', message: err.message});
+            request.log.warn(
+                { error: err.message, ip: request.ip },
+                "JWT authentication failed."
+            );
+            throw new AuthenticationError(
+                `Authentication failed: ${err.message}`
+            );
         }
     });
 
-    fastify.decorate('signToken', function (payload, options = {}) {
+    fastify.decorate("signToken", function (payload, options = {}) {
         return this.jwt.sign(payload, options);
-    });
-
-    fastify.decorate('isAdmin', async function (request, reply) {
-        if (!request.user || request.user.role !== 'admin') {
-            return reply.code(403).send({ error: 'Forbidden', message: 'Admin only' });
-        }
     });
 
     done();

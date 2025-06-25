@@ -1,286 +1,236 @@
-import {
-    DriverApplication,
-    DriverProfile,
-    User,
-    PassengerProfile // <-- Added import
-} from "#config/index.js";
-import {userService} from "./../services/userService.js";
+// import { DriverApplication, DriverProfile, User, PassengerProfile } from "#config/index.js"; // REMOVED - Should be handled by service
+import { userService } from "./../services/userService.js";
 import createLogger from "#utils/logger.js";
-
+import { NotFoundError } from "#utils/customErrors.js";
 const logger = createLogger("user-facade");
 
+/**
+ * @file User Facade: Provides a simplified interface to user-related services and operations.
+ * Handles data fetching, aggregation, and error mapping for the controller layer.
+ * @typedef {import('../models/user.js').UserAttributes} UserAttributes
+ * @typedef {import('../models/driverApplication.js').DriverApplicationAttributes} DriverApplicationAttributes
+ * @typedef {import('../models/passengerProfile.js').PassengerProfileAttributes} PassengerProfileAttributes
+ * @typedef {import('../models/driverProfile.js').DriverProfileAttributes} DriverProfileAttributes
+ */
+
 export const userFacade = {
+    /**
+     * Retrieves all driver applications with associated user details.
+     * @returns {Promise<DriverApplicationAttributes[]>}
+     * @throws {AppError} If database query fails.
+     */
     getAllDriverApplications: async () => {
-        try {
-            const result = await DriverApplication.findAll({
-                include: [{
-                    model: PassengerProfile,
-                    as: "passengerProfile",
-                    include: [{model: User, as: "user", attributes: {exclude: ["fcmToken"]}}],
-                }],
-            });
-            logger.info("Fetched all driver applications", { count: result.length });
-            return result;
-        } catch (error) {
-            logger.error("Failed to fetch driver applications", { error: error.message });
-            throw error;
-        }
+        logger.debug(
+            "Facade: Calling service to fetch all driver applications."
+        );
+        return userService.getAllDriverApplications();
     },
 
-    reviewDriverApplication: async (id, status, comments) => {
-        try {
-            const application = await DriverApplication.findByPk(id, {
-                include: [{model: PassengerProfile, as: "passengerProfile"}],
-            });
-            if (!application) {
-                logger.warn("Application not found", { id });
-                return null;
-            }
-            application.status = status;
-            application.comments = comments;
-            await application.save();
-            if (status === "approved" && application.passengerProfile) {
-                const userId = application.passengerProfile.userId;
-                let driver = await DriverProfile.findOne({where: {userId}});
-                if (!driver) {
-                    await DriverProfile.create({userId, statusProfil: "Active"});
-                } else {
-                    driver.statusProfil = "Active";
-                    await driver.save();
-                }
-            }
-            logger.info("Reviewed driver application", { id, status });
-            return application;
-        } catch (error) {
-            logger.error("Failed to review driver application", { id, error: error.message });
-            throw error;
-        }
+    /**
+     * Reviews a driver application, updating its status and potentially creating/activating a driver profile.
+     * @param {string|number} applicationId - The ID of the driver application.
+     * @param {'approved'|'rejected'|'needs_more_info'} status - The new status for the application.
+     * @param {string} [comments] - Optional comments from the reviewer.
+     * @returns {Promise<DriverApplicationAttributes>} The updated driver application.
+     * @throws {NotFoundError} If the application is not found.
+     * @throws {AppError} For other processing errors.
+     */
+    reviewDriverApplication: async (applicationId, status, comments) => {
+        logger.debug(
+            `Facade: Calling service to review driver application ID: ${applicationId}`
+        );
+        return userService.reviewDriverApplication(
+            applicationId,
+            status,
+            comments
+        );
     },
 
+    /**
+     * Retrieves all users.
+     * @returns {Promise<UserAttributes[]>}
+     * @throws {AppError}
+     */
     getAllUsers: async () => {
-        try {
-            const users = await User.findAll();
-            logger.info("Fetched all users", { count: users.length });
-            return users;
-        } catch (error) {
-            logger.error("Failed to fetch users", { error: error.message });
-            throw error;
-        }
+        logger.debug("Facade: Calling service to fetch all users.");
+        return userService.getAllUsers();
     },
 
+    /**
+     * Retrieves a user by ID.
+     * @param {string|number} id - User ID.
+     * @returns {Promise<UserAttributes|null>} User or null if not found.
+     * @throws {AppError}
+     */
     getUserById: async (id) => {
-        try {
-            const user = await User.findByPk(id);
-            if (!user) {
-                logger.warn("User not found", { id });
-                return null;
-            }
-            logger.info("Fetched user by id", { id });
-            return user;
-        } catch (error) {
-            logger.error("Failed to fetch user by id", { id, error: error.message });
-            throw error;
-        }
+        logger.debug(`Facade: Calling service to fetch user by ID: ${id}.`);
+        return userService.getUserById(id);
     },
 
-    requestLoginOtp: async (contact) => {
-        try {
-            const user = await userService.findUserByPhoneOrEmail(contact);
-            if (!user) {
-                logger.warn("User not found for login OTP", { contact });
-                return null;
-            }
-            const otp = await userService.generateAndStoreOtp(contact.phoneNumber || contact.email);
-            logger.info("Generated login OTP", { contact });
-            return {user, otp};
-        } catch (error) {
-            logger.error("Failed to request login OTP", { contact, error: error.message });
-            throw error;
+    /**
+     * Requests an OTP for login.
+     * @param {{phoneNumber?: string, email?: string}} contactDetails - Phone or email.
+     * @returns {Promise<void>}
+     * @throws {NotFoundError} If user not found.
+     * @throws {AppError}
+     */
+    requestLoginOtp: async (contactDetails) => {
+        logger.debug("Requesting login OTP from facade:", contactDetails);
+        const user = await userService.findUserByPhoneOrEmail(contactDetails);
+        if (!user) {
+            throw new NotFoundError("User not registered with these details.");
         }
+        const otp = await userService.generateAndSendOtp(
+            contactDetails.phoneNumber || contactDetails.email,
+            "login"
+        );
+        logger.info(`Login OTP ${otp} request processed for:`, contactDetails);
     },
 
-    login: async ({phoneNumber, email, otp}) => {
-        try {
-            const identifier = email || phoneNumber;
-            const user = await userService.findUserByPhoneOrEmail({email, phoneNumber});
-            if (!user) {
-                logger.warn("User not found for login", { phoneNumber, email });
-                return null;
-            }
-            await userService.verifyOtp(identifier, otp);
-            logger.info("User logged in", { id: user.id });
-            return user;
-        } catch (error) {
-            logger.warn("Login failed", { phoneNumber, email, error: error.message });
-            throw error;
-        }
+    /**
+     * Logs in a user.
+     * @param {{phoneNumber?: string, email?: string, otp: string}} credentials
+     * @returns {Promise<UserAttributes>} Logged-in user.
+     * @throws {AuthenticationError} For invalid credentials or OTP.
+     * @throws {NotFoundError} If user not found.
+     */
+    login: async ({ phoneNumber, email, otp }) => {
+        const identifier = email || phoneNumber;
+        logger.debug(`Facade: Calling service to login user: ${identifier}`);
+        return userService.loginUser(identifier, otp);
     },
 
+    /**
+     * Requests an OTP for registration.
+     * @param {string} phoneNumber
+     * @returns {Promise<void>}
+     * @throws {ConflictError} If user already exists.
+     * @throws {AppError}
+     */
     requestRegisterOtp: async (phoneNumber) => {
-        try {
-            const user = await User.findOne({where: {phoneNumber}});
-            if (user) {
-                logger.warn("User already exists for register OTP", { phoneNumber });
-                return null;
-            }
-            const otp = await userService.generateAndStoreOtp(phoneNumber);
-            logger.info("Generated register OTP", { phoneNumber });
-            return otp;
-        } catch (error) {
-            logger.error("Failed to request register OTP", { phoneNumber, error: error.message });
-            throw error;
-        }
+        logger.debug(
+            `Facade: Calling service to request registration OTP for phone: ${phoneNumber}.`
+        );
+        // The service method will handle ConflictError or proceed to send OTP.
+        return userService.requestRegisterOtp(phoneNumber);
     },
 
+    /**
+     * Creates a new user.
+     * @param {object} userData - Includes OTP and other user details.
+     * @returns {Promise<UserAttributes>} The created user.
+     * @throws {AuthenticationError} If OTP is invalid.
+     * @throws {ConflictError} If user already exists (double check).
+     * @throws {AppError}
+     */
     createUser: async (userData) => {
-        try {
-            await userService.verifyOtp(userData.phoneNumber, userData.otp);
-            const user = await userService.createUserWithProfile(userData);
-            logger.info("User created", { id: user.id });
-            return user;
-        } catch (error) {
-            logger.warn("Failed to create user", { phoneNumber: userData.phoneNumber, error: error.message });
-            throw error;
-        }
+        logger.debug("Creating user from facade with data:", userData);
+        await userService.verifyOtp(
+            userData.phoneNumber,
+            userData.otp,
+            "registration"
+        );
+        const user = await userService.createUserWithProfile(userData);
+        logger.info(`User created successfully with ID: ${user.id}`);
+        return user;
     },
 
-    updateUser: async (id, fields, file) => {
-        try {
-            const user = await User.findByPk(id);
-            if (!user) {
-                logger.warn("User not found for update", { id });
-                return null;
-            }
-            Object.entries(fields).forEach(([key, value]) => {
-                if (key in user) user[key] = value;
-            });
-            if (file?.buffer && file.filename) {
-                user.profileImage = userService.saveProfileImage(file);
-            }
-            await user.save();
-            logger.info("User updated", { id });
-            return user;
-        } catch (error) {
-            logger.error("Failed to update user", { id, error: error.message });
-            throw error;
-        }
+    /**
+     * Updates a user's profile.
+     * @param {string|number} userId
+     * @param {object} fieldsToUpdate - Key-value pairs of fields to update.
+     * @param {object} [fileData] - Optional file data for profile image.
+     * @returns {Promise<UserAttributes>} Updated user.
+     * @throws {NotFoundError}
+     * @throws {AppError}
+     */
+    updateUser: async (userId, fieldsToUpdate, fileData) => {
+        logger.debug(`Facade: Calling service to update user ID: ${userId}.`);
+        return userService.updateUserProfile(userId, fieldsToUpdate, fileData);
     },
 
-    deleteUser: async (id) => {
-        try {
-            const user = await User.findByPk(id);
-            if (!user) {
-                logger.warn("User not found for delete", { id });
-                return false;
-            }
-            await user.destroy();
-            logger.info("User deleted", { id });
-            return true;
-        } catch (error) {
-            logger.error("Failed to delete user", { id, error: error.message });
-            throw error;
-        }
+    /**
+     * Deletes a user.
+     * @param {string|number} userId
+     * @returns {Promise<boolean>} True if deleted.
+     * @throws {NotFoundError}
+     * @throws {AppError}
+     */
+    deleteUser: async (userId) => {
+        logger.debug(`Facade: Calling service to delete user ID: ${userId}.`);
+        return userService.deleteUser(userId);
     },
 
-    updateFcmToken: async (id, fcmToken) => {
-        try {
-            const user = await User.findByPk(id);
-            if (!user) {
-                logger.warn("User not found for FCM token update", { id });
-                return null;
-            }
-            user.fcmToken = fcmToken;
-            await user.save();
-            logger.info("Updated FCM token", { id });
-            return user;
-        } catch (error) {
-            logger.error("Failed to update FCM token", { id, error: error.message });
-            throw error;
-        }
+    /**
+     * Updates FCM token for a user.
+     * @param {string|number} userId
+     * @param {string} fcmToken
+     * @returns {Promise<UserAttributes>} Updated user.
+     * @throws {NotFoundError}
+     */
+    updateFcmToken: async (userId, fcmToken) => {
+        logger.debug(
+            `Facade: Calling service to update FCM token for user ID: ${userId}.`
+        );
+        return userService.updateFcmToken(userId, fcmToken);
     },
 
-    updateLocation: async (id, location) => {
-        try {
-            const user = await User.findByPk(id);
-            if (!user) {
-                logger.warn("User not found for location update", { id });
-                return null;
-            }
-            user.latitude = location.latitude;
-            user.longitude = location.longitude;
-            await user.save();
-            logger.info("Updated user location", { id });
-            return user;
-        } catch (error) {
-            logger.error("Failed to update user location", { id, error: error.message });
-            throw error;
-        }
+    /**
+     * Updates user's location.
+     * @param {string|number} userId
+     * @param {{latitude: number, longitude: number}} location
+     * @returns {Promise<UserAttributes>} Updated user.
+     * @throws {NotFoundError}
+     */
+    updateLocation: async (userId, location) => {
+        logger.debug(
+            `Facade: Calling service to update location for user ID: ${userId}.`
+        );
+        return userService.updateLocation(userId, location);
     },
 
-    submitDriverApplication: async (userId, parts) => {
-        try {
-            const passenger = await userService.findPassengerProfile(userId);
-            if (!passenger) {
-                logger.warn("Passenger profile not found for driver application", { userId });
-                return null;
-            }
-            const existing = await DriverApplication.findOne({
-                where: {userId: passenger.id, status: "pending"},
-            });
-            if (existing) {
-                logger.warn("Pending driver application exists", { userId });
-                return null;
-            }
-            const pdfPath = await userService.savePdfFromParts(parts, userId);
-            const result = await DriverApplication.create({
-                userId: passenger.id,
-                documents: pdfPath,
-            });
-            logger.info("Submitted driver application", { userId });
-            return result;
-        } catch (error) {
-            logger.error("Failed to submit driver application", { userId, error: error.message });
-            throw error;
-        }
+    /**
+     * Submits a driver application.
+     * @param {string|number} userId - ID of the user (who has a passenger profile).
+     * @param {any} partsStream - Multipart stream from Fastify.
+     * @returns {Promise<DriverApplicationAttributes>}
+     * @throws {NotFoundError} If passenger profile not found.
+     * @throws {ConflictError} If pending application exists.
+     * @throws {AppError}
+     */
+    submitDriverApplication: async (userId, partsStream) => {
+        logger.debug(
+            `Facade: Calling service to submit driver application for user ID: ${userId}.`
+        );
+        return userService.processDriverApplicationSubmission(
+            userId,
+            partsStream
+        );
     },
 
+    /**
+     * Gets driver application status for a user.
+     * @param {string|number} userId
+     * @returns {Promise<{status: string, comments: string|null}>}
+     * @throws {NotFoundError} If passenger profile or application not found.
+     */
     getDriverApplicationStatus: async (userId) => {
-        try {
-            const passenger = await userService.findPassengerProfile(userId);
-            if (!passenger) {
-                logger.info("No passenger profile for driver application status", { userId });
-                return {status: "none", comments: null};
-            }
-            const application = await DriverApplication.findOne({
-                where: {userId: passenger.id},
-                order: [["createdAt", "DESC"]],
-            });
-            if (!application) {
-                logger.info("No driver application found", { userId });
-                return {status: "none", comments: null};
-            }
-            logger.info("Fetched driver application status", { userId, status: application.status });
-            return {status: application.status, comments: application.comments || null};
-        } catch (error) {
-            logger.error("Failed to fetch driver application status", { userId, error: error.message });
-            throw error;
-        }
+        logger.debug(
+            `Facade: Calling service to get driver application status for user ID: ${userId}.`
+        );
+        return userService.getDriverApplicationStatus(userId);
     },
 
-    blockUser: async (id) => {
-        try {
-            const user = await User.findByPk(id);
-            if (!user) {
-                logger.warn("User not found for block", { id });
-                return null;
-            }
-            user.isBlocked = true;
-            await user.save();
-            logger.info("Blocked user", { id });
-            return user;
-        } catch (error) {
-            logger.error("Failed to block user", { id, error: error.message });
-            throw error;
-        }
+    /**
+     * Blocks a user.
+     * @param {string|number} userIdToBlock
+     * @returns {Promise<UserAttributes>} Blocked user.
+     * @throws {NotFoundError}
+     */
+    blockUser: async (userIdToBlock) => {
+        logger.debug(
+            `Facade: Calling service to block user ID: ${userIdToBlock}.`
+        );
+        return userService.blockUser(userIdToBlock);
     },
 };

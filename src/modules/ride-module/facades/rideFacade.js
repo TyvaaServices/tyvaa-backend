@@ -1,4 +1,4 @@
-import rideService from '../services/rideService.js';
+import rideService from "../services/rideService.js";
 
 const rideFacade = {
     getAllRides: async () => rideService.getAllRides(),
@@ -9,7 +9,8 @@ const rideFacade = {
     getAllRideInstances: async () => rideService.getAllRideInstances(),
     getRideInstanceById: async (id) => rideService.getRideInstanceById(id),
     createRideInstance: async (data) => rideService.createRideInstance(data),
-    updateRideInstance: async (id, data) => rideService.updateRideInstance(id, data),
+    updateRideInstance: async (id, data) =>
+        rideService.updateRideInstance(id, data),
     deleteRideInstance: async (id) => rideService.deleteRideInstance(id),
     acceptRide: async (id) => rideService.acceptRide(id),
     rejectRide: async (id) => rideService.rejectRide(id),

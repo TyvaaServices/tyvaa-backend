@@ -1,9 +1,9 @@
 {
-  "compilerOptions": {
-    "checkJs": false,
-    "allowJs": true,
-    "moduleResolution": "node",
-    "noEmit": true
-  },
-  "exclude": ["node_modules"]
+    "compilerOptions": {
+        "checkJs": false,
+        "allowJs": true,
+        "moduleResolution": "node",
+        "noEmit": true
+    },
+    "exclude": ["node_modules"]
 }

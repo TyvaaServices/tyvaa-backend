@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
-import {ai} from './../ai-instance.js'; // Adjust the path as necessary;
-import {z} from 'zod';
+import { ai } from "./../ai-instance.js"; // Adjust the path as necessary;
+import { z } from "zod";
 
 const messageSchema = z.object({
     text: z.string(),
@@ -9,12 +9,14 @@ const messageSchema = z.object({
 });
 
 const SupportChatInputSchema = z.object({
-    userQuery: z.string().describe("La question de l'utilisateur concernant l'application."),
-    personality: z.enum(['f', 'm']),
+    userQuery: z
+        .string()
+        .describe("La question de l'utilisateur concernant l'application."),
+    personality: z.enum(["f", "m"]),
     history: z
         .array(
             z.object({
-                text: z.string().min(1, 'Text cannot be empty.'),
+                text: z.string().min(1, "Text cannot be empty."),
                 isUserMessage: z.boolean(),
             })
         )
@@ -26,7 +28,7 @@ const SupportChatOutputSchema = z.object({
 });
 
 const prompt = ai.definePrompt({
-    name: 'supportChatPrompt',
+    name: "supportChatPrompt",
     input: {
         schema: SupportChatInputSchema,
     },
@@ -34,24 +36,29 @@ const prompt = ai.definePrompt({
         schema: SupportChatOutputSchema,
     },
     prompt: (input) => {
-        const {userQuery, personality, history = []} = input;
+        const { userQuery, personality, history = [] } = input;
 
+        const personalityText = personality === "f" ? "Oulyx" : "Chyx";
+        const personalityIntro =
+            personality === "f"
+                ? "Bonjour, je suis Oulyx. Je suis là pour t'aider avec douceur et clarté, même quand la route semble floue."
+                : "Yo, moi c’est Chyx. On ne va pas tourner autour du pot. Je t’explique ce que tu dois savoir, direct au but.";
 
-        const personalityText = personality === 'f' ? 'Oulyx' : 'Chyx';
-        const personalityIntro = personality === 'f'
-            ? "Bonjour, je suis Oulyx. Je suis là pour t'aider avec douceur et clarté, même quand la route semble floue."
-            : "Yo, moi c’est Chyx. On ne va pas tourner autour du pot. Je t’explique ce que tu dois savoir, direct au but.";
+        const personalityStyle =
+            personality === "f"
+                ? "cool, chaleureuse, feminine, drole. Aime expliquer simplement, est comme chyx parfois"
+                : "connaisseur, trop taquin, macho, un peu sec parfois, mais ultra efficace. Parle de façon trop directe, et cache une certaine tendresse sous ses piques. ";
 
-        const personalityStyle = personality === 'f'
-            ? "cool, chaleureuse, feminine, drole. Aime expliquer simplement, est comme chyx parfois"
-            : "connaisseur, trop taquin, macho, un peu sec parfois, mais ultra efficace. Parle de façon trop directe, et cache une certaine tendresse sous ses piques. ";
-
-        const historyText = history.length > 0
-            ? history.map((msg) =>
-                msg.isUser ? `👤 Utilisateur : ${msg.text}` : `🧑‍💻 ${personalityText} : ${msg.text}`
-            ).join('\n')
-            : "Aucun historique fourni.";
-
+        const historyText =
+            history.length > 0
+                ? history
+                      .map((msg) =>
+                          msg.isUser
+                              ? `👤 Utilisateur : ${msg.text}`
+                              : `🧑‍💻 ${personalityText} : ${msg.text}`
+                      )
+                      .join("\n")
+                : "Aucun historique fourni.";
 
         return `
 Tu es **${personalityText}**, un assistant virtuel de l'application **Tyvaa**. Tu es un personnage avec une personnalité unique : ${personalityStyle}
@@ -184,15 +191,18 @@ Ta réponse doit être :
 
 const supportChatFlow = ai.defineFlow(
     {
-        name: 'supportChatFlow',
+        name: "supportChatFlow",
         inputSchema: SupportChatInputSchema,
         outputSchema: SupportChatOutputSchema,
     },
     async (input) => {
-        const {output} = await prompt(input);
-        return output || {
-            response: "Désolé, je n'ai pas pu comprendre votre demande. Peux-tu reformuler ?",
-        };
+        const { output } = await prompt(input);
+        return (
+            output || {
+                response:
+                    "Désolé, je n'ai pas pu comprendre votre demande. Peux-tu reformuler ?",
+            }
+        );
     }
 );
 
@@ -202,4 +212,3 @@ export async function getSupportChatResponse(input) {
     console.log("Response generated:", result);
     return result;
 }
-

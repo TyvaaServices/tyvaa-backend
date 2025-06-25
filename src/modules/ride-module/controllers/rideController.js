@@ -1,4 +1,4 @@
-import rideFacade from '../facades/rideFacade.js';
+import rideFacade from "../facades/rideFacade.js";
 
 const rideController = {
     getAllRides: async (req, reply) => {
@@ -7,7 +7,7 @@ const rideController = {
     },
     getRideById: async (req, reply) => {
         const ride = await rideFacade.getRideById(req.params.id);
-        if (!ride) return reply.code(404).send({error: 'Ride not found'});
+        if (!ride) return reply.code(404).send({ error: "Ride not found" });
         return reply.send(ride);
     },
     createRide: async (req, reply) => {
@@ -16,13 +16,13 @@ const rideController = {
     },
     updateRide: async (req, reply) => {
         const ride = await rideFacade.updateRide(req.params.id, req.body);
-        if (!ride) return reply.code(404).send({error: 'Ride not found'});
+        if (!ride) return reply.code(404).send({ error: "Ride not found" });
         return reply.send(ride);
     },
     deleteRide: async (req, reply) => {
         const deleted = await rideFacade.deleteRide(req.params.id);
-        if (!deleted) return reply.code(404).send({error: 'Ride not found'});
-        return reply.send({message: 'Ride deleted'});
+        if (!deleted) return reply.code(404).send({ error: "Ride not found" });
+        return reply.send({ message: "Ride deleted" });
     },
 
     // RIDE INSTANCE CRUD
@@ -32,7 +32,8 @@ const rideController = {
     },
     getRideInstanceById: async (req, reply) => {
         const instance = await rideFacade.getRideInstanceById(req.params.id);
-        if (!instance) return reply.code(404).send({error: 'RideInstance not found'});
+        if (!instance)
+            return reply.code(404).send({ error: "RideInstance not found" });
         return reply.send(instance);
     },
     createRideInstance: async (req, reply) => {
@@ -40,33 +41,37 @@ const rideController = {
         return reply.code(201).send(instance);
     },
     updateRideInstance: async (req, reply) => {
-        const instance = await rideFacade.updateRideInstance(req.params.id, req.body);
-        if (!instance) return reply.code(404).send({error: 'RideInstance not found'});
+        const instance = await rideFacade.updateRideInstance(
+            req.params.id,
+            req.body
+        );
+        if (!instance)
+            return reply.code(404).send({ error: "RideInstance not found" });
         return reply.send(instance);
     },
     deleteRideInstance: async (req, reply) => {
         const deleted = await rideFacade.deleteRideInstance(req.params.id);
-        if (!deleted) return reply.code(404).send({error: 'RideInstance not found'});
-        return reply.send({message: 'RideInstance deleted'});
+        if (!deleted)
+            return reply.code(404).send({ error: "RideInstance not found" });
+        return reply.send({ message: "RideInstance deleted" });
     },
-
 
     acceptRide: async (req, reply) => {
         const accepted = await rideFacade.acceptRide(req.params.id);
-        if (!accepted) return reply.code(404).send({error: 'Ride not found'});
-        return reply.send({message: 'Ride accepted'});
+        if (!accepted) return reply.code(404).send({ error: "Ride not found" });
+        return reply.send({ message: "Ride accepted" });
     },
     rejectRide: async (req, reply) => {
         const rejected = await rideFacade.rejectRide(req.params.id);
-        if (!rejected) return reply.code(404).send({error: 'Ride not found'});
-        return reply.send({message: 'Ride rejected'});
+        if (!rejected) return reply.code(404).send({ error: "Ride not found" });
+        return reply.send({ message: "Ride rejected" });
     },
     completeRide: async (req, reply) => {
         const completed = await rideFacade.completeRide(req.params.id);
-        if (!completed) return reply.code(404).send({error: 'Ride not found'});
-        return reply.send({message: 'Ride completed'});
+        if (!completed)
+            return reply.code(404).send({ error: "Ride not found" });
+        return reply.send({ message: "Ride completed" });
     },
-
 };
 
 export default rideController;

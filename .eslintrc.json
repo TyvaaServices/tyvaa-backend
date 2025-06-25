@@ -1,0 +1,38 @@
+{
+    "extends": ["standard", "plugin:prettier/recommended"],
+    "plugins": ["prettier"],
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "env": {
+        "es2021": true,
+        "node": true,
+        "jest": true
+    },
+    "rules": {
+        "prettier/prettier": "warn",
+        "no-unused-vars": "warn",
+        "no-console": "warn",
+        "semi": ["warn", "always"],
+        "quotes": [
+            "warn",
+            "double",
+            { "avoidEscape": true, "allowTemplateLiterals": true }
+        ],
+        // Add any project-specific overrides here
+        // For example, if you use a global logger and don't want `no-console` to warn on it:
+        // "no-restricted-globals": ["error", "logger"]
+        "camelcase": "off", // Often API responses or DB columns are not camelCase
+        "no-process-exit": "off", // Allow process.exit in server startup scripts
+        "radix": ["warn", "as-needed"] // Require radix parameter for parseInt only when needed
+    },
+    "ignorePatterns": [
+        "node_modules/",
+        "dist/",
+        "coverage/",
+        "logs/",
+        "infra/",
+        ".github/"
+    ]
+}

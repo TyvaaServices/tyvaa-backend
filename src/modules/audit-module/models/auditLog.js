@@ -1,52 +1,56 @@
-import sequelize from './../../../config/db.js';
-import {DataTypes} from "sequelize";
+import sequelize from "./../../../config/db.js";
+import { DataTypes } from "sequelize";
 
-const AuditLog = sequelize.define('AuditLog', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    entityId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-    },
-    entityType: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    description: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    actionTypeId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    ipAddress: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    timestamp: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-    },
-}, {
-    tableName: 'audit_logs',
-    timestamps: false,
-    indexes: [
-        {
-            fields: ['entityId', 'entityType'],
+const AuditLog = sequelize.define(
+    "AuditLog",
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
         },
-        {
-            name: 'idx_audit_logs_actionTypeId',
-            fields: ['actionTypeId'],
+        entityId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
         },
-        {
-            name: 'idx_audit_logs_entityType_entityId',
-            fields: ['entityType', 'entityId'],
+        entityType: {
+            type: DataTypes.STRING,
+            allowNull: false,
         },
-    ],
-});
+        description: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        actionTypeId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        ipAddress: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        timestamp: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+    },
+    {
+        tableName: "audit_logs",
+        timestamps: false,
+        indexes: [
+            {
+                fields: ["entityId", "entityType"],
+            },
+            {
+                name: "idx_audit_logs_actionTypeId",
+                fields: ["actionTypeId"],
+            },
+            {
+                name: "idx_audit_logs_entityType_entityId",
+                fields: ["entityType", "entityId"],
+            },
+        ],
+    }
+);
 
 export default AuditLog;
