@@ -1,10 +1,6 @@
 import { userFacade } from "./../facades/userFacade.js";
 import createLogger from "#utils/logger.js";
-import {
-    NotFoundError,
-    BadRequestError,
-    AuthenticationError,
-} from "#utils/customErrors.js";
+import { NotFoundError, BadRequestError } from "#utils/customErrors.js";
 
 /**
  * @file User controller for handling regular user operations and driver applications.

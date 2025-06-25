@@ -7,9 +7,9 @@ async function userRoutes(fastify, opts) {
         "/users",
         {
             preValidation: [
-                fastify.authenticate,
-                fastify.checkRole("CHAUFFEUR"),
-                fastify.checkPermission("publier_trajet"),
+                // fastify.authenticate,
+                // fastify.checkRole("CHAUFFEUR"),
+                // fastify.checkPermission("publier_trajet"),
             ],
         },
         userController.getAllUsers
@@ -39,8 +39,6 @@ async function userRoutes(fastify, opts) {
     );
     fastify.get(
         "/admin/driver-applications",
-        // Assuming 'voir_candidatures' is appropriate.
-        // SUPERVISEUR or ADMINISTRATEUR should have this.
         {
             preValidation: [
                 fastify.authenticate,
@@ -51,8 +49,6 @@ async function userRoutes(fastify, opts) {
     );
     fastify.patch(
         "/admin/driver-applications/:id/review",
-        // Assuming 'valider_candidature' is the correct permission.
-        // SUPERVISEUR or ADMINISTRATEUR should have this.
         {
             preValidation: [
                 fastify.authenticate,
@@ -62,11 +58,8 @@ async function userRoutes(fastify, opts) {
         userController.reviewDriverApplication
     );
 
-    // --- RBAC Admin Routes ---
-    // Import admin controller functions
     const adminCtrl = await import("../controllers/adminController.js");
 
-    // Role Management
     fastify.post(
         "/admin/roles",
         {
@@ -108,8 +101,6 @@ async function userRoutes(fastify, opts) {
         adminCtrl.deleteRole
     );
 
-    // Permission Management
-    // Typically, managing permissions themselves is a very high-level admin task.
     fastify.post(
         "/admin/permissions",
         {
@@ -153,7 +144,6 @@ async function userRoutes(fastify, opts) {
         adminCtrl.removePermissionFromRole
     );
 
-    // User-Role Assignment
     fastify.get(
         "/admin/users/:userId/roles",
         {

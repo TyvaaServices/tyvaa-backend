@@ -12,7 +12,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Define mocks at the top level so they can be referenced by jest.unstable_mockModule
 const mockPinoInstanceMethods = {
     info: jest.fn(),
     error: jest.fn(),
@@ -37,7 +36,6 @@ describe("createLogger", () => {
         originalNodeEnv = process.env.NODE_ENV;
         originalLogLevel = process.env.LOG_LEVEL;
 
-        // Clear calls for all mocks before each test
         mockPinoConstructor.mockClear();
         mockPinoConstructor.destination.mockClear();
         mockPinoConstructor.transport.mockClear();
@@ -55,7 +53,7 @@ describe("createLogger", () => {
         } else {
             process.env.LOG_LEVEL = originalLogLevel;
         }
-        jest.resetModules(); // Reset modules after each test to ensure clean state for next one
+        jest.resetModules();
     });
 
     async function setupMocksAndImportLogger() {
@@ -79,8 +77,6 @@ describe("createLogger", () => {
     it("should create logs directory if it does not exist", async () => {
         mockFsExistsSync.mockReturnValue(false); // Simulate directory does not exist
         const createLogger = await setupMocksAndImportLogger();
-        // The directory creation happens at module load time, so calling createLogger() isn't strictly necessary
-        // but the import itself triggers it. We can call it to make the test intent clearer.
         createLogger("any-service");
         const expectedLogDir = path.resolve(__dirname, "..", "..", "logs");
         expect(mockFsExistsSync).toHaveBeenCalledWith(expectedLogDir);
@@ -207,7 +203,7 @@ describe("createLogger", () => {
         const expectedLogPath = path.join(
             path.resolve(__dirname, "..", "..", "logs"),
             "my_service____________.log"
-        ); // Corrected to 12 underscores
+        );
         expect(mockPinoConstructor.destination).toHaveBeenCalledWith(
             expect.objectContaining({
                 dest: expectedLogPath,

@@ -220,7 +220,6 @@ export const userService = {
      * @throws {AppError} For update errors or invalid file type.
      */
     updateUserProfile: async (userId, fieldsToUpdate, fileData) => {
-        // Changed userInstance to userId
         logger.info(`Service: Updating profile for User ID: ${userId}`);
         const userInstance = await User.findByPk(userId); // Fetch user
         if (!userInstance) {
@@ -229,7 +228,6 @@ export const userService = {
             );
         }
 
-        // Whitelist updatable fields to prevent mass assignment vulnerabilities
         const allowedFields = ["fullName", "email", "sexe", "dateOfBirth"]; // Add other fields as necessary
         for (const key in fieldsToUpdate) {
             if (

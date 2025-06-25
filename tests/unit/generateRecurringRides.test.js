@@ -73,17 +73,14 @@ describe("generateRecurringRides", () => {
             isRecurring: true,
             status: "active",
             recurrence,
-            time: "10:00:00", // Add time to prevent other warnings
+            time: "10:00:00",
         };
         mockFindAll.mockResolvedValueOnce([ride]);
         await generateRecurringRides();
 
-        // For empty array, the specific log in the main loop is hit
-        // For null recurrence, it's the same.
         expect(mockLogger.warn).toHaveBeenCalledWith(
             `Skipping RideModel ID ${rideId}: Invalid or empty recurrence array.`
         );
-        // shouldGenerateInstanceForDate would return false, so create is not called.
         expect(mockCreate).not.toHaveBeenCalled();
     });
 
@@ -98,13 +95,12 @@ describe("generateRecurringRides", () => {
         };
         mockFindAll.mockResolvedValueOnce([ride]);
 
-        // Mock today as Tuesday
-        const today = new Date(); // Use real today for simplicity in date setup
-        const currentDay = today.getDay(); // 0 for Sunday, 1 for Monday, ..., 6 for Saturday
-        const daysUntilTuesday = (2 - currentDay + 7) % 7; // Calculate days until next Tuesday (or today if it's Tuesday)
+        const today = new Date();
+        const currentDay = today.getDay();
+        const daysUntilTuesday = (2 - currentDay + 7) % 7;
         const tuesday = new Date(today);
         tuesday.setDate(today.getDate() + daysUntilTuesday);
-        tuesday.setHours(0, 0, 0, 0); // Normalize for date comparison
+        tuesday.setHours(0, 0, 0, 0);
 
         const OriginalDate = global.Date;
         global.Date = jest.fn((...args) => {
@@ -121,7 +117,6 @@ describe("generateRecurringRides", () => {
             `RideModel ID ${ride.id} has no departure time specified. Defaulting to midnight for instance generation on ${tuesday.toISOString().split("T")[0]}.`
         );
 
-        // Check the first call to mockCreate
         expect(mockCreate).toHaveBeenCalledTimes(
             RIDE_INSTANCE_GENERATION_LOOKAHEAD_DAYS + 1 >= daysUntilTuesday + 7
                 ? 3
@@ -132,8 +127,7 @@ describe("generateRecurringRides", () => {
                       daysUntilTuesday - 7
                     ? 1
                     : 0
-        ); // Adjust based on lookahead
-
+        );
         if (mockCreate.mock.calls.length > 0) {
             expect(mockCreate.mock.calls[0][0]).toEqual(
                 expect.objectContaining({
@@ -149,14 +143,11 @@ describe("generateRecurringRides", () => {
             expect(createdDateArg.getMinutes()).toBe(0);
             expect(createdDateArg.getSeconds()).toBe(0);
         } else {
-            // This case might occur if lookahead is too short, ensure test setup reflects this possibility
-            // or the test needs to assert mockCreate was NOT called if that's expected.
-            // For this specific test, we expect it to be called at least once.
             throw new Error(
                 "mockCreate was not called, check test setup for date mocking and lookahead logic."
             );
         }
-        global.Date = OriginalDate; // Restore
+        global.Date = OriginalDate;
     });
 
     it("logs error if RideInstance.create fails but continues processing", async () => {
@@ -169,7 +160,6 @@ describe("generateRecurringRides", () => {
             seatsAvailable: 2,
         };
         const ride2 = {
-            // Add a second ride to ensure processing continues
             id: 6,
             isRecurring: true,
             status: "active",
@@ -197,12 +187,10 @@ describe("generateRecurringRides", () => {
         mockCreate
             .mockImplementationOnce(async () => {
                 throw creationError;
-            }) // Fail for ride1's first instance
-            .mockResolvedValue({}); // Succeed for subsequent or ride2's instances
-
+            })
+            .mockResolvedValue({});
         await generateRecurringRides();
 
-        // Calculate how many Wednesdays are in the lookahead period starting from the mocked 'wednesday'
         let expectedCreateCalls = 0;
         for (let i = 0; i <= RIDE_INSTANCE_GENERATION_LOOKAHEAD_DAYS; i++) {
             const date = new OriginalDate(wednesday);
@@ -212,10 +200,6 @@ describe("generateRecurringRides", () => {
                 expectedCreateCalls += 2; // For ride1 and ride2
             }
         }
-        // If RIDE_INSTANCE_GENERATION_LOOKAHEAD_DAYS is small, it might be less.
-        // This is a simplification; actual calls depend on how many Wednesdays are in the window.
-        // For robustness, we check that it's called for ride1 (fails) and ride2 (succeeds for its first instance).
-        // The important part is that it attempts for both.
         expect(mockCreate.mock.calls.length).toBeGreaterThanOrEqual(2);
 
         const wednesdayAt12 = new OriginalDate(wednesday);
@@ -232,7 +216,6 @@ describe("generateRecurringRides", () => {
         global.Date = OriginalDate; // Restore
     });
 
-    // Helper constant for lookahead days, to make tests more readable
     const RIDE_INSTANCE_GENERATION_LOOKAHEAD_DAYS = parseInt(
         process.env.RIDE_LOOKAHEAD_DAYS || "14",
         10
@@ -303,14 +286,12 @@ describe("generateRecurringRides", () => {
         global.Date = jest.fn((...args) => {
             callCount++;
             if (callCount > 1 && args.length > 0) {
-                // Throw on 'new Date(today)' inside the loop
                 throw dateError;
             }
             if (args.length === 0 && callCount === 1) {
-                // First call for 'today'
-                return new OriginalDate(); // Real date for 'today'
+                return new OriginalDate();
             }
-            return new OriginalDate(...args); // Other calls
+            return new OriginalDate(...args);
         });
 
         await expect(generateRecurringRides()).rejects.toThrow(dateError);
@@ -329,7 +310,7 @@ describe("generateRecurringRides", () => {
         expect(mockLogger.info).toHaveBeenCalledWith(
             "No active recurring ride models found. Exiting job."
         );
-        expect(mockCreate).not.toHaveBeenCalled(); // Ensure no attempt to create instances
+        expect(mockCreate).not.toHaveBeenCalled();
     });
 
     afterAll(async () => {

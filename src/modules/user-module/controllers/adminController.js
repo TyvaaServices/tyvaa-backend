@@ -1,10 +1,8 @@
-// src/modules/user-module/controllers/adminController.js
 import User from "../models/user.js";
 import Role from "../models/role.js";
 import Permission from "../models/permission.js";
 import sequelize from "#config/db.js"; // For transactions if needed
 
-// --- Role Management ---
 export const createRole = async (request, reply) => {
     try {
         const { name } = request.body;
@@ -60,8 +58,6 @@ export const getRoleById = async (request, reply) => {
 };
 
 export const deleteRole = async (request, reply) => {
-    // Note: Consider implications of deleting a role that's in use.
-    // Maybe prevent deletion if users are assigned, or unassign them first.
     const transaction = await sequelize.transaction();
     try {
         const roleId = request.params.roleId;
@@ -71,7 +67,6 @@ export const deleteRole = async (request, reply) => {
             return reply.status(404).send({ message: "Role not found." });
         }
 
-        // Check if any users are assigned this role
         const usersWithRole = await role.getUsers({ transaction }); // getUsers is a Sequelize mixin
         if (usersWithRole.length > 0) {
             await transaction.rollback();
@@ -93,7 +88,6 @@ export const deleteRole = async (request, reply) => {
     }
 };
 
-// --- Permission Management ---
 export const createPermission = async (request, reply) => {
     try {
         const { name, description } = request.body;
@@ -132,7 +126,6 @@ export const getAllPermissions = async (request, reply) => {
     }
 };
 
-// --- Role-Permission Assignment ---
 export const assignPermissionToRole = async (request, reply) => {
     try {
         const { roleId, permissionId } = request.params;
@@ -144,7 +137,7 @@ export const assignPermissionToRole = async (request, reply) => {
         if (!permission)
             return reply.status(404).send({ message: "Permission not found." });
 
-        await role.addPermission(permission); // addPermission is a Sequelize mixin
+        await role.addPermission(permission);
         return reply.status(200).send({
             message: `Permission '${permission.name}' assigned to role '${role.name}'.`,
         });
@@ -179,7 +172,6 @@ export const removePermissionFromRole = async (request, reply) => {
     }
 };
 
-// --- User-Role Assignment ---
 export const assignRoleToUser = async (request, reply) => {
     try {
         const { userId, roleId } = request.params;
@@ -191,7 +183,7 @@ export const assignRoleToUser = async (request, reply) => {
         if (!role)
             return reply.status(404).send({ message: "Role not found." });
 
-        await user.addRole(role); // addRole is a Sequelize mixin
+        await user.addRole(role);
         return reply.status(200).send({
             message: `Role '${role.name}' assigned to user ID ${user.id}.`,
         });
@@ -234,7 +226,7 @@ export const getUserRoles = async (request, reply) => {
         if (!user) {
             return reply.status(404).send({ message: "User not found." });
         }
-        return reply.send(user.Roles); // user.Roles will be populated by the include
+        return reply.send(user.Roles);
     } catch (error) {
         request.log.error(error, "Error fetching user roles");
         return reply

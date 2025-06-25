@@ -1,4 +1,3 @@
-// import { DriverApplication, DriverProfile, User, PassengerProfile } from "#config/index.js"; // REMOVED - Should be handled by service
 import { userService } from "./../services/userService.js";
 import createLogger from "#utils/logger.js";
 import { NotFoundError } from "#utils/customErrors.js";

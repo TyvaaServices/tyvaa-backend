@@ -7,7 +7,7 @@ import {
     NotFoundError,
     ConflictError,
     InternalServerError,
-} from "../../src/utils/customErrors.js";
+} from "#utils/customErrors.js";
 
 describe("Custom Errors", () => {
     describe("AppError", () => {

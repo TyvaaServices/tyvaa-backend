@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import rbacPluginFp from "../../src/utils/rbacPlugin.js";
 import User from "../../src/modules/user-module/models/user.js";
-import Role from "../../src/modules/user-module/models/role.js";
-import Permission from "../../src/modules/user-module/models/permission.js";
-
 jest.mock("../../src/modules/user-module/models/user.js");
 jest.mock("../../src/modules/user-module/models/role.js");
 jest.mock("../../src/modules/user-module/models/permission.js");
@@ -17,7 +14,6 @@ describe("RBAC Plugin", () => {
     let mockUserInstance;
 
     beforeEach(async () => {
-        // Make this async
         mockUserInstance = {
             id: 1,
             hasPermission: jest.fn(),
@@ -37,7 +33,6 @@ describe("RBAC Plugin", () => {
                     checkRoleHandler = func("test_role");
                 }
             }),
-            // Remove models property, inject User directly
         };
 
         mockRequest = {
@@ -52,7 +47,6 @@ describe("RBAC Plugin", () => {
             status: jest.fn().mockReturnThis(),
             send: jest.fn(),
         };
-        // Mock User globally
         User.findByPk = jest.fn().mockResolvedValue(mockUserInstance);
 
         await rbacPluginFp(mockFastify, {});
@@ -83,7 +77,6 @@ describe("RBAC Plugin", () => {
         });
 
         it("should return 500 if User model not found on fastify.models", async () => {
-            // Simulate User model not registered by mocking User.findByPk as not a function
             Object.defineProperty(User, "findByPk", {
                 value: undefined,
                 configurable: true,

@@ -10,7 +10,6 @@ async function rideRoutes(fastify, opts) {
     fastify.post("/rides/:id/reject", rideController.rejectRide);
     fastify.post("/rides/:id/complete", rideController.completeRide);
 
-    // RideInstance CRUD
     fastify.get("/ride-instances", rideController.getAllRideInstances);
     fastify.get("/ride-instances/:id", rideController.getRideInstanceById);
     fastify.post("/ride-instances", rideController.createRideInstance);

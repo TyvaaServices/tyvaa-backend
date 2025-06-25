@@ -1,4 +1,3 @@
-// src/seeders/rbacSeeder.js
 import sequelize from "#config/db.js";
 import User from "../src/modules/user-module/models/user.js"; // Needed for context if we assign default roles
 import Role from "../src/modules/user-module/models/role.js";
@@ -116,8 +115,9 @@ const rolePermissionsData = {
         "voir_candidatures",
         "acceder_journal_audit_superviseur",
     ],
+
+    // Admin gets all permissions
     ADMINISTRATEUR: [
-        // Admin gets all permissions
         "reserver_trajet",
         "annuler_reservation",
         "voir_reservation",
@@ -256,4 +256,4 @@ if (
         });
 }
 
-export { seedDatabase }; // Export if you want to call it from elsewhere, e.g. app startup for dev
+export { seedDatabase };

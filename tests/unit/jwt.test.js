@@ -63,8 +63,7 @@ describe("jwt plugin", () => {
         mockDecorate.mockImplementation((name, fn) => {
             if (name === "authenticate") authFn = fn;
         });
-        jwtPlugin(fastify, {}, () => {}); // Initialize plugin to get authFn
-
+        jwtPlugin(fastify, {}, () => {});
         const error = new Error("JWT verification failed"); // More specific error message
         const request = {
             jwtVerify: jest.fn().mockRejectedValue(error),
@@ -74,11 +73,10 @@ describe("jwt plugin", () => {
                 info: jest.fn(),
                 debug: jest.fn(),
             },
-            ip: "127.0.0.1", // Add ip to request for the log
+            ip: "127.0.0.1",
         };
         const reply = { code: jest.fn().mockReturnThis(), send: jest.fn() };
 
-        // Import the actual AuthenticationError to check its type
         const { AuthenticationError: ActualAuthenticationError } = await import(
             "../../src/utils/customErrors.js"
         );
@@ -87,7 +85,7 @@ describe("jwt plugin", () => {
             await authFn.call(fastify, request, reply);
             throw new Error(
                 "Test failed: authenticate should have thrown AuthenticationError."
-            ); // Should not reach here
+            );
         } catch (e) {
             expect(e).toBeInstanceOf(ActualAuthenticationError);
             expect(e.message).toBe(`Authentication failed: ${error.message}`);
@@ -123,7 +121,7 @@ describe("jwt plugin", () => {
             "JWT_SECRET environment variable is not set. Using a default, insecure secret. THIS IS NOT SUITABLE FOR PRODUCTION."
         );
 
-        process.env.JWT_SECRET = originalSecret; // Restore
+        process.env.JWT_SECRET = originalSecret;
         expect(done).toHaveBeenCalled();
     });
 

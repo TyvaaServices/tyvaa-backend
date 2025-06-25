@@ -3,7 +3,7 @@ import AuditAction from "./../models/actionType.js";
 import RedisCache from "#utils/redisCache.js";
 import createLogger from "#utils/logger.js";
 const logger = createLogger("auditService");
-const ACTION_CACHE_TTL = 86400; // 1 day
+const ACTION_CACHE_TTL = 86400;
 
 async function getActionTypeId(action) {
     const cacheKey = `audit:actionTypeId:${action}`;

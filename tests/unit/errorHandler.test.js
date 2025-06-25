@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import errorHandlerPlugin from "../../src/utils/errorHandler.js";
 
-// Mock AppError and its subclass, and mock the import in the plugin
 const mockAppError = class AppError extends Error {
     constructor(message, statusCode = 500, details) {
         super(message);

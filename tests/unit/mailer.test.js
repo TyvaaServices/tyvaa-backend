@@ -8,14 +8,12 @@ import {
     afterAll,
 } from "@jest/globals";
 
-// Mock the logger at the top level
 const mockLoggerError = jest.fn();
 const mockLoggerWarn = jest.fn();
 const mockLoggerInfo = jest.fn();
 jest.unstable_mockModule("../../src/utils/logger.js", () => ({
     __esModule: true,
     default: jest.fn(() => ({
-        // Factory function for createLogger
         error: mockLoggerError,
         warn: mockLoggerWarn,
         info: mockLoggerInfo,
@@ -26,22 +24,19 @@ describe("Mailer Utility", () => {
     let originalEnv;
 
     beforeEach(() => {
-        // Backup original process.env
         originalEnv = { ...process.env };
-        // Reset mocks for logger and nodemailer before each test
         mockLoggerError.mockClear();
         mockLoggerWarn.mockClear();
         mockLoggerInfo.mockClear();
-        jest.resetModules(); // This is key to re-evaluate mailer.js
+        jest.resetModules();
     });
 
     afterEach(() => {
-        // Restore original process.env
         process.env = originalEnv;
     });
 
     afterAll(() => {
-        jest.clearAllMocks(); // General cleanup
+        jest.clearAllMocks();
     });
 
     const setupNodemailerMock = (
@@ -65,8 +60,6 @@ describe("Mailer Utility", () => {
         process.env.SMTP_PORT = "587";
         process.env.SMTP_USER = "user";
         process.env.SMTP_PASS = "pass";
-        // SMTP_SECURE is not set, defaults based on port 587 should be secure: false
-
         const { mockCreateTransport, mockVerify } = setupNodemailerMock();
         const mailerModule = await import("../../src/utils/mailer.js");
 
@@ -88,8 +81,6 @@ describe("Mailer Utility", () => {
         process.env.SMTP_PORT = "465";
         process.env.SMTP_USER = "user";
         process.env.SMTP_PASS = "pass";
-        // SMTP_SECURE is not set, defaults based on port 465 should be secure: true
-
         const { mockCreateTransport } = setupNodemailerMock();
         await import("../../src/utils/mailer.js");
 
@@ -103,7 +94,7 @@ describe("Mailer Utility", () => {
 
     it("should use SMTP_SECURE='true' when set, overriding port-based default", async () => {
         process.env.SMTP_HOST = "smtp.example.com";
-        process.env.SMTP_PORT = "587"; // Typically non-secure port
+        process.env.SMTP_PORT = "587";
         process.env.SMTP_USER = "user";
         process.env.SMTP_PASS = "pass";
         process.env.SMTP_SECURE = "true";
@@ -139,9 +130,6 @@ describe("Mailer Utility", () => {
 
     it("should log a warning and set transporter to null if SMTP env vars are incomplete", async () => {
         process.env.SMTP_HOST = "smtp.example.com";
-        // Missing SMTP_USER and SMTP_PASS
-
-        // Nodemailer mock is not strictly necessary here as createTransport shouldn't be called
         setupNodemailerMock();
         const mailerModule = await import("../../src/utils/mailer.js");
 
@@ -178,7 +166,6 @@ describe("Mailer Utility", () => {
 
         const createTransportError = new Error("Create transport failed");
         jest.unstable_mockModule("nodemailer", () => ({
-            // Override the helper
             __esModule: true,
             default: {
                 createTransport: jest.fn(() => {
@@ -199,14 +186,13 @@ describe("Mailer Utility", () => {
         process.env.SMTP_HOST = "smtp.example.com";
         process.env.SMTP_USER = "user";
         process.env.SMTP_PASS = "pass";
-        // SMTP_PORT not set, SMTP_SECURE not 'false' -> port 465, secure true
 
         const { mockCreateTransport } = setupNodemailerMock();
         await import("../../src/utils/mailer.js");
 
         expect(mockCreateTransport).toHaveBeenCalledWith(
             expect.objectContaining({
-                port: 465, // Default for secure
+                port: 465,
                 secure: true,
             })
         );
@@ -217,8 +203,6 @@ describe("Mailer Utility", () => {
         process.env.SMTP_USER = "user";
         process.env.SMTP_PASS = "pass";
         process.env.SMTP_SECURE = "false";
-        // SMTP_PORT not set, SMTP_SECURE is 'false' -> port 587, secure false
-
         const { mockCreateTransport } = setupNodemailerMock();
         await import("../../src/utils/mailer.js");
 

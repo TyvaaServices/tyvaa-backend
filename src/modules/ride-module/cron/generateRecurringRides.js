@@ -13,8 +13,6 @@ const DAYS_OF_WEEK = [
     "Saturday",
 ];
 
-// Configuration: How many days into the future to generate ride instances.
-// Could be made an environment variable for more flexibility.
 const RIDE_INSTANCE_GENERATION_LOOKAHEAD_DAYS = parseInt(
     process.env.RIDE_LOOKAHEAD_DAYS || "14",
     10
@@ -38,7 +36,7 @@ async function getActiveRecurringRideModels() {
     return RideModel.findAll({
         where: {
             isRecurring: true,
-            status: "active", // Only consider active ride templates
+            status: "active",
         },
     });
 }
@@ -201,8 +199,6 @@ async function generateRecurringRideInstances() {
                 if (shouldGenerateInstanceForDate(rideModel, date)) {
                     const instanceDepartureDateTime =
                         buildInstanceDepartureDateTime(rideModel, date);
-                    // No await here, let them run in parallel for different ride models on different dates
-                    // but be careful with DB connection limits if many. For now, sequential for safety.
                     await createRideInstanceIfNotExists(
                         rideModel,
                         instanceDepartureDateTime
@@ -218,8 +214,6 @@ async function generateRecurringRideInstances() {
             "Critical error during recurring ride instance generation job:",
             error
         );
-        // Depending on setup, this might re-throw to be caught by a higher-level cron manager
-        // or just log and allow next cron run. For now, re-throwing.
         throw error;
     }
 }
