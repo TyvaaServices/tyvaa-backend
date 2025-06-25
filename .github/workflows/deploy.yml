@@ -67,7 +67,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t backend-tyvaa:latest .
+        run: docker build -t ${{ secrets.DOCKER_HUB_USER }}/backend-tyvaa:latest .
+
+      - name: Log in to Docker Hub
+        run: echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_HUB_USER }}/backend-tyvaa:latest
 
   # Deployment is currently disabled. To enable, uncomment the section below.
   # deploy:
@@ -119,3 +125,4 @@ jobs:
   #     - name: Terraform Apply
   #       working-directory: ./infra
   #       run: terraform apply -auto-approve -var="database_url=${{ secrets.DATABASE_URL }}"
+
