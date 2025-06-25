@@ -52,7 +52,6 @@ const chatSchema = {
 export default async function (fastify, opts) {
     fastify.post('/chatbot', {schema: chatSchema}, async (request, reply) => {
         try {
-            // Validate input schema manually
             const validationResult = ChatRequestSchema.safeParse(request.body);
 
             if (!validationResult.success) {

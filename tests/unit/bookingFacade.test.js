@@ -1,5 +1,4 @@
-// --- Prevent Sequelize from connecting to a real DB during tests ---
-import { beforeEach, describe, jest } from '@jest/globals';
+import {beforeAll, beforeEach, describe, expect, it, jest} from '@jest/globals';
 
 jest.mock('sequelize', () => {
     const ActualSequelize = jest.requireActual('sequelize');
@@ -8,7 +7,6 @@ jest.mock('sequelize', () => {
     }
     return { ...ActualSequelize, Sequelize: SequelizeMock };
 });
-// --- Mock BookingModel and related models to prevent Sequelize DB calls ---
 jest.mock('../../src/modules/booking-module/models/booking.js', () => ({
     __esModule: true,
     default: { findByPk: jest.fn(), create: jest.fn(), update: jest.fn(), destroy: jest.fn() },
@@ -21,7 +19,6 @@ jest.mock('../../src/modules/user-module/models/user.js', () => ({
     __esModule: true,
     default: { findByPk: jest.fn(), create: jest.fn(), update: jest.fn(), destroy: jest.fn() },
 }));
-// --- Mock bookingService to prevent real DB logic if imported anywhere ---
 const mockGetAllBookings = jest.fn();
 const mockGetBookingById = jest.fn();
 const mockCreateBooking = jest.fn();
@@ -37,7 +34,6 @@ jest.unstable_mockModule('../../src/modules/booking-module/services/bookingServi
     default: {
         getAllBookings: mockGetAllBookings,
         getBookingById: mockGetBookingById,
-        createBooking: mockCreateBooking,
         updateBooking: mockUpdateBooking,
         deleteBooking: mockDeleteBooking,
         bookRide: mockBookRide,
@@ -50,10 +46,8 @@ jest.unstable_mockModule('../../src/config/index.js', () => ({
     RideInstance: { findByPk: mockRideInstanceFindByPk },
 }));
 
-// --- Patch global RideInstance for legacy service code expecting it as a global ---
 global.RideInstance = { findByPk: mockRideInstanceFindByPk };
 
-// tests/unit/bookingFacade.test.js
 let bookingFacade;
 beforeAll(async () => {
     bookingFacade = (await import('../../src/modules/booking-module/facades/bookingFacade.js')).default;
@@ -61,11 +55,9 @@ beforeAll(async () => {
 
 describe('Booking Facade', () => {
     beforeEach(() => {
-        // Reset model mocks first
         mockUserFindByPk.mockReset();
         mockRideInstanceFindByPk.mockReset();
 
-        // Clear all service mocks
         mockGetAllBookings.mockClear();
         mockGetBookingById.mockClear();
         mockCreateBooking.mockClear();
@@ -105,13 +97,16 @@ describe('Booking Facade', () => {
         it('should call bookingService.createBooking with data and return its result', async () => {
             const bookingData = { details: 'New Booking Data' };
             const mockCreatedBooking = { id: '2', ...bookingData };
-            mockCreateBooking.mockResolvedValue(mockCreatedBooking);
+            mockBookRide.mockResolvedValue(mockCreatedBooking);
+
             const result = await bookingFacade.createBooking(bookingData);
-            expect(mockCreateBooking).toHaveBeenCalledWith(bookingData);
+            expect(mockBookRide).toHaveBeenCalledWith(bookingData);
             expect(result).toEqual(mockCreatedBooking);
         });
-         it('should propagate errors from bookingService.createBooking', async () => {
-            mockCreateBooking.mockRejectedValue(new Error('Service creation failed'));
+
+        it('should propagate errors from bookingService.createBooking', async () => {
+            mockBookRide.mockRejectedValue(new Error('Service creation failed')); // ✅ FIXED
+
             await expect(bookingFacade.createBooking({})).rejects.toThrow('Service creation failed');
         });
     });
@@ -153,8 +148,8 @@ describe('Booking Facade', () => {
 
         it('should fetch user and rideInstance, then call bookingService.bookRide', async () => {
             const mockBookingResult = { id: 'b1', ...bookRideData };
-            mockUserFindByPk.mockResolvedValue(mockUser); // Use the specific mock fn
-            mockRideInstanceFindByPk.mockResolvedValue(mockRideInstance); // Use the specific mock fn
+            mockUserFindByPk.mockResolvedValue(mockUser);
+            mockRideInstanceFindByPk.mockResolvedValue(mockRideInstance);
             mockBookRide.mockResolvedValue(mockBookingResult);
 
             const result = await bookingFacade.bookRide(bookRideData);

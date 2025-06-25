@@ -1,4 +1,4 @@
-import {jest, describe, it, expect, beforeEach, beforeAll} from '@jest/globals';
+import {jest, describe, it, expect, beforeEach, beforeAll, afterAll} from '@jest/globals';
 
 const mockFindAll = jest.fn();
 const mockFindOne = jest.fn();
@@ -38,7 +38,6 @@ describe('generateRecurringRides', () => {
       seatsAvailable: 3,
     };
     mockFindAll.mockResolvedValueOnce([ride]);
-    // Mock today as Monday
     const today = new Date();
     today.setDate(today.getDate() - today.getDay()); // set to Sunday, then +1 for Monday
     const monday = new Date(today);

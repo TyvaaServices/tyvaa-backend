@@ -16,13 +16,13 @@ async function rbacPlugin(fastify, opts) {
             }
 
 
-            const User = fastify.models.User; // Assuming models are attached to fastify instance
+            const User = fastify.models.User;
             if (!User) {
                  request.log.error('RBAC: User model not found on fastify.models. Ensure models are registered.');
                  return reply.status(500).send({ message: 'Internal Server Error: RBAC configuration issue.'});
             }
 
-            const userInstance = await User.findByPk(request.user.id); // Assuming request.user.id is the user's primary key
+            const userInstance = await User.findByPk(request.user.id);
 
             if (!userInstance) {
                 request.log.warn(`RBAC: User with ID ${request.user.id} not found in database.`);

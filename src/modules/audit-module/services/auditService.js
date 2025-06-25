@@ -1,5 +1,5 @@
 import { validateAuditLog } from "./../validations/auditValidation.js";
-import AuditAction from "./../models/actionType.js"; // or however you're exporting it
+import AuditAction from "./../models/actionType.js";
 import RedisCache from "#utils/redisCache.js";
 import createLogger from  "#utils/logger.js";
 const logger = createLogger("auditService");
@@ -42,7 +42,6 @@ export const auditService = {
                   action,
                   ipAddress
               });
-              // Do not re-throw, as audit logging failure should not fail the main request.
        }
     },
 

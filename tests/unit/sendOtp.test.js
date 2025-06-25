@@ -1,5 +1,5 @@
 import sendOtpEmail from '../../src/modules/user-module/utils/sendOtp.js';
-import {beforeEach, describe, expect, it, jest} from "@jest/globals";
+import {afterAll, beforeEach, describe, expect, it, jest} from "@jest/globals";
 
 describe('sendOtpEmail', () => {
     let transporter, logger;

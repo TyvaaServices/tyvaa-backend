@@ -1,18 +1,5 @@
-// tests/unit/userModel.rbac.test.js
+import {beforeEach, describe, expect, it, jest} from '@jest/globals'; // Import jest explicitly
 
-// Import the User model. Sequelize and other models will be mocked as needed.
-// We are testing the prototype methods, so we need a User class/constructor.
-// However, User model is initialized with a sequelize instance.
-// For pure unit tests of prototype functions, we can mock the parts they depend on.
-
-// Mock the User model's dependencies for `getRoles` and `role.getPermissions`
-// This is a simplified approach. A more robust way might involve jest.mock for the actual models.
-import { jest } from '@jest/globals'; // Import jest explicitly
-
-// Let's assume User is the class constructor from the model definition
-// We'll manually create a User "instance" and attach mock methods.
-
-// Mock Role and Permission objects that would be returned by Sequelize mixins
 const mockPermission = (name) => ({ name, otherPermissionData: '...' });
 const mockRole = (name, permissions = []) => ({
     name,
@@ -25,44 +12,12 @@ describe('User Model RBAC Methods', () => {
     let userInstance;
 
     beforeEach(() => {
-        // Create a fresh "mock" user instance for each test
-        // This isn't a real Sequelize instance, but an object that mimics its structure
-        // for testing the prototype methods.
-        userInstance = {
-            // Mock the `getRoles` Sequelize mixin for the User instance
+       userInstance = {
             getRoles: jest.fn(),
-            // Attach the prototype methods we want to test
-            // These are directly from src/modules/user-module/models/user.js
-            // For this to work, we need to ensure the actual User model is imported
-            // and its prototype methods are available.
-            // This approach is a bit tricky for Sequelize models without a full Sequelize mock.
-            // A better way would be to import User and then spyOn/mock its `getRoles` method.
-        };
+       };
     });
 
-    // To properly test Sequelize model instance methods, we should import the actual User model
-    // and then mock the `getRoles` method on its prototype or on specific instances.
-    // However, that requires the Sequelize connection to be mocked or handled.
-
-    // Let's try a different approach: Import the real User model,
-    // then create an instance (even if not from DB) and mock its `getRoles` method.
-    // This is still not perfect as `User.findByPk` would need a DB.
-    // The most direct way is to test the logic by providing mock inputs to the functions.
-
-    // Re-importing User model methods directly for testing their logic:
-    // This is NOT how they are defined (they are User.prototype.method).
-    // This is just to test the logic in isolation if we extract it.
-    // This is becoming complicated. Let's simplify.
-
-    // We will assume `User.prototype.hasRole` etc. are available.
-    // We will create a plain object and assign the prototype methods to it,
-    // then mock `this.getRoles` for that object.
-
     const UserPrototype = {
-        // Manually copy the logic from User model's prototype methods for isolated testing
-        // This is not ideal but avoids complex Sequelize mocking for this specific test.
-        // A better long-term solution is a proper Sequelize testing setup.
-
         async hasRole(roleName) {
             const roles = await this.getRoles();
             return roles.some(role => role.name === roleName);
@@ -193,9 +148,6 @@ describe('User Model RBAC Methods', () => {
             Object.setPrototypeOf(testUser, UserPrototype);
 
             expect(await testUser.hasPermission('perm_write')).toBe(true);
-            // Check that getPermissions on roles was called until permission found
-            // (or through all roles if not found)
-            // The current implementation iterates all roles and their permissions.
         });
     });
 });

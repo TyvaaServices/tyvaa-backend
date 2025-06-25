@@ -1,4 +1,3 @@
-// tests/unit/rideFacade.test.js
 import { jest, describe, it, expect, beforeEach, beforeAll } from '@jest/globals';
 
 const mockRideService = {

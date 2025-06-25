@@ -10,7 +10,6 @@ const mockDeleteBooking = jest.fn();
 const mockBookRide = jest.fn();
 const mockCancelBooking = jest.fn();
 
-// ESM-compliant mocking for the facade
 jest.unstable_mockModule('../../src/modules/booking-module/facades/bookingFacade.js', () => ({
     __esModule: true,
     default: {
@@ -39,7 +38,6 @@ describe('Booking Controller (with Facade)', () => {
             send: jest.fn().mockReturnThis(),
             code: jest.fn().mockReturnThis(),
         };
-        // Clear all facade mocks
         mockGetAllBookings.mockClear();
         mockGetBookingById.mockClear();
         mockCreateBooking.mockClear();
@@ -47,7 +45,6 @@ describe('Booking Controller (with Facade)', () => {
         mockDeleteBooking.mockClear();
         mockBookRide.mockClear();
         mockCancelBooking.mockClear();
-        // Import controller after mocks are set up (ESM compatible)
         bookingController = (await import('../../src/modules/booking-module/controllers/bookingController.js')).default;
     });
 

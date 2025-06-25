@@ -3,7 +3,7 @@ import {userControllerFactory} from "./../controllers/userController.js";
 async function userRoutes(fastify, opts) {
     const userController = userControllerFactory(fastify);
 
-    fastify.get("/users", userController.getAllUsers);
+    fastify.get("/users",{preValidation:[fastify.authenticate,fastify.checkRole("CHAUFFEUR"),fastify.checkPermission("publier_trajet")]}, userController.getAllUsers);
     fastify.post("/users/request-login-otp", userController.requestLoginOtp);
     fastify.post(
         "/users/request-register-otp",

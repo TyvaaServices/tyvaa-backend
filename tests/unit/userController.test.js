@@ -20,9 +20,8 @@ jest.unstable_mockModule('../../src/modules/user-module/facades/userFacade.js', 
   userFacade: mockUserFacade,
 
 }));
-import {describe, expect, jest} from '@jest/globals';
+import {afterAll, beforeAll, describe, expect, it, jest} from '@jest/globals';
 
-// Mocks
 const mockSignToken = jest.fn(() => 'mocked.jwt.token');
 const fastify = { signToken: mockSignToken,log: {
     error: jest.fn(),

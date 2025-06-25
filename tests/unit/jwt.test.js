@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import {describe, it, expect, beforeEach, jest, afterAll} from '@jest/globals';
 
 const mockRegister = jest.fn();
 const mockDecorate = jest.fn();

@@ -1,7 +1,5 @@
-// tests/unit/rideController.test.js
-import {describe, expect, jest} from '@jest/globals';
+import {describe, expect, it, jest} from '@jest/globals';
 
-// --- Mocking rideFacade.js ---
 const mockRideFacade = {
     getAllRides: jest.fn(),
     getRideById: jest.fn(),

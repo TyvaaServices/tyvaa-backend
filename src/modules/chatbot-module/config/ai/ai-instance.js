@@ -12,7 +12,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 const plugins = [];
 
-// Create a mock AI instance for tests
 const ai = (() => {
   if (process.env.NODE_ENV === 'test') {
     return {

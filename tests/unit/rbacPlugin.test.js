@@ -1,11 +1,9 @@
-// tests/unit/rbacPlugin.test.js
-import { jest } from '@jest/globals';
+import {beforeEach, describe, expect, it, jest} from '@jest/globals';
 import rbacPluginFp, { modelsPlugin as modelsPluginFp } from '../../src/utils/rbacPlugin.js';
 import User from '../../src/modules/user-module/models/user.js';
 import Role from '../../src/modules/user-module/models/role.js';
 import Permission from '../../src/modules/user-module/models/permission.js';
 
-// Mock the models that modelsPlugin would import
 jest.mock('../../src/modules/user-module/models/user.js');
 jest.mock('../../src/modules/user-module/models/role.js');
 jest.mock('../../src/modules/user-module/models/permission.js');
@@ -21,16 +19,10 @@ describe('Models Plugin', () => {
     });
 
     it('should decorate fastify with models', async () => {
-        // The plugin itself is wrapped with fp, so we call the function fp returns.
-        // Or, if fp is simple pass-through in test, call modelsPluginFp.default directly if needed.
-        // Assuming fp(plugin) returns the plugin function directly for testing.
-        // const modelsPlugin = modelsPluginFp[Symbol.for('fastify.plugin.fn')];
-        // modelsPluginFp is the actual plugin function.
-        // Since it's an async function, await should work.
         await modelsPluginFp(mockFastify, {});
 
         expect(mockFastify.decorate).toHaveBeenCalledWith('models', {
-            User: User, // User will be the mocked constructor
+            User: User,
             Role: Role,
             Permission: Permission,
         });
@@ -58,21 +50,18 @@ describe('RBAC Plugin', () => {
 
         mockFastify = {
             decorate: jest.fn((name, func) => {
-                // Capture the decorated function (checkPermission or checkRole)
                 if (name === 'checkPermission') {
-                    // func is the outer function (requiredPermission) => async (request, reply)
-                    // We call it to get the actual handler
                     checkPermissionHandler = func('test_permission');
                 }
                 if (name === 'checkRole') {
                     checkRoleHandler = func('test_role');
                 }
             }),
-            models: { User: MockUser }, // Mock fastify.models.User
+            models: { User: MockUser },
         };
 
         mockRequest = {
-            user: { id: 1 }, // Default authenticated user
+            user: { id: 1 },
             log: {
                 warn: jest.fn(),
                 error: jest.fn(),
@@ -83,17 +72,9 @@ describe('RBAC Plugin', () => {
             status: jest.fn().mockReturnThis(),
             send: jest.fn(),
         };
-
-        // Ensure that mockFastify.models.User.findByPk is a fresh mock for each test
-        // The User model itself is mocked via jest.mock at the top.
-        // The rbacPlugin uses fastify.models.User.
         mockFastify.models.User.findByPk = jest.fn().mockResolvedValue(mockUserInstance);
 
 
-        // Call the plugin to decorate mockFastify
-        // rbacPluginFp is the actual plugin function.
-        // It's an async function, so await should work, or provide a done callback.
-        // Let's use await as it's simpler if fp handles async functions that way.
         await rbacPluginFp(mockFastify, {});
     });
 
@@ -146,17 +127,10 @@ describe('RBAC Plugin', () => {
 
         it('should handle error from User.findByPk', async () => {
             mockFastify.models.User.findByPk.mockRejectedValue(new Error('DB error'));
-            // For route handlers, errors are typically passed to Fastify's error handler
-            // The test should check if the error is thrown or passed to reply.send appropriately
-            // Given the current plugin structure, it doesn't explicitly pass to an error handler.
-            // It would likely result in an unhandled promise rejection if not caught by Fastify.
-            // Let's assume Fastify catches it and test for a 500 or specific error handling if added.
-            // For now, we'll test that it doesn't succeed.
             try {
                 await checkPermissionHandler(mockRequest, mockReply);
             } catch (e) {
-                // Fastify might catch this and convert to 500. This test setup doesn't fully emulate that.
-                // We can check that send was not called successfully.
+
             }
             expect(mockReply.send).not.toHaveBeenCalledWith(expect.objectContaining({ message: "Forbidden. Required permission: 'test_permission'." }));
         });
@@ -165,7 +139,7 @@ describe('RBAC Plugin', () => {
             try {
                  await checkPermissionHandler(mockRequest, mockReply);
             } catch (e) {
-                // Similar to above, Fastify would handle this.
+
             }
             expect(mockReply.send).not.toHaveBeenCalledWith(expect.objectContaining({ message: "Forbidden. Required permission: 'test_permission'." }));
         });

@@ -1,4 +1,4 @@
-import { jest, describe, it, expect, beforeEach, beforeAll } from '@jest/globals';
+import {jest, describe, it, expect, beforeEach, beforeAll, afterAll} from '@jest/globals';
 
 const mockDriverApplication = { findAll: jest.fn(), findByPk: jest.fn(), findOne: jest.fn(), create: jest.fn() };
 const mockDriverProfile = { findOne: jest.fn(), create: jest.fn() };
@@ -362,7 +362,6 @@ describe('userFacade', () => {
     expect(mockLogger.error).toHaveBeenCalledWith('Failed to block user', { id: 1, error: 'fail' });
   });
 
-  // Edge case: submitDriverApplication when savePdfFromParts throws
   it('submitDriverApplication handles error from savePdfFromParts', async () => {
     mockUserService.findPassengerProfile.mockResolvedValueOnce({ id: 2 });
     mockDriverApplication.findOne.mockResolvedValueOnce(null);
@@ -371,7 +370,6 @@ describe('userFacade', () => {
     expect(mockLogger.error).toHaveBeenCalledWith('Failed to submit driver application', { userId: 1, error: 'pdf fail' });
   });
 
-  // Edge case: getDriverApplicationStatus when application.comments is undefined
   it('getDriverApplicationStatus returns status and null comments if comments missing', async () => {
     mockUserService.findPassengerProfile.mockResolvedValueOnce({ id: 2 });
     mockDriverApplication.findOne.mockResolvedValueOnce({ status: 'approved' });

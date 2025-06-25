@@ -344,7 +344,7 @@ const swaggerOptions = {
 };
 
 const swaggerUiOptions = {
-    routePrefix: '/documentation',
+    routePrefix: '/docs',
     exposeRoute: true,
 };
 

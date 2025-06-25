@@ -1,4 +1,4 @@
-import { jest, describe, it, expect, beforeAll } from '@jest/globals';
+import {jest, describe, it, expect, beforeAll, afterAll} from '@jest/globals';
 
 describe('mailer', () => {
   it('should create a transporter with correct config', async () => {

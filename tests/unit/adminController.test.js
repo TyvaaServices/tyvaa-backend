@@ -1,5 +1,4 @@
-// tests/unit/adminController.test.js
-import { jest } from '@jest/globals';
+import {describe, expect, it, jest} from '@jest/globals';
 import {
     createRole,
     getAllRoles,
@@ -40,7 +39,6 @@ describe('Admin Controller', () => {
             send: jest.fn(),
         };
 
-        // Ensure all model methods are fresh mocks for each test
         User.findByPk = jest.fn();
         User.prototype.addRole = jest.fn();
         User.prototype.removeRole = jest.fn();
@@ -61,7 +59,6 @@ describe('Admin Controller', () => {
         sequelize.transaction = jest.fn();
     });
 
-    // --- Role Management ---
     describe('createRole', () => {
         it('should create a role successfully', async () => {
             mockRequest.body.name = 'Admin';
@@ -254,7 +251,6 @@ describe('Admin Controller', () => {
         });
     });
 
-    // --- Permission Management ---
     describe('createPermission', () => {
         it('should create a permission successfully', async () => {
             mockRequest.body = { name: 'edit_post', description: 'Can edit posts' };
@@ -305,7 +301,6 @@ describe('Admin Controller', () => {
         });
     });
 
-    // --- Role-Permission Assignment ---
     describe('assignPermissionToRole', () => {
         it('should assign permission to role successfully', async () => {
             mockRequest.params = { roleId: 1, permissionId: 1 };
@@ -393,7 +388,6 @@ describe('Admin Controller', () => {
         });
     });
 
-    // --- User-Role Assignment ---
     describe('assignRoleToUser', () => {
         it('should assign role to user successfully', async () => {
             mockRequest.params = { userId: 1, roleId: 1 };

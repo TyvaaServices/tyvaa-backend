@@ -41,7 +41,6 @@ const rolesData = [
     { name: 'ADMINISTRATEUR' },
 ];
 
-// Define which permissions belong to which role
 const rolePermissionsData = {
     UTILISATEUR_BASE: [
         'modifier_profil',
@@ -75,12 +74,7 @@ const rolePermissionsData = {
 
 async function seedDatabase() {
     try {
-        // It's good practice to ensure tables are created before seeding.
-        // The main app.js syncs with alter:true, which should be fine for dev.
-        // For production, migrations would run before seeders.
-        // await sequelize.sync({ alter: true }); // Or ensure it's run elsewhere first
-
-        // Seed Permissions
+        await sequelize.sync({ alter: true });
         const createdPermissions = {};
         for (const pData of permissionsData) {
             const [permission, created] = await Permission.findOrCreate({
@@ -91,11 +85,10 @@ async function seedDatabase() {
             if (created) {
                 console.log(`Permission '${pData.name}' created.`);
             } else {
-                // console.log(`Permission '${pData.name}' already exists.`);
+                console.log(`Permission '${pData.name}' already exists.`);
             }
         }
 
-        // Seed Roles
         const createdRoles = {};
         for (const rData of rolesData) {
             const [role, created] = await Role.findOrCreate({
@@ -105,11 +98,10 @@ async function seedDatabase() {
             if (created) {
                 console.log(`Role '${rData.name}' created.`);
             } else {
-                // console.log(`Role '${rData.name}' already exists.`);
+                console.log(`Role '${rData.name}' already exists.`);
             }
         }
 
-        // Assign Permissions to Roles
         for (const roleName in rolePermissionsData) {
             const role = createdRoles[roleName];
             const permissionsToAssign = rolePermissionsData[roleName];
@@ -119,11 +111,8 @@ async function seedDatabase() {
                 console.log(`Assigned ${permissionsToAssign.length} permissions to role '${roleName}'.`);
             }
         }
-
-        // Example: Assign a default role to an admin user if one exists or create one
-        // This part is highly dependent on your user setup strategy
-        const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
-        const adminPhone = process.env.ADMIN_PHONE || '+10000000000'; // Ensure unique phone
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@tyvaa.live';
+        const adminPhone = process.env.ADMIN_PHONE || '+10000000000';
 
         if (createdRoles.ADMINISTRATEUR) {
             let adminUser = await User.findOne({ where: { email: adminEmail } });
@@ -133,28 +122,23 @@ async function seedDatabase() {
 
             if (!adminUser && process.env.ADMIN_PASSWORD) { // Only create if password is provided
                 console.log(`Admin user not found, creating one... (Phone: ${adminPhone})`);
-                // IMPORTANT: Password hashing should be handled by your user service/model hooks
-                // This is a simplified seeding example.
-                // Ensure your User model or a service handles password hashing on creation.
-                try {
+               try {
                     adminUser = await User.create({
                         phoneNumber: adminPhone,
                         fullName: 'Default Admin',
                         email: adminEmail,
-                        sexe: 'male', // or other default
-                        dateOfBirth: '1990-01-01', // default
+                        sexe: 'male',
+                        dateOfBirth: '1990-01-01',
                         isActive: true,
-                        // password: process.env.ADMIN_PASSWORD, // Assuming hashing is done in model/service
                     });
                     console.log(`Admin user created with phone ${adminPhone}. Please set password securely if not handled by model.`);
                 } catch (error) {
                     console.error(`Failed to create admin user with phone ${adminPhone}:`, error.message);
-                    // This might happen if a user with this phone number already exists from a previous partial seed.
                 }
             }
 
             if (adminUser) {
-                await adminUser.setRoles([createdRoles.ADMINISTRATEUR]); // `setRoles` is a Sequelize mixin
+                await adminUser.setRoles([createdRoles.ADMINISTRATEUR]);
                 console.log(`Assigned ADMINISTRATEUR role to user ${adminUser.email || adminUser.phoneNumber}.`);
             } else {
                 console.log('Admin user not found and ADMIN_PASSWORD not set in .env, skipping admin role assignment.');
@@ -166,12 +150,10 @@ async function seedDatabase() {
     } catch (error) {
         console.error('Error seeding database for RBAC:', error);
     } finally {
-        // Close the database connection if this script is run standalone
         // await sequelize.close();
     }
 }
 
-// If this script is run directly (e.g., `node src/seeders/rbacSeeder.js`)
 if (
     import.meta.url === `file://${process.argv[1]}` &&
     process.env.NODE_ENV !== 'test'

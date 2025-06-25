@@ -94,9 +94,6 @@ export const userControllerFactory = (fastify) => ({
             }
             const token = fastify.signToken({
                 id: user.id,
-                phoneNumber: user.phoneNumber,
-                email: user.email,
-                isDriver: user.isDriver,
             });
             logger.info("User logged in", { id: user.id });
             return reply.send({ user, token });

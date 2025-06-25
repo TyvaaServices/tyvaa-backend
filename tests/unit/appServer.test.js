@@ -35,7 +35,6 @@ describe('startServer', () => {
     });
 
     it('should start and close the server without error', async () => {
-        // Dynamically import after mocks are in place
         const { startServer } = await import('../../src/app.js');
         const server = await startServer();
         expect(server).toBeDefined();
