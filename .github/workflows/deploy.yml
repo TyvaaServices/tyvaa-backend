@@ -115,7 +115,7 @@ jobs:
              if [ "$EXISTING_SERVICE_ID" != "null" ] && [ -n "$EXISTING_SERVICE_ID" ]; then
                echo "Found existing service with ID: $EXISTING_SERVICE_ID, importing into Terraform state..."
                terraform import koyeb_service.backend_service $EXISTING_SERVICE_ID
-               echo "Service imported successfully"
+               echo "Service imported successful"
              else
                echo "No existing service found, will create a "
              fi
