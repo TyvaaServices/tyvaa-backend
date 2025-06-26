@@ -76,7 +76,7 @@ export const userService = {
                 { model: DriverProfile, as: "driverProfile" },
             ],
         });
-        const roles = user.getRoles();
+        const roles = await user.getRoles();
         if (roles.length > 0) {
             user.roles = roles.map((role) => role.name);
         } else {

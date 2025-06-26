@@ -158,8 +158,22 @@ export const userControllerFactory = (fastify) => ({
             if (!user) {
                 return reply.status(404).send({ error: "User not found" });
             }
-            const token = fastify.signToken({ id: user.id });
-            return reply.send({ user, token });
+            // If login is with email (admin), set short-lived token and refresh token
+            let token, refreshToken;
+            if (email) {
+                token = fastify.signToken(
+                    { id: user.id },
+                    { expiresIn: "15m" }
+                );
+                refreshToken = fastify.signToken(
+                    { id: user.id, type: "refresh" },
+                    { expiresIn: "7d" }
+                );
+                return reply.send({ user, token, refreshToken });
+            } else {
+                token = fastify.signToken({ id: user.id });
+                return reply.send({ user, token });
+            }
         } catch (err) {
             return reply.status(500).send({ error: err.message });
         }

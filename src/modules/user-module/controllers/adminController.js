@@ -29,7 +29,7 @@ export const createRole = async (request, reply) => {
 export const getAllRoles = async (request, reply) => {
     try {
         const roles = await Role.findAll({
-            include: [{ model: Permission, through: { attributes: [] } }],
+            include: [{ model: Permission, as: "permissions" }],
         }); // Include permissions
         return reply.send(roles);
     } catch (error) {
