@@ -117,7 +117,7 @@ jobs:
                terraform import koyeb_service.backend_service $EXISTING_SERVICE_ID
                echo "Service imported successfully"
              else
-               echo "No existing service found, will create a new one"
+               echo "No existing service found, will create a "
              fi
            else
              echo "Service already in Terraform state: $SERVICE_ID"
