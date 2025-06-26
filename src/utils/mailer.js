@@ -78,6 +78,6 @@ try {
  * This will be `null` if SMTP environment variables are not properly configured
  * or if transporter verification fails.
  * Functions using this transporter should check for its existence before attempting to send mail.
- * @type {import('nodemailer').Transporter | null}
+ * @type {import("nodemailer").Transporter | null}
  */
 export default transporterInstance;

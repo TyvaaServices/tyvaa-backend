@@ -5,7 +5,7 @@ import sequelize from "./../../../config/db.js";
  * Sequelize model for RideModel (Ride Template).
  * Represents the template or definition of a ride, which can be recurring or a one-time offer.
  * Specific occurrences of these rides are managed as RideInstances.
- * @type {import('sequelize').ModelCtor<import('sequelize').Model<RideModelAttributes, any>>}
+ * @type {import("sequelize").ModelCtor<import("sequelize").Model<RideModelAttributes, any>>}
  */
 const RideModel = sequelize.define(
     "RideModel",

@@ -1,10 +1,10 @@
 import {
-    jest,
-    describe,
-    it,
-    expect,
-    beforeEach,
     afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    jest,
 } from "@jest/globals";
 import path from "path";
 import { fileURLToPath } from "url";

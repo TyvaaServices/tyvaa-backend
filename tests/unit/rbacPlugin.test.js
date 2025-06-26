@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import rbacPluginFp from "../../src/utils/rbacPlugin.js";
 import User from "../../src/modules/user-module/models/user.js";
+
 jest.mock("../../src/modules/user-module/models/user.js");
 jest.mock("../../src/modules/user-module/models/role.js");
 jest.mock("../../src/modules/user-module/models/permission.js");

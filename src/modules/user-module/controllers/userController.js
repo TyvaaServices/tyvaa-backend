@@ -1,12 +1,12 @@
 import { userFacade } from "./../facades/userFacade.js";
 import createLogger from "#utils/logger.js";
-import { NotFoundError, BadRequestError } from "#utils/customErrors.js";
+import { BadRequestError, NotFoundError } from "#utils/customErrors.js";
 
 /**
  * @file User controller for handling regular user operations and driver applications.
- * @typedef {import('fastify').FastifyInstance & { signToken: (payload: object) => string }} FastifyAugmentedInstance
- * @typedef {import('fastify').FastifyRequest} FastifyRequest
- * @typedef {import('fastify').FastifyReply} FastifyReply
+ * @typedef {import("fastify").FastifyInstance & { signToken: (payload: object) => string }} FastifyAugmentedInstance
+ * @typedef {import("fastify").FastifyRequest} FastifyRequest
+ * @typedef {import("fastify").FastifyReply} FastifyReply
  */
 
 const logger = createLogger("user-controller");
@@ -34,7 +34,7 @@ export const userControllerFactory = (fastify) => ({
     /**
      * Reviews a driver application, updating its status. (Admin operation)
      * @async
-     * @param {FastifyRequest<{ Params: {id: string}, Body: {status: 'approved'|'rejected', comments?: string} }>} request
+     * @param {FastifyRequest<{ Params: {id: string}, Body: {status: "approved"|"rejected", comments?: string} }>} request
      * @param {FastifyReply} reply
      */
     reviewDriverApplication: async (request, reply) => {

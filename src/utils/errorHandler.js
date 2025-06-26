@@ -4,7 +4,7 @@ import fp from "fastify-plugin";
  * Fastify plugin for centralized error handling of custom and generic errors.
  * Handles AppError and its subclasses, as well as generic errors, returning appropriate status codes and messages.
  *
- * @param {import('fastify').FastifyInstance} fastify
+ * @param {import("fastify").FastifyInstance} fastify
  */
 async function errorHandlerPlugin(fastify) {
     const { AppError } = await import("../utils/customErrors.js");

@@ -1,11 +1,11 @@
 import {
-    describe,
-    it,
-    expect,
-    beforeEach,
-    jest,
-    beforeAll,
     afterAll,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    jest,
 } from "@jest/globals";
 
 const mockRegister = jest.fn();

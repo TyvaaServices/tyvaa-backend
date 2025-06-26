@@ -1,12 +1,12 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import {
     AppError,
-    BadRequestError,
     AuthenticationError,
-    ForbiddenError,
-    NotFoundError,
+    BadRequestError,
     ConflictError,
+    ForbiddenError,
     InternalServerError,
+    NotFoundError,
 } from "#utils/customErrors.js";
 
 describe("Custom Errors", () => {

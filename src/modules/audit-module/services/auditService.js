@@ -2,6 +2,7 @@ import { validateAuditLog } from "./../validations/auditValidation.js";
 import AuditAction from "./../models/actionType.js";
 import RedisCache from "#utils/redisCache.js";
 import createLogger from "#utils/logger.js";
+
 const logger = createLogger("auditService");
 const ACTION_CACHE_TTL = 86400;
 

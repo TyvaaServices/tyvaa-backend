@@ -5,7 +5,7 @@ import { User } from "#config/index.js";
  * RBAC plugin that adds `checkPermission` and `checkRole` decorators to Fastify.
  * These decorators are intended to be used as `preValidation` hooks in route options.
  *
- * @param {import('fastify').FastifyInstance & { models?: any }} fastify - The Fastify instance.
+ * @param {import("fastify").FastifyInstance & { models?: any }} fastify - The Fastify instance.
  * @param {Object} opts - Plugin options.
  */
 async function rbacPlugin(fastify, opts) {

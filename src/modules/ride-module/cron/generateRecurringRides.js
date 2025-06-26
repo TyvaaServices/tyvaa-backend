@@ -23,7 +23,7 @@ const RIDE_INSTANCE_GENERATION_LOOKAHEAD_DAYS = parseInt(
  */
 
 /**
- * @typedef {import('../models/rideModel.js').RideModelAttributes} RideModelAttributes
+ * @typedef {import("../models/rideModel.js").RideModelAttributes} RideModelAttributes
  */
 
 /**

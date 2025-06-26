@@ -1,10 +1,10 @@
 import {
-    jest,
-    describe,
-    test,
-    expect,
-    beforeAll,
     afterAll,
+    beforeAll,
+    describe,
+    expect,
+    jest,
+    test,
 } from "@jest/globals";
 import fastify from "fastify";
 import chatbotRoutes from "../../src/modules/chatbot-module/routes/chatbotRoutes.js";

@@ -1,10 +1,10 @@
 import {
-    jest,
-    describe,
-    it,
-    expect,
-    beforeEach,
     beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    jest,
 } from "@jest/globals";
 
 const mockRideService = {

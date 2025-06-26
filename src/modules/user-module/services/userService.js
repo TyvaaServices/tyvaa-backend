@@ -1,8 +1,8 @@
 import {
+    DriverApplication,
     DriverProfile,
     PassengerProfile,
     User,
-    DriverApplication,
 } from "#config/index.js";
 import RedisCache from "#utils/redisCache.js";
 import fs from "fs";
@@ -62,14 +62,38 @@ export const userService = {
             email,
         });
         const whereClause = email ? { email } : { phoneNumber };
-        return User.findOne({ where: whereClause });
+        const user = await User.findOne({
+            where: whereClause,
+            include: [
+                {
+                    model: Role,
+                    as: "roles",
+                },
+                {
+                    model: PassengerProfile,
+                    as: "passengerProfile",
+                },
+                { model: DriverProfile, as: "driverProfile" },
+            ],
+        });
+        const roles = user.getRoles();
+        if (roles.length > 0) {
+            user.roles = roles.map((role) => role.name);
+        } else {
+            user.roles = [];
+        }
+        logger.debug("Service: User found", {
+            userId: user?.id,
+            roles: user?.roles,
+        });
+        return user;
     },
 
     /**
      * Generates an OTP, stores it in Redis, and (conceptually) sends it.
      * In a real app, this would integrate with an SMS/Email service.
      * @param {string} identifier - Phone number or email.
-     * @param {'login'|'registration'} context - Purpose of the OTP.
+     * @param {"login"|"registration"} context - Purpose of the OTP.
      * @returns {Promise<string>} The generated OTP (for testing/dev; not for prod response).
      * @throws {AppError} If OTP generation or storage fails.
      */
@@ -98,7 +122,7 @@ export const userService = {
      * Verifies an OTP against the stored value in Redis.
      * @param {string} identifier - Phone number or email.
      * @param {string} otp - The OTP submitted by the user.
-     * @param {'login'|'registration'} context - Purpose of the OTP.
+     * @param {"login"|"registration"} context - Purpose of the OTP.
      * @returns {Promise<void>}
      * @throws {AuthenticationError} If OTP is invalid or expired.
      */
@@ -116,7 +140,10 @@ export const userService = {
                 "OTP expired or not found. Please request a new one."
             );
         }
-        if (storedOtp !== otp) {
+        logger.debug(
+            `Verifying OTP for ${identifier} (context: ${context}). Stored OTP: ${storedOtp}, Provided OTP: ${otp}`
+        );
+        if (String(storedOtp) !== String(otp)) {
             logger.warn(
                 `OTP verification failed: Invalid OTP for ${identifier} (context: ${context}).`
             );
@@ -624,7 +651,6 @@ export const userService = {
             throw new AuthenticationError("Account is inactive or blocked.");
         }
         await this.verifyOtp(identifier, otp, "login");
-
         user.lastLogin = new Date();
         await user.save();
         logger.info(

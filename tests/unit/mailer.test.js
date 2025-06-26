@@ -1,11 +1,11 @@
 import {
-    jest,
-    describe,
-    it,
-    expect,
-    beforeEach,
-    afterEach,
     afterAll,
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    jest,
 } from "@jest/globals";
 
 const mockLoggerError = jest.fn();

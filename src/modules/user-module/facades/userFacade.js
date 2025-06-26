@@ -1,15 +1,16 @@
 import { userService } from "./../services/userService.js";
 import createLogger from "#utils/logger.js";
 import { NotFoundError } from "#utils/customErrors.js";
+
 const logger = createLogger("user-facade");
 
 /**
  * @file User Facade: Provides a simplified interface to user-related services and operations.
  * Handles data fetching, aggregation, and error mapping for the controller layer.
- * @typedef {import('../models/user.js').UserAttributes} UserAttributes
- * @typedef {import('../models/driverApplication.js').DriverApplicationAttributes} DriverApplicationAttributes
- * @typedef {import('../models/passengerProfile.js').PassengerProfileAttributes} PassengerProfileAttributes
- * @typedef {import('../models/driverProfile.js').DriverProfileAttributes} DriverProfileAttributes
+ * @typedef {import("../models/user.js").UserAttributes} UserAttributes
+ * @typedef {import("../models/driverApplication.js").DriverApplicationAttributes} DriverApplicationAttributes
+ * @typedef {import("../models/passengerProfile.js").PassengerProfileAttributes} PassengerProfileAttributes
+ * @typedef {import("../models/driverProfile.js").DriverProfileAttributes} DriverProfileAttributes
  */
 
 export const userFacade = {
@@ -28,7 +29,7 @@ export const userFacade = {
     /**
      * Reviews a driver application, updating its status and potentially creating/activating a driver profile.
      * @param {string|number} applicationId - The ID of the driver application.
-     * @param {'approved'|'rejected'|'needs_more_info'} status - The new status for the application.
+     * @param {"approved"|"rejected"|"needs_more_info"} status - The new status for the application.
      * @param {string} [comments] - Optional comments from the reviewer.
      * @returns {Promise<DriverApplicationAttributes>} The updated driver application.
      * @throws {NotFoundError} If the application is not found.

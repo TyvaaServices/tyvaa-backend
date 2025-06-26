@@ -133,7 +133,7 @@ class RedisCacheService {
      * Retrieves data from cache and optionally builds a Sequelize model instance.
      * Useful for caching Sequelize model objects.
      * @param {string} key - The cache key.
-     * @param {import('sequelize').ModelStatic<import('sequelize').Model>} [SequelizeModel] - Optional Sequelize model constructor.
+     * @param {import("sequelize").ModelStatic<import("sequelize").Model>} [SequelizeModel] - Optional Sequelize model constructor.
      *        If provided, the retrieved data will be used to build an instance of this model.
      * @returns {Promise<any|null>} The parsed object, or a Sequelize model instance if `SequelizeModel` is provided,
      *                              or null if not found or an error occurs.

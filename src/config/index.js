@@ -31,6 +31,12 @@ Booking.hasOne(Payment, { foreignKey: "bookingId" });
 
 User.hasMany(AuditLog, { foreignKey: "userId" });
 
+// User associations
+User.hasOne(PassengerProfile, { as: "passengerProfile", foreignKey: "userId" });
+PassengerProfile.belongsTo(User, { as: "user", foreignKey: "userId" });
+User.hasOne(DriverProfile, { as: "driverProfile", foreignKey: "userId" });
+DriverProfile.belongsTo(User, { as: "user", foreignKey: "userId" });
+
 export {
     User,
     RideModel,

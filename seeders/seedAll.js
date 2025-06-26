@@ -2,15 +2,14 @@ import sequelize from "#config/db.js";
 import Role from "../src/modules/user-module/models/role.js";
 
 import {
-    User,
-    RideModel,
-    Booking,
-    RideInstance,
-    Payment,
-    PassengerProfile,
-    DriverProfile,
-    DriverApplication,
     AuditAction,
+    Booking,
+    DriverApplication,
+    DriverProfile,
+    PassengerProfile,
+    RideInstance,
+    RideModel,
+    User,
 } from "#config/index.js";
 
 async function seed() {

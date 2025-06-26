@@ -9,11 +9,13 @@ import {
 
 jest.mock("sequelize", () => {
     const ActualSequelize = jest.requireActual("sequelize");
+
     class SequelizeMock extends ActualSequelize.Sequelize {
         constructor() {
             super("sqlite::memory:");
         }
     }
+
     return { ...ActualSequelize, Sequelize: SequelizeMock };
 });
 jest.mock("../../src/modules/booking-module/models/booking.js", () => ({
