@@ -58,11 +58,8 @@ jobs:
         with:
           projectBaseDir: .
         env:
-          env:
-            TF_VAR_database_url: ${{ secrets.DATABASE_URL }}
-            TF_VAR_koyeb_token: ${{ secrets.KOYEB_TOKEN }}
-            TF_VAR_docker_hub_user: ${{ secrets.DOCKER_HUB_USER }}
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+           KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
 
   dockerize:
     needs: [test, quality]
