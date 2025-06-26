@@ -1,7 +1,27 @@
 import { DataTypes, Op } from "sequelize";
 import sequelize from "#config/db.js";
 import Role from "./role.js";
-import Permission from "./permission.js"; // Permission model for type hinting
+/**
+ * @typedef {import("sequelize").Model & {
+ *   id: number,
+ *   phoneNumber: string,
+ *   fullName?: string,
+ *   fcmToken?: string,
+ *   profileImage?: string,
+ *   sexe: "male" | "female",
+ *   dateOfBirth?: Date,
+ *   email?: string,
+ *   isActive: boolean,
+ *   isBlocked: boolean,
+ *   latitude?: number,
+ *   longitude?: number,
+ *   lastLogin?: Date,
+ *   getRoles: () => Promise<Role[]>,
+ *   hasRole: (roleName: string) => Promise<boolean>,
+ *   getPermissions: () => Promise<Permission[]>,
+ *   hasPermission: (permissionName: string) => Promise<boolean>
+ * }} UserInstance
+ */
 
 /**
  * @file Defines the User model, including attributes, associations, and instance methods for RBAC.
@@ -11,7 +31,7 @@ import Permission from "./permission.js"; // Permission model for type hinting
  * @property {string} [fullName] - The user's full name.
  * @property {string} [fcmToken] - Firebase Cloud Messaging token for push notifications.
  * @property {string} [profileImage] - URL or path to the user's profile image.
- * @property {('male'|'female'|'other'|'prefer_not_to_say')} sexe - The user's gender.
+ * @property {("male"|"female"|"other"|"prefer_not_to_say")} sexe - The user's gender.
  * @property {Date} dateOfBirth - The user's date of birth.
  * @property {string} [email] - The user's email address (optional, could be unique if primary identifier).
  * @property {boolean} isActive - Flag indicating if the user's account is active. Defaults to false (e.g., pending OTP verification).
@@ -25,8 +45,9 @@ import Permission from "./permission.js"; // Permission model for type hinting
  * Sequelize model for User.
  * Represents a user in the system with authentication details and profile information.
  * Includes instance methods for Role-Based Access Control (RBAC).
- * @type {import('sequelize').ModelCtor<import('sequelize').Model<UserAttributes, any> & UserInstanceMethods>}
+ * @type {import("sequelize").ModelCtor<import("sequelize").Model<UserAttributes, any> & UserInstanceMethods>}
  */
+
 const User = sequelize.define(
     "User",
     {
@@ -146,12 +167,14 @@ const User = sequelize.define(
 
 User.belongsToMany(Role, {
     through: "UserRoles",
+    as: "roles",
     foreignKey: "userId",
     otherKey: "roleId",
 });
 
 Role.belongsToMany(User, {
     through: "UserRoles",
+    as: "users",
     foreignKey: "roleId",
     otherKey: "userId",
 });
