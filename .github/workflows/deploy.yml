@@ -130,5 +130,5 @@ jobs:
          run: terraform apply -auto-approve \
            -var="database_url=${{ secrets.DATABASE_URL }}" \
            -var="docker_hub_user=${{ secrets.DOCKER_HUB_USER }}" \
-           -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}"
+
 
