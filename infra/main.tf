@@ -7,6 +7,8 @@ terraform {
   }
 }
 
+provider "koyeb" {
+}
 
 
 resource "koyeb_app" "backend" {
@@ -42,10 +44,9 @@ resource "koyeb_service" "backend_service" {
     }
 
     regions = ["fra"]
-    git {
-      repository = "github.com/traorecheikh/backend-tyvaa"
-      branch     = "dev-test"
-    }
+    docker {
+        image = "docker.io/${var.docker_hub_user}/backend-tyvaa:latest"
+      }
   }
   depends_on = [
     koyeb_app.backend
