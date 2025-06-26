@@ -1,16 +1,16 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
+    assignPermissionToRole,
+    assignRoleToUser,
+    createPermission,
     createRole,
+    deleteRole,
+    getAllPermissions,
     getAllRoles,
     getRoleById,
-    deleteRole,
-    createPermission,
-    getAllPermissions,
-    assignPermissionToRole,
-    removePermissionFromRole,
-    assignRoleToUser,
-    removeRoleFromUser,
     getUserRoles,
+    removePermissionFromRole,
+    removeRoleFromUser,
 } from "../../src/modules/user-module/controllers/adminController.js";
 import User from "../../src/modules/user-module/models/user.js";
 import Role from "../../src/modules/user-module/models/role.js";

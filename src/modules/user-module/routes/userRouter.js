@@ -19,7 +19,7 @@ async function userRoutes(fastify, opts) {
         "/users/request-register-otp",
         userController.requestRegisterOtp
     );
-    fastify.post("/users/login", userController.login);
+    fastify.post("/users/verify", userController.login);
     fastify.get("/users/:id", userController.getUserById);
     fastify.post("/users/register", userController.createUser);
     fastify.put("/users/:id", userController.updateUser);
