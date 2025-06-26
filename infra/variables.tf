@@ -16,3 +16,14 @@ variable "database_url" {
   type        = string
 }
 
+variable "docker_hub_user" {
+  description = "Docker Hub username"
+  type        = string
+  default     = "tyvaa"
+}
+
+variable "koyeb_token" {
+  description = "Koyeb API token"
+    type      = string
+   }
+
