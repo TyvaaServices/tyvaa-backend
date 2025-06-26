@@ -127,8 +127,9 @@ jobs:
          run: terraform plan -var="database_url=${{ secrets.DATABASE_URL }}"
        - name: Terraform Apply
          working-directory: ./infra
-         run: terraform apply -auto-approve -var="database_url=${{ secrets.DATABASE_URL }}"
-       
+         run: terraform apply -auto-approve -var="database_url=${{ secrets.DATABASE_URL }}" -var="docker_hub_user=${{ secrets.DOCKER_HUB_USER }}"
+
+
 
 
 
