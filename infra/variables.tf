@@ -16,3 +16,10 @@ variable "database_url" {
   type        = string
 }
 
+variable "docker_hub_user" {
+  description = "Docker Hub username"
+  type        = string
+  default     = "tyvaa"
+}
+
+
