@@ -58,7 +58,11 @@ jobs:
         with:
           projectBaseDir: .
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          env:
+            TF_VAR_database_url: ${{ secrets.DATABASE_URL }}
+            TF_VAR_koyeb_token: ${{ secrets.KOYEB_TOKEN }}
+            TF_VAR_docker_hub_user: ${{ secrets.DOCKER_HUB_USER }}
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   dockerize:
     needs: [test, quality]
@@ -126,7 +130,8 @@ jobs:
          run: terraform plan -var="database_url=${{ secrets.DATABASE_URL }}"
        - name: Terraform Apply
          working-directory: ./infra
-         run: terraform apply -auto-approve -var="database_url=${{ secrets.DATABASE_URL }}" -var="docker_hub_user=${{ secrets.DOCKER_HUB_USER }}" -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}"
+         run: terraform apply -auto-approve
+
 
 
 
