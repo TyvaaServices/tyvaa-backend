@@ -78,54 +78,57 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_HUB_USER }}/backend-tyvaa:latest
 
-  # Deployment is currently disabled. To enable, uncomment the section below.
-  # deploy:
-  #   needs: [dockerize]
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  #     KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Setup Terraform
-  #       uses: hashicorp/setup-terraform@v2
-  #       with:
-  #         terraform_version: 1.0.0
-  #     - name: Terraform Init
-  #       working-directory: ./infra
-  #       run: terraform init
-  #       env:
-  #         TF_VAR_koyeb_token: ${{ secrets.KOYEB_TOKEN }}
-  #         DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  #         KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
-  #     - name: Terraform Validate
-  #       working-directory: ./infra
-  #       run: terraform validate
-  #     - name: Check if service exists and import it
-  #       working-directory: ./infra
-  #       run: |
-  #         # Store service ID if it exists
-  #         SERVICE_ID=$(terraform state list koyeb_service.backend_service 2>/dev/null || echo "")
-  #         if [ -z "$SERVICE_ID" ]; then
-  #           echo "Service not in Terraform state, checking if it exists in Koyeb..."
-  #           # Get the service ID from Koyeb using the API
-  #           EXISTING_SERVICE_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.KOYEB_TOKEN }}" \
-  #             "https://app.koyeb.com/v1/services?name=backend-tyvaa-service" | \
-  #             jq -r '.services[0].id')
-  #           if [ "$EXISTING_SERVICE_ID" != "null" ] && [ -n "$EXISTING_SERVICE_ID" ]; then
-  #             echo "Found existing service with ID: $EXISTING_SERVICE_ID, importing into Terraform state..."
-  #             terraform import koyeb_service.backend_service $EXISTING_SERVICE_ID
-  #             echo "Service imported successfully"
-  #           else
-  #             echo "No existing service found, will create a new one"
-  #           fi
-  #         else
-  #           echo "Service already in Terraform state: $SERVICE_ID"
-  #         fi
-  #     - name: Terraform Plan
-  #       working-directory: ./infra
-  #       run: terraform plan -var="database_url=${{ secrets.DATABASE_URL }}"
-  #     - name: Terraform Apply
-  #       working-directory: ./infra
-  #       run: terraform apply -auto-approve -var="database_url=${{ secrets.DATABASE_URL }}"
+#   Deployment is currently disabled. To enable, uncomment the section below.
+  deploy:
+     needs: [dockerize]
+     runs-on: ubuntu-latest
+     env:
+       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+       KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+     steps:
+       - uses: actions/checkout@v3
+       - name: Setup Terraform
+         uses: hashicorp/setup-terraform@v2
+         with:
+           terraform_version: 1.0.0
+       - name: Terraform Init
+         working-directory: ./infra
+         run: terraform init
+         env:
+           TF_VAR_koyeb_token: ${{ secrets.KOYEB_TOKEN }}
+           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+           KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
+       - name: Terraform Validate
+         working-directory: ./infra
+         run: terraform validate
+       - name: Check if service exists and import it
+         working-directory: ./infra
+         run: |
+           # Store service ID if it exists
+           SERVICE_ID=$(terraform state list koyeb_service.backend_service 2>/dev/null || echo "")
+           if [ -z "$SERVICE_ID" ]; then
+             echo "Service not in Terraform state, checking if it exists in Koyeb..."
+             # Get the service ID from Koyeb using the API
+             EXISTING_SERVICE_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.KOYEB_TOKEN }}" \
+               "https://app.koyeb.com/v1/services?name=backend-tyvaa-service" | \
+               jq -r '.services[0].id')
+             if [ "$EXISTING_SERVICE_ID" != "null" ] && [ -n "$EXISTING_SERVICE_ID" ]; then
+               echo "Found existing service with ID: $EXISTING_SERVICE_ID, importing into Terraform state..."
+               terraform import koyeb_service.backend_service $EXISTING_SERVICE_ID
+               echo "Service imported successfully"
+             else
+               echo "No existing service found, will create a new one"
+             fi
+           else
+             echo "Service already in Terraform state: $SERVICE_ID"
+           fi
+       - name: Terraform Plan
+         working-directory: ./infra
+         run: terraform plan -var="database_url=${{ secrets.DATABASE_URL }}"
+       - name: Terraform Apply
+         working-directory: ./infra
+         run: terraform apply -auto-approve \
+           -var="database_url=${{ secrets.DATABASE_URL }}" \
+           -var="docker_hub_user=${{ secrets.DOCKER_HUB_USER }}" \
+           -var="koyeb_token=${{ secrets.KOYEB_TOKEN }}"
 
