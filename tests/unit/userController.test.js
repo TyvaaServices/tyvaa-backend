@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, jest } from "@jest/globals";
+
 const mockUserFacade = {
     getAllDriverApplications: jest.fn(),
     reviewDriverApplication: jest.fn(),

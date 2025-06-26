@@ -1,11 +1,11 @@
 import {
-    jest,
-    describe,
-    it,
-    expect,
-    beforeEach,
-    beforeAll,
     afterAll,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    jest,
 } from "@jest/globals";
 
 const mockDriverApplication = {
