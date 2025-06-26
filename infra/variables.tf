@@ -22,8 +22,4 @@ variable "docker_hub_user" {
   default     = "tyvaa"
 }
 
-variable "koyeb_token" {
-  description = "Koyeb API token"
-    type      = string
-   }
 
