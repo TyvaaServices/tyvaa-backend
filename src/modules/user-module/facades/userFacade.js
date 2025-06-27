@@ -111,7 +111,6 @@ export const userFacade = {
         logger.debug(
             `Facade: Calling service to request registration OTP for phone: ${phoneNumber}.`
         );
-        // The service method will handle ConflictError or proceed to send OTP.
         return userService.requestRegisterOtp(phoneNumber);
     },
 
@@ -125,11 +124,8 @@ export const userFacade = {
      */
     createUser: async (userData) => {
         logger.debug("Creating user from facade with data:", userData);
-        await userService.verifyOtp(
-            userData.phoneNumber,
-            userData.otp,
-            "registration"
-        );
+        const identifier = userData.email || userData.phoneNumber;
+        await userService.verifyOtp(identifier, userData.otp, "registration");
         const user = await userService.createUserWithProfile(userData);
         logger.info(`User created successfully with ID: ${user.id}`);
         return user;

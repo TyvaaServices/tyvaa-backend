@@ -192,38 +192,26 @@ export const userService = {
                 { ...userInfo, isActive: true },
                 { transaction }
             );
-
             await PassengerProfile.create({ userId: user.id }, { transaction });
             logger.info(`Created PassengerProfile for User ID: ${user.id}`);
-
-            if (profileType === "driver") {
-                await DriverProfile.create(
-                    { userId: user.id, status: "pending_approval" },
-                    { transaction }
-                );
-                logger.info(
-                    `Created DriverProfile (pending_approval) for User ID: ${user.id}`
-                );
-            }
-
-            const passengerRole = await Role.findOne({
-                where: { name: "PASSENGER" },
-            });
-            if (passengerRole)
-                await user.addRole(passengerRole, { transaction });
-
-            if (profileType === "driver") {
-                const driverRole = await Role.findOne({
-                    where: { name: "DRIVER" },
-                });
-                if (driverRole) await user.addRole(driverRole, { transaction });
-            }
-
+            // if (profileType === "driver") {
+            //     await DriverProfile.create(
+            //         { userId: user.id, status: "pending_approval" },
+            //         { transaction }
+            //     );
+            //     logger.info(
+            //         `Created DriverProfile (pending_approval) for User ID: ${user.id}`
+            //     );
+            // }
+            // Assign base and extra roles (PASSENGER, DRIVER)
+            const roles = ["PASSENGER"];
+            if (profileType === "driver") roles.push("CHAUFFEUR");
+            await userService.assignBaseAndExtraRoles(user, roles, transaction);
             await transaction.commit();
             logger.info(
                 `User and profile(s) created successfully for User ID: ${user.id}`
             );
-            return user; // Consider returning user with profiles eager-loaded
+            return user;
         } catch (error) {
             await transaction.rollback();
             logger.error(
@@ -232,6 +220,51 @@ export const userService = {
             );
             if (error instanceof ConflictError) throw error;
             throw new AppError("User creation failed.", 500, error);
+        }
+    },
+
+    /**
+     * Creates a user with specified roles (no profile creation).
+     * @param {object} userData - User fields (email, phoneNumber, etc.)
+     * @param {string[]} roles - Array of role names to assign (e.g., ["ADMIN", "SUPERVISOR"])
+     * @returns {Promise<User>} The created User instance with roles.
+     * @throws {ConflictError} If user already exists.
+     * @throws {AppError} For other creation errors.
+     */
+    createUserWithRoles: async (userData, roles = []) => {
+        logger.info("Service: Creating user with custom roles", {
+            email: userData.email,
+            roles,
+        });
+        if (!userData.email.endsWith("@tyvaa.live")) {
+            throw new AppError("Email must end with @tyvaa.live", 400);
+        }
+        if (
+            userData.email &&
+            (await User.findOne({ where: { email: userData.email } }))
+        ) {
+            throw new ConflictError("User with this email already exists.");
+        }
+        const transaction = await sequelize.transaction();
+        try {
+            const user = await User.create(
+                { ...userData, isActive: true },
+                { transaction }
+            );
+            await userService.assignBaseAndExtraRoles(user, roles, transaction);
+            await transaction.commit();
+            logger.info(
+                `User created with roles: [UTILISATEUR_BASE${roles.length ? ", " + roles.join(", ") : ""}]`
+            );
+            return user;
+        } catch (error) {
+            await transaction.rollback();
+            logger.error(
+                { error, userData },
+                "Failed to create user with roles."
+            );
+            if (error instanceof ConflictError) throw error;
+            throw new AppError("User creation with roles failed.", 500, error);
         }
     },
 
@@ -712,5 +745,27 @@ export const userService = {
         await user.save();
         logger.info(`Service: Location updated for user ID: ${userId}`);
         return user;
+    },
+
+    /**
+     * Assigns the UTILISATEUR_BASE role and any additional roles to a user.
+     * @param {User} user - The user instance.
+     * @param {string[]} roles - Array of role names to assign (excluding duplicates).
+     * @param {object} transaction - The sequelize transaction.
+     */
+    assignBaseAndExtraRoles: async (user, roles = [], transaction) => {
+        // Always assign UTILISATEUR_BASE role
+        const baseRole = await Role.findOne({
+            where: { name: "UTILISATEUR_BASE" },
+        });
+        if (baseRole) await user.addRole(baseRole, { transaction });
+        // Assign any additional roles (excluding UTILISATEUR_BASE to avoid duplicate)
+        const filteredRoles = roles.filter((r) => r !== "UTILISATEUR_BASE");
+        if (filteredRoles.length > 0) {
+            const roleRecords = await Role.findAll({
+                where: { name: filteredRoles },
+            });
+            await user.addRoles(roleRecords, { transaction });
+        }
     },
 };

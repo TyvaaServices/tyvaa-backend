@@ -94,7 +94,7 @@ const permissionsData = [
 ];
 
 const rolesData = [
-    { name: "UTILISATEUR_BASE" }, // Default role for any new user
+    { name: "UTILISATEUR_BASE" },
     { name: "PASSAGER" },
     { name: "CHAUFFEUR" },
     { name: "SUPERVISEUR" },
