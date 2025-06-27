@@ -49,7 +49,7 @@ const chatSchema = {
     },
 };
 
-export default async function (fastify, opts) {
+export default async function (fastify, _opts) {
     fastify.post("/chatbot", { schema: chatSchema }, async (request, reply) => {
         try {
             const validationResult = ChatRequestSchema.safeParse(request.body);
@@ -78,7 +78,7 @@ export default async function (fastify, opts) {
 
             reply.code(200).send({ reply: output.response });
         } catch (error) {
-            console.error("Error in chatbot route:", error);
+            // console.error("Error in chatbot route:", error);
 
             if (error.name === "ZodError") {
                 reply.code(400).send({

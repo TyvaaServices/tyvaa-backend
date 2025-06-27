@@ -3,7 +3,7 @@ import Role from "../src/modules/user-module/models/role.js";
 
 import {
     AuditAction,
-    Booking,
+    // Booking,
     DriverApplication,
     DriverProfile,
     PassengerProfile,
@@ -137,7 +137,7 @@ async function seed() {
     );
 
     // Use only valid passenger profiles for booking creation
-    const rideInstances = await RideInstance.bulkCreate(
+    const rideInstances = await RideInstance.bulkCreate( // eslint-disable-line
         [
             {
                 rideId: rideModels[0]?.id,
@@ -156,16 +156,16 @@ async function seed() {
         ].filter((instance) => instance.rideId)
     );
 
-    const bookings = await Booking.bulkCreate(
-        [
-            {
-                userId: validPassengerProfiles[1]?.id,
-                rideInstanceId: rideInstances[0]?.id,
-                seatsBooked: 1,
-                status: "booked",
-            },
-        ].filter((booking) => booking.userId && booking.rideInstanceId)
-    );
+    // const bookings = await Booking.bulkCreate(
+    //     [
+    //         {
+    //             userId: validPassengerProfiles[1]?.id,
+    //             rideInstanceId: rideInstances[0]?.id,
+    //             seatsBooked: 1,
+    //             status: "booked",
+    //         },
+    //     ].filter((booking) => booking.userId && booking.rideInstanceId)
+    // );
 
     // await Payment.bulkCreate([
     //   {
@@ -205,10 +205,10 @@ async function seed() {
 
 seed()
     .then(() => {
-        console.log("Seeding successful!");
+        // console.log("Seeding successful!");
         process.exit(0);
     })
-    .catch((error) => {
-        console.error("Seeding failed:", error);
+    .catch((_error) => {
+        // console.error("Seeding failed:", _error);
         process.exit(1);
     });

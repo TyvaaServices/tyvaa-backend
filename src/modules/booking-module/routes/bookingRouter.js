@@ -1,6 +1,6 @@
 import bookingController from "../controllers/bookingController.js";
 
-async function rideRoutes(fastify, opts) {
+async function rideRoutes(fastify, _opts) {
     fastify.get("/bookings", bookingController.getAllBookings);
     fastify.get("/bookings/:id", bookingController.getBookingById);
     fastify.post("/bookings", bookingController.createBooking);

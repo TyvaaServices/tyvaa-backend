@@ -4,7 +4,7 @@ import multipart from "@fastify/multipart";
 
 dotenv.config();
 
-export default async function (fastify, opts) {
+export default async function (fastify, _opts) {
     fastify.register(multipart);
     fastify.register(userRoutes, { prefix: "/api/v1" });
 }

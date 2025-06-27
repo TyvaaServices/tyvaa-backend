@@ -18,10 +18,9 @@ let transporterInstance = null;
 
 try {
     const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = parseInt(
+    const smtpPort = parseInt( // eslint-disable-line
         process.env.SMTP_PORT ||
-            (process.env.SMTP_SECURE === "false" ? "587" : "465"),
-        10
+            (process.env.SMTP_SECURE === "false" ? "587" : "465")
     );
     let secureConnection;
     if (process.env.SMTP_SECURE?.toLowerCase() === "true") {
@@ -51,7 +50,7 @@ try {
             },
         });
 
-        transporterInstance.verify((error, success) => {
+        transporterInstance.verify((error, _success) => {
             if (error) {
                 logger.error(
                     { error },

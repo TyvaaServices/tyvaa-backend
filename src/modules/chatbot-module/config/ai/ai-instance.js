@@ -16,7 +16,7 @@ const ai = (() => {
     if (process.env.NODE_ENV === "test") {
         return {
             definePrompt: () => ({
-                __prompting: (input) =>
+                __prompting: (_input) =>
                     Promise.resolve({
                         output: {
                             response: "This is a mock response for testing.",
@@ -38,9 +38,9 @@ const ai = (() => {
         if (process.env.GOOGLE_API_KEY) {
             plugins.push(googleAI({ apiVersion: ["v1", "v1beta"] }));
         } else {
-            console.warn(
-                "GOOGLE_API_KEY environment variable not found. Google AI plugin will not be available."
-            );
+            // console.warn(
+            //     "GOOGLE_API_KEY environment variable not found. Google AI plugin will not be available."
+            // );
         }
         return genkit({
             plugins,

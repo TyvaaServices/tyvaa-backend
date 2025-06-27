@@ -9,7 +9,7 @@ dotenv.config();
 const app = fastify({ logger: true });
 app.register(router, { prefix: "/api/v1" });
 
-export default async function (fastify, opts) {
+export default async function (fastify, _opts) {
     fastify.register(router, { prefix: "/api/v1" });
 
     cron.schedule("* 9 * * *", async () => {

@@ -1,6 +1,6 @@
 import rideController from "../controllers/rideController.js";
 
-async function rideRoutes(fastify, opts) {
+async function rideRoutes(fastify, _opts) {
     fastify.get("/rides", rideController.getAllRides);
     fastify.get("/rides/:id", rideController.getRideById);
     fastify.post("/rides", rideController.createRide);

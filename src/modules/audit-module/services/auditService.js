@@ -19,7 +19,7 @@ async function getActionTypeId(action) {
         await RedisCache.set(cacheKey, id, ACTION_CACHE_TTL);
     }
 
-    return parseInt(id);
+    return parseInt(id, 10);
 }
 
 export const auditService = {

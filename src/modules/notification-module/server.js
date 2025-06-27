@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-export default async function (fastify, opts) {
+export default async function (fastify, _opts) {
     const base64Key = process.env.FIREBASE_KEY_BASE64;
     if (!base64Key) {
         fastify.log.error(

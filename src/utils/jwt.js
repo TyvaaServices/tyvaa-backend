@@ -13,7 +13,7 @@ function jwtPlugin(fastify, opts, done) {
         secret: jwtSecret || "supersecret",
     });
 
-    fastify.decorate("authenticate", async function (request, reply) {
+    fastify.decorate("authenticate", async function (request, _reply) {
         try {
             await request.jwtVerify();
         } catch (err) {

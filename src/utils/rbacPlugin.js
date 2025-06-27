@@ -6,9 +6,9 @@ import { User } from "#config/index.js";
  * These decorators are intended to be used as `preValidation` hooks in route options.
  *
  * @param {import("fastify").FastifyInstance & { models?: any }} fastify - The Fastify instance.
- * @param {Object} opts - Plugin options.
+ * @param {Object} _opts - Plugin options.
  */
-async function rbacPlugin(fastify, opts) {
+async function rbacPlugin(fastify, _opts) {
     /**
      * Decorator function (a preValidation hook factory) to check if the authenticated user
      * has a specific permission.
