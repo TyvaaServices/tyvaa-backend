@@ -224,47 +224,117 @@ export const userService = {
     },
 
     /**
-     * Creates a user with specified roles (no profile creation).
-     * @param {object} userData - User fields (email, phoneNumber, etc.)
-     * @param {string[]} roles - Array of role names to assign (e.g., ["ADMIN", "SUPERVISOR"])
-     * @returns {Promise<User>} The created User instance with roles.
-     * @throws {ConflictError} If user already exists.
-     * @throws {AppError} For other creation errors.
+     * Creates a "special" user (e.g., Admin, Supervisor) identified primarily by email.
+     * Assigns `UTILISATEUR_BASE` and exactly one specified special role (e.g., `ADMINISTRATEUR`, `SUPERVISEUR`).
+     * Does not create any `PassengerProfile` or `DriverProfile` for these users.
+     * Email must end with `@tyvaa.live`.
+     *
+     * @async
+     * @param {object} userData - User data. Must include `email`. May include `phoneNumber`, `sexe`, `fullName`, etc.
+     * @param {string} userData.email - The user's email address (primary identifier, must end with `@tyvaa.live`).
+     * @param {string} [userData.phoneNumber] - The user's phone number (optional).
+     * @param {string[]} specialRoleInput - An array containing exactly one valid special role name.
+     *                                      Valid special roles include `ADMINISTRATEUR`, `SUPERVISEUR`.
+     * @returns {Promise<User>} The created Sequelize User instance.
+     * @throws {ConflictError} If a user already exists with the provided email or phone number (if provided and unique).
+     * @throws {AppError} If email is invalid (domain, missing), role input is invalid (count, disallowed role),
+     *                    or for other creation errors.
      */
-    createUserWithRoles: async (userData, roles = []) => {
-        logger.info("Service: Creating user with custom roles", {
-            email: userData.email,
-            roles,
-        });
-        if (!userData.email.endsWith("@tyvaa.live")) {
-            throw new AppError("Email must end with @tyvaa.live", 400);
+    createUserWithRoles: async (userData, specialRoleInput = []) => {
+        logger.info(
+            "Service: Creating special user (via email) with specific role",
+            {
+                email: userData.email,
+                attemptedRole: specialRoleInput,
+            }
+        );
+
+        if (!userData.email || !userData.email.endsWith("@tyvaa.live")) {
+            throw new AppError(
+                "Invalid or missing email for special user creation. Email must end with @tyvaa.live.",
+                400
+            );
         }
+
+        const ALLOWED_SPECIAL_ROLES = [
+            "ADMINISTRATEUR",
+            "SUPERVISEUR",
+            // Add other future special roles here, e.g., "EDITOR", "MODERATOR"
+        ];
+        const DISALLOWED_ROLES_FOR_SPECIAL_USER = ["PASSAGER", "CHAUFFEUR"];
+
+        if (specialRoleInput.length !== 1) {
+            throw new AppError(
+                `Special users must be assigned exactly one primary role from the allowed list. Received: ${specialRoleInput.length} roles.`,
+                400
+            );
+        }
+        const roleToAssign = specialRoleInput[0];
+        if (!ALLOWED_SPECIAL_ROLES.includes(roleToAssign)) {
+            throw new AppError(
+                `Invalid special role: ${roleToAssign}. Must be one of [${ALLOWED_SPECIAL_ROLES.join(", ")}].`,
+                400
+            );
+        }
+        if (DISALLOWED_ROLES_FOR_SPECIAL_USER.includes(roleToAssign)) {
+            throw new AppError(
+                `Role ${roleToAssign} cannot be assigned directly during special user creation.`,
+                400
+            );
+        }
+
+        if (await User.findOne({ where: { email: userData.email } })) {
+            throw new ConflictError(
+                `User with email ${userData.email} already exists.`
+            );
+        }
+        // Optional: Check for phone number conflict if provided and needs to be unique across all users
         if (
-            userData.email &&
-            (await User.findOne({ where: { email: userData.email } }))
+            userData.phoneNumber &&
+            (await User.findOne({
+                where: { phoneNumber: userData.phoneNumber },
+            }))
         ) {
-            throw new ConflictError("User with this email already exists.");
+            throw new ConflictError(
+                `User with phone number ${userData.phoneNumber} already exists.`
+            );
         }
+
         const transaction = await sequelize.transaction();
         try {
+            // Ensure no profiles are created for these users
+            const { profileType, ...restUserData } = userData; // Explicitly remove profileType if ever passed
+
             const user = await User.create(
-                { ...userData, isActive: true },
+                { ...restUserData, isActive: true }, // isActive true by default for special users, or adjust as needed
                 { transaction }
             );
-            await userService.assignBaseAndExtraRoles(user, roles, transaction);
+
+            // Assign UTILISATEUR_BASE and the validated single special role
+            await userService.assignBaseAndExtraRoles(
+                user,
+                [roleToAssign], // Pass as an array
+                transaction
+            );
+
             await transaction.commit();
             logger.info(
-                `User created with roles: [UTILISATEUR_BASE${roles.length ? ", " + roles.join(", ") : ""}]`
+                `Special user ${userData.email} created successfully with roles: [UTILISATEUR_BASE, ${roleToAssign}]`
             );
             return user;
         } catch (error) {
             await transaction.rollback();
             logger.error(
-                { error, userData },
-                "Failed to create user with roles."
+                { error, userData, roleToAssign },
+                "Failed to create special user with roles."
             );
-            if (error instanceof ConflictError) throw error;
-            throw new AppError("User creation with roles failed.", 500, error);
+            if (error instanceof ConflictError || error instanceof AppError)
+                throw error;
+            throw new AppError(
+                "Special user creation with roles failed.",
+                500,
+                error
+            );
         }
     },
 
@@ -600,7 +670,21 @@ export const userService = {
                         `Service: Updated existing DriverProfile to active for User ID: ${userId}`
                     );
                 }
-                // TODO: Role assignment logic
+                const user = await User.findByPk(userId, { transaction });
+                if (!user) {
+                    throw new AppError(
+                        `User not found for role assignment during driver approval. User ID: ${userId}`,
+                        500
+                    );
+                }
+                await userService.assignBaseAndExtraRoles(
+                    user,
+                    ["CHAUFFEUR"],
+                    transaction
+                );
+                logger.info(
+                    `Service: Assigned CHAUFFEUR role to User ID: ${userId}`
+                );
             }
             await transaction.commit();
             logger.info(
@@ -753,19 +837,65 @@ export const userService = {
      * @param {string[]} roles - Array of role names to assign (excluding duplicates).
      * @param {object} transaction - The sequelize transaction.
      */
-    assignBaseAndExtraRoles: async (user, roles = [], transaction) => {
-        // Always assign UTILISATEUR_BASE role
+    /**
+     * Assigns the UTILISATEUR_BASE role and any additional unique roles to a user.
+     * Ensures UTILISATEUR_BASE is always present and avoids duplicate role assignments.
+     * @param {User} user - The Sequelize User instance.
+     * @param {string[]} extraRoleNames - Array of additional role names to assign.
+     * @param {object} transaction - The Sequelize transaction object.
+     * @throws {AppError} If the UTILISATEUR_BASE role is not found in the database.
+     */
+    assignBaseAndExtraRoles: async (user, extraRoleNames = [], transaction) => {
+        logger.debug(
+            `Service: Assigning roles to User ID: ${user.id}. Base role + Extras: [${extraRoleNames.join(", ")}]`
+        );
+
+        // 1. Ensure UTILISATEUR_BASE role is assigned
         const baseRole = await Role.findOne({
             where: { name: "UTILISATEUR_BASE" },
+            transaction,
         });
-        if (baseRole) await user.addRole(baseRole, { transaction });
-        // Assign any additional roles (excluding UTILISATEUR_BASE to avoid duplicate)
-        const filteredRoles = roles.filter((r) => r !== "UTILISATEUR_BASE");
-        if (filteredRoles.length > 0) {
-            const roleRecords = await Role.findAll({
-                where: { name: filteredRoles },
-            });
-            await user.addRoles(roleRecords, { transaction });
+        if (!baseRole) {
+            // This is a critical setup issue
+            logger.error(
+                "CRITICAL: UTILISATEUR_BASE role not found in database."
+            );
+            throw new AppError("Base user role configuration error.", 500);
         }
+        await user.addRole(baseRole, { transaction });
+        logger.debug(
+            `Service: Assigned UTILISATEUR_BASE to User ID: ${user.id}`
+        );
+
+        // 2. Process and assign additional unique roles
+        // Use a Set to ensure uniqueness among the provided extraRoleNames and exclude UTILISATEUR_BASE
+        const uniqueExtraRoleNames = new Set(
+            extraRoleNames.filter((roleName) => roleName !== "UTILISATEUR_BASE")
+        );
+
+        if (uniqueExtraRoleNames.size > 0) {
+            const rolesToAssign = await Role.findAll({
+                where: { name: Array.from(uniqueExtraRoleNames) },
+                transaction,
+            });
+
+            if (rolesToAssign.length !== uniqueExtraRoleNames.size) {
+                logger.warn(
+                    `Service: Some requested roles not found. Requested: [${Array.from(uniqueExtraRoleNames).join(", ")}], Found: [${rolesToAssign.map((r) => r.name).join(", ")}]`
+                );
+                // Optionally, throw an error if any requested role is not found,
+                // or proceed with assigning only the found ones.
+                // For now, proceeding with found ones.
+            }
+
+            if (rolesToAssign.length > 0) {
+                await user.addRoles(rolesToAssign, { transaction });
+                logger.debug(
+                    `Service: Assigned extra roles [${rolesToAssign.map((r) => r.name).join(", ")}] to User ID: ${user.id}`
+                );
+            }
+        }
+        // Sequelize's addRole/addRoles are generally idempotent (won't create duplicates in join table if records exist)
+        // Refresh roles on the instance if needed by the caller, or re-fetch user.
     },
 };

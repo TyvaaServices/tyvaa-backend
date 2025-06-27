@@ -20,6 +20,8 @@ terraform*
 logs/
 *.log
 *.log.*
+coverage
+*lcov.info
 
 # Environment variables
 .env

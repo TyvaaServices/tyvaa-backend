@@ -4,7 +4,7 @@ import { BadRequestError, NotFoundError } from "#utils/customErrors.js";
 
 /**
  * @file User controller for handling regular user operations and driver applications.
- * @typedef {import("fastify").FastifyInstance & { signToken: (payload: object) => string }} FastifyAugmentedInstance
+ * @typedef {import("fastify").FastifyInstance & { signToken: (payload: object, options?: object) => string }} FastifyAugmentedInstance
  * @typedef {import("fastify").FastifyRequest} FastifyRequest
  * @typedef {import("fastify").FastifyReply} FastifyReply
  */
@@ -158,22 +158,8 @@ export const userControllerFactory = (fastify) => ({
             if (!user) {
                 return reply.status(404).send({ error: "User not found" });
             }
-            // If login is with email (admin), set short-lived token and refresh token
-            let token, refreshToken;
-            if (email) {
-                token = fastify.signToken(
-                    { id: user.id },
-                    { expiresIn: "15m" }
-                );
-                refreshToken = fastify.signToken(
-                    { id: user.id, type: "refresh" },
-                    { expiresIn: "7d" }
-                );
-                return reply.send({ user, token, refreshToken });
-            } else {
-                token = fastify.signToken({ id: user.id });
-                return reply.send({ user, token });
-            }
+            let tokens = generateAuthTokens(user, fastify, email);
+            return reply.send({ user, ...tokens });
         } catch (err) {
             return reply.status(500).send({ error: err.message });
         }
@@ -407,3 +393,24 @@ export const userControllerFactory = (fastify) => ({
         }
     },
 });
+
+/**
+ * Helper to generate authentication tokens for a user.
+ * @param {object} user - The user object (must have an id).
+ * @param {FastifyAugmentedInstance} fastify - The Fastify instance with signToken.
+ * @param {string} [email] - The user's email, if available.
+ * @returns {object} Object containing token and optionally refreshToken.
+ */
+function generateAuthTokens(user, fastify, email) {
+    if (email) {
+        const token = fastify.signToken({ id: user.id }, { expiresIn: "15m" });
+        const refreshToken = fastify.signToken(
+            { id: user.id, type: "refresh" },
+            { expiresIn: "7d" }
+        );
+        return { token, refreshToken };
+    } else {
+        const token = fastify.signToken({ id: user.id });
+        return { token };
+    }
+}
