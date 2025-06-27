@@ -35,7 +35,7 @@ async function sendFCM(token, title, body, data) {
     }
 }
 
-async function router(fastify, options) {
+async function router(fastify, _options) {
     fastify.post("/send-notification", async (request, reply) => {
         const { token, title, body, data } = request.body;
         if (!token || !title || !body) {

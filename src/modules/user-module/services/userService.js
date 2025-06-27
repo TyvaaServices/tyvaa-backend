@@ -303,7 +303,7 @@ export const userService = {
         const transaction = await sequelize.transaction();
         try {
             // Ensure no profiles are created for these users
-            const { profileType, ...restUserData } = userData; // Explicitly remove profileType if ever passed
+            const { ...restUserData } = userData; // Explicitly remove profileType if ever passed
 
             const user = await User.create(
                 { ...restUserData, isActive: true }, // isActive true by default for special users, or adjust as needed

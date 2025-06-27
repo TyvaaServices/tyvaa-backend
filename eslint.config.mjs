@@ -58,7 +58,7 @@ export default defineConfig([
 
             camelcase: "off",
             "no-process-exit": "off",
-            radix: ["warn", "as-needed"],
+            radix: ["warn", "always"],
         },
     },
 ]);

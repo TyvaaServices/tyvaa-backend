@@ -1,6 +1,6 @@
 import { userControllerFactory } from "./../controllers/userController.js";
 
-async function userRoutes(fastify, opts) {
+async function userRoutes(fastify, _opts) {
     const userController = userControllerFactory(fastify);
 
     fastify.get(

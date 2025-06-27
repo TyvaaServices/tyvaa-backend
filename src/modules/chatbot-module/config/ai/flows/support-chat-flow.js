@@ -3,10 +3,10 @@
 import { ai } from "./../ai-instance.js"; // Adjust the path as necessary;
 import { z } from "zod";
 
-const messageSchema = z.object({
-    text: z.string(),
-    isUser: z.boolean(),
-});
+// const messageSchema = z.object({
+//     text: z.string(),
+//     isUser: z.boolean(),
+// });
 
 const SupportChatInputSchema = z.object({
     userQuery: z
@@ -207,8 +207,8 @@ const supportChatFlow = ai.defineFlow(
 );
 
 export async function getSupportChatResponse(input) {
-    console.log("Received input:", input);
+    // console.log("Received input:", input);
     const result = await supportChatFlow(input);
-    console.log("Response generated:", result);
+    // console.log("Response generated:", result);
     return result;
 }

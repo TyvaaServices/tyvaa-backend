@@ -150,9 +150,9 @@ async function seedDatabase() {
             });
             createdPermissions[pData.name] = permission;
             if (created) {
-                console.log(`Permission '${pData.name}' created.`);
+                // console.log(`Permission '${pData.name}' created.`);
             } else {
-                console.log(`Permission '${pData.name}' already exists.`);
+                // console.log(`Permission '${pData.name}' already exists.`);
             }
         }
 
@@ -163,9 +163,9 @@ async function seedDatabase() {
             });
             createdRoles[rData.name] = role;
             if (created) {
-                console.log(`Role '${rData.name}' created.`);
+                // console.log(`Role '${rData.name}' created.`);
             } else {
-                console.log(`Role '${rData.name}' already exists.`);
+                // console.log(`Role '${rData.name}' already exists.`);
             }
         }
 
@@ -177,9 +177,9 @@ async function seedDatabase() {
                     .map((pName) => createdPermissions[pName])
                     .filter((p) => p);
                 await role.addPermissions(permissionInstances); // `addPermissions` is a Sequelize mixin
-                console.log(
-                    `Assigned ${permissionsToAssign.length} permissions to role '${roleName}'.`
-                );
+                // console.log(
+                //     `Assigned ${permissionsToAssign.length} permissions to role '${roleName}'.`
+                // );
             }
         }
         const adminEmail = process.env.ADMIN_EMAIL || "admin@tyvaa.live";
@@ -197,9 +197,9 @@ async function seedDatabase() {
 
             if (!adminUser && process.env.ADMIN_PASSWORD) {
                 // Only create if password is provided
-                console.log(
-                    `Admin user not found, creating one... (Phone: ${adminPhone})`
-                );
+                // console.log(
+                //     `Admin user not found, creating one... (Phone: ${adminPhone})`
+                // );
                 try {
                     adminUser = await User.create({
                         phoneNumber: adminPhone,
@@ -209,32 +209,32 @@ async function seedDatabase() {
                         dateOfBirth: "1990-01-01",
                         isActive: true,
                     });
-                    console.log(
-                        `Admin user created with phone ${adminPhone}. Please set password securely if not handled by model.`
-                    );
-                } catch (error) {
-                    console.error(
-                        `Failed to create admin user with phone ${adminPhone}:`,
-                        error.message
-                    );
+                    // console.log(
+                    //     `Admin user created with phone ${adminPhone}. Please set password securely if not handled by model.`
+                    // );
+                } catch (_error) { // eslint-disable-line no-unused-vars
+                    // console.error(
+                    //     `Failed to create admin user with phone ${adminPhone}:`,
+                    //     _error.message
+                    // );
                 }
             }
 
             if (adminUser) {
                 await adminUser.setRoles([createdRoles.ADMINISTRATEUR]);
-                console.log(
-                    `Assigned ADMINISTRATEUR role to user ${adminUser.email || adminUser.phoneNumber}.`
-                );
+                // console.log(
+                //     `Assigned ADMINISTRATEUR role to user ${adminUser.email || adminUser.phoneNumber}.`
+                // );
             } else {
-                console.log(
-                    "Admin user not found and ADMIN_PASSWORD not set in .env, skipping admin role assignment."
-                );
+                // console.log(
+                //     "Admin user not found and ADMIN_PASSWORD not set in .env, skipping admin role assignment."
+                // );
             }
         }
 
-        console.log("RBAC Seeding completed successfully.");
-    } catch (error) {
-        console.error("Error seeding database for RBAC:", error);
+        // console.log("RBAC Seeding completed successfully.");
+    } catch (_error) { // eslint-disable-line no-unused-vars
+        // console.error("Error seeding database for RBAC:", _error);
     } finally {
         // await sequelize.close();
     }
@@ -244,14 +244,14 @@ if (
     import.meta.url === `file://${process.argv[1]}` &&
     process.env.NODE_ENV !== "test"
 ) {
-    console.log("Running RBAC Seeder...");
+    // console.log("Running RBAC Seeder...");
     seedDatabase()
         .then(() => {
-            console.log("Seeder finished. Exiting.");
+            // console.log("Seeder finished. Exiting.");
             process.exit(0);
         })
-        .catch((err) => {
-            console.error("Seeder failed:", err);
+        .catch((_err) => {
+            // console.error("Seeder failed:", _err);
             process.exit(1);
         });
 }

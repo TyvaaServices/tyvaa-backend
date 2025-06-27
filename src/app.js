@@ -26,7 +26,7 @@ const swaggerUi = (await import("@fastify/swagger-ui")).default;
 
 export async function buildApp() {
     const fastify = Fastify({ logger: true });
-    fastify.get("/health", async (request, reply) => {
+    fastify.get("/health", async (_request, _reply) => {
         return { status: "ok" };
     });
     fastify.register(cors, {
@@ -52,7 +52,7 @@ export async function buildApp() {
     fastify.register(rateLimit, {
         max: 100,
         timeWindow: "1 minute",
-        keyGenerator: (req, res) => req.headers["x-forwarded-for"] || req.ip,
+        keyGenerator: (req, _res) => req.headers["x-forwarded-for"] || req.ip,
     });
     fastify.register(errorHandlerPlugin);
     return fastify;
@@ -84,10 +84,10 @@ export async function startServer() {
                 }
                 fastify.log.info(`Server listening at ${address}`);
                 resolve(fastify);
-                if (process.env.NODE_ENV !== "test") {
-                    await fastify.ready();
-                    console.log(fastify.printRoutes());
-                }
+                // if (process.env.NODE_ENV !== "test") {
+                //     await fastify.ready();
+                //     console.log(fastify.printRoutes());
+                // }
             }
         );
         const shutdown = async () => {
