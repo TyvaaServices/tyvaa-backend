@@ -22,7 +22,7 @@ jest.unstable_mockModule(
     "../../src/modules/user-module/facades/userFacade.js",
     () => ({
         userFacade: mockUserFacade,
-    }),
+    })
 );
 
 const mockSignToken = jest.fn(() => "mocked.jwt.token");
@@ -46,7 +46,7 @@ let controller;
 beforeAll(async () => {
     const { userControllerFactory } = await import(
         "../../src/modules/user-module/controllers/userController.js"
-        );
+    );
     controller = userControllerFactory(fastify);
 });
 
@@ -65,7 +65,7 @@ describe("userController", () => {
         it("should return applications on success", async () => {
             const applications = [{ id: 1 }, { id: 2 }];
             mockUserFacade.getAllDriverApplications.mockResolvedValueOnce(
-                applications,
+                applications
             );
             const res = reply();
             await controller.getAllDriverApplications({}, res);
@@ -76,7 +76,7 @@ describe("userController", () => {
         });
         it("should handle errors", async () => {
             mockUserFacade.getAllDriverApplications.mockRejectedValueOnce(
-                new Error("fail"),
+                new Error("fail")
             );
             const res = reply();
             try {
@@ -93,7 +93,7 @@ describe("userController", () => {
             try {
                 await controller.reviewDriverApplication(
                     { params: { id: "1" }, body: { status: "invalid" } },
-                    res,
+                    res
                 );
             } catch (e) {
                 expect(e).toBeInstanceOf(Error);
@@ -102,7 +102,7 @@ describe("userController", () => {
         it("should return application on success", async () => {
             const application = { id: 1 };
             mockUserFacade.reviewDriverApplication.mockResolvedValueOnce(
-                application,
+                application
             );
             const res = reply();
             await controller.reviewDriverApplication(
@@ -110,7 +110,7 @@ describe("userController", () => {
                     params: { id: "1" },
                     body: { status: "approved", comments: "ok" },
                 },
-                res,
+                res
             );
             expect(res.send).toHaveBeenCalledWith({
                 success: true,
@@ -119,7 +119,7 @@ describe("userController", () => {
         });
         it("should handle not found", async () => {
             mockUserFacade.reviewDriverApplication.mockRejectedValueOnce(
-                new Error("Application not found"),
+                new Error("Application not found")
             );
             const res = reply();
             try {
@@ -128,7 +128,7 @@ describe("userController", () => {
                         params: { id: "1" },
                         body: { status: "approved", comments: "ok" },
                     },
-                    res,
+                    res
                 );
             } catch (e) {
                 expect(e).toBeInstanceOf(Error);
@@ -136,7 +136,7 @@ describe("userController", () => {
         });
         it("should handle other errors", async () => {
             mockUserFacade.reviewDriverApplication.mockRejectedValueOnce(
-                new Error("fail"),
+                new Error("fail")
             );
             const res = reply();
             try {
@@ -145,7 +145,7 @@ describe("userController", () => {
                         params: { id: "1" },
                         body: { status: "approved", comments: "ok" },
                     },
-                    res,
+                    res
                 );
             } catch (e) {
                 expect(e).toBeInstanceOf(Error);
@@ -219,7 +219,7 @@ describe("userController", () => {
             const res = reply();
             await controller.requestLoginOtp(
                 { body: { email: "foo@bar.com" } },
-                res,
+                res
             );
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith({
@@ -233,7 +233,7 @@ describe("userController", () => {
             const res = reply();
             await controller.requestLoginOtp(
                 { body: { phoneNumber: "123" } },
-                res,
+                res
             );
             expect(res.send).toHaveBeenCalledWith({
                 success: true,
@@ -242,12 +242,12 @@ describe("userController", () => {
         });
         it("should handle errors", async () => {
             mockUserFacade.requestLoginOtp.mockRejectedValueOnce(
-                new Error("fail"),
+                new Error("fail")
             );
             const res = reply();
             await controller.requestLoginOtp(
                 { body: { phoneNumber: "123" } },
-                res,
+                res
             );
             expect(res.status).toHaveBeenCalledWith(401);
             expect(res.send).toHaveBeenCalledWith({ error: "fail" });
@@ -273,7 +273,7 @@ describe("userController", () => {
             const res = reply();
             await controller.login(
                 { body: { email: "foo@bar.com", otp: "1234" } },
-                res,
+                res
             );
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith({
@@ -291,7 +291,7 @@ describe("userController", () => {
             const res = reply();
             await controller.login(
                 { body: { phoneNumber: "123", otp: "1234" } },
-                res,
+                res
             );
             expect(res.send).toHaveBeenCalledWith({
                 user,
@@ -300,12 +300,12 @@ describe("userController", () => {
         });
         it("should handle invalid otp", async () => {
             mockUserFacade.login.mockRejectedValueOnce(
-                new Error("Invalid OTP"),
+                new Error("Invalid OTP")
             );
             const res = reply();
             await controller.login(
                 { body: { phoneNumber: "123", otp: "1234" } },
-                res,
+                res
             );
             expect(res.status).toHaveBeenCalledWith(401);
             expect(res.send).toHaveBeenCalledWith({ error: "Invalid OTP" });
@@ -315,7 +315,7 @@ describe("userController", () => {
             const res = reply();
             await controller.login(
                 { body: { phoneNumber: "123", otp: "1234" } },
-                res,
+                res
             );
             expect(res.status).toHaveBeenCalledWith(404);
             expect(res.send).toHaveBeenCalledWith({ error: "not found" });
@@ -325,7 +325,7 @@ describe("userController", () => {
             const res = reply();
             await controller.login(
                 { body: { phoneNumber: "123", otp: "1234" } },
-                res,
+                res
             );
             expect(res.status).toHaveBeenCalledWith(404);
             expect(res.send).toHaveBeenCalledWith({ error: "User not found" });
@@ -348,7 +348,7 @@ describe("userController", () => {
             const res = reply();
             await controller.requestRegisterOtp(
                 { body: { phoneNumber: "123" } },
-                res,
+                res
             );
             expect(res.send).toHaveBeenCalledWith({
                 success: true,
@@ -357,12 +357,12 @@ describe("userController", () => {
         });
         it("should handle errors", async () => {
             mockUserFacade.requestRegisterOtp.mockRejectedValueOnce(
-                new Error("fail"),
+                new Error("fail")
             );
             const res = reply();
             await controller.requestRegisterOtp(
                 { body: { phoneNumber: "123" } },
-                res,
+                res
             );
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.send).toHaveBeenCalledWith({ error: "fail" });
@@ -380,358 +380,362 @@ describe("userController", () => {
                 user,
                 token: "mocked.jwt.token",
             });
-            it("should handle user already exists", async () => {
-                mockUserFacade.createUser.mockRejectedValueOnce(
-                    mockUserFacade.createUser.mockRejectedValueOnce(
-                        new Error("User already exists"),
-                    );
-            )
-
-                const res = reply();
-                await controller.createUser({ body: { phoneNumber: "123" } }, res);
-                expect(res.send).toHaveBeenCalledWith({
-                    error: "User already exists",
-                });
-            });
+        });
+        it("should handle user already exists", async () => {
             mockUserFacade.createUser.mockRejectedValueOnce(
-                new Error("Invalid OTP"),
+                new Error("User already exists")
             );
+            const res = reply();
+            await controller.createUser({ body: { phoneNumber: "123" } }, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({
+                error: "User already exists",
+            });
+        });
+        it("should handle invalid otp", async () => {
+            mockUserFacade.createUser.mockRejectedValueOnce(
+                new Error("Invalid OTP")
+            );
+            const res = reply();
+            await controller.createUser({ body: { phoneNumber: "123" } }, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({ error: "Invalid OTP" });
+        });
+        it("should handle other errors", async () => {
             mockUserFacade.createUser.mockRejectedValueOnce(new Error("fail"));
             const res = reply();
             await controller.createUser({ body: { phoneNumber: "123" } }, res);
             expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.send).toHaveBeenCalledWith({ error: "Invalid OTP" });
-            describe("updateUser", () => {
-                it("should update user and return result", async () => {
-                    const user = { id: 1 };
-                    mockUserFacade.updateUser.mockResolvedValueOnce(user);
-                    // Simulate multipart parts
-                    const part1 = { fieldname: "name", value: "foo", file: false };
-                    const part2 = {
-                        fieldname: "profile_image",
-                        file: true,
-                        filename: "img.png",
-                        toBuffer: jest.fn().mockResolvedValue(Buffer.from("")),
-                        await controller.createUser({ body: { phoneNumber: "123" } }, res);
-                        const req = {
-                            params: { id: "1" },
-                            parts: async function* () {
-                                yield part1;
-                                expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                                const res = reply();
-                                await controller.updateUser(req, res);
-                                expect(res.send).toHaveBeenCalledWith({
-                                    success: true,
-                                    message: "Profile updated successfully.",
-                                    data: user,
-                                });
-                            }
-                )
+            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+        });
+    });
 
-                    it("should handle user not found", async () => {
-                        mockUserFacade.updateUser.mockRejectedValueOnce(
-                            new Error("User not found"),
-                        );
-                        const req = {
-                            params: { id: "1" },
-                            parts: async function* () {
-                            },
-                            log: { warn: jest.fn() },
-                        };
-                        const res = reply();
-                        await controller.updateUser(req, res);
-                        expect(res.status).toHaveBeenCalledWith(404);
-                        expect(res.send).toHaveBeenCalledWith({ error: "User not found" });
-                    });
-                    it("should handle other errors", async () => {
-                        mockUserFacade.updateUser.mockRejectedValueOnce(new Error("fail"));
-                        const req = {
-                            params: { id: "1" },
-                            parts: async function* () {
-                            },
-                            log: { warn: jest.fn() },
-                        };
-                        const res = reply();
-                        try {
-                            await controller.updateUser(req, res);
-                        } catch (e) {
-                            expect(e).toBeInstanceOf(Error);
-                        }
-                    });
-                    it("should handle unexpected error and return 500", async () => {
-                        mockUserFacade.updateUser.mockRejectedValueOnce(new Error("fail"));
-                        const req = {
-                            params: { id: "1" },
-                            parts: async function* () {
-                            },
-                            log: fastify.log,
-                        };
-                        const res = reply();
-                        await controller.updateUser(req, res);
-                        expect(res.status).toHaveBeenCalledWith(500);
-                        expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                    });
-                })
+    describe("updateUser", () => {
+        it("should update user and return result", async () => {
+            const user = { id: 1 };
+            mockUserFacade.updateUser.mockResolvedValueOnce(user);
+            // Simulate multipart parts
+            const part1 = { fieldname: "name", value: "foo", file: false };
+            const part2 = {
+                fieldname: "profile_image",
+                file: true,
+                filename: "img.png",
+                toBuffer: jest.fn().mockResolvedValue(Buffer.from("")),
+            };
+            const req = {
+                params: { id: "1" },
+                parts: async function* () {
+                    yield part1;
+                    yield part2;
+                },
+                log: { warn: jest.fn() },
+            };
+            const res = reply();
+            await controller.updateUser(req, res);
+            expect(res.send).toHaveBeenCalledWith({
+                success: true,
+                message: "Profile updated successfully.",
+                data: user,
+            });
+        });
+        it("should handle user not found", async () => {
+            mockUserFacade.updateUser.mockRejectedValueOnce(
+                new Error("User not found")
+            );
+            const req = {
+                params: { id: "1" },
+                parts: async function* () {},
+                log: { warn: jest.fn() },
+            };
+            const res = reply();
+            await controller.updateUser(req, res);
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.send).toHaveBeenCalledWith({ error: "User not found" });
+        });
+        it("should handle other errors", async () => {
+            mockUserFacade.updateUser.mockRejectedValueOnce(new Error("fail"));
+            const req = {
+                params: { id: "1" },
+                parts: async function* () {},
+                log: { warn: jest.fn() },
+            };
+            const res = reply();
+            try {
+                await controller.updateUser(req, res);
+            } catch (e) {
+                expect(e).toBeInstanceOf(Error);
+            }
+        });
+        it("should handle unexpected error and return 500", async () => {
+            mockUserFacade.updateUser.mockRejectedValueOnce(new Error("fail"));
+            const req = {
+                params: { id: "1" },
+                parts: async function* () {},
+                log: fastify.log,
+            };
+            const res = reply();
+            await controller.updateUser(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+        });
+    });
 
+    describe("deleteUser", () => {
+        it("should return 204 on success", async () => {
+            mockUserFacade.deleteUser.mockResolvedValueOnce();
+            const res = reply();
+            await controller.deleteUser({ params: { id: "1" } }, res);
+            expect(res.status).toHaveBeenCalledWith(204);
+            expect(res.send).toHaveBeenCalled();
+        });
+        it("should handle user not found", async () => {
+            mockUserFacade.deleteUser.mockRejectedValueOnce(
+                new Error("User not found")
+            );
+            const res = reply();
+            await controller.deleteUser({ params: { id: "1" } }, res);
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.send).toHaveBeenCalledWith({ error: "User not found" });
+        });
+        it("should handle other errors", async () => {
+            mockUserFacade.deleteUser.mockRejectedValueOnce(new Error("fail"));
+            const res = reply();
+            await controller.deleteUser({ params: { id: "1" } }, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+        });
+    });
 
-                    describe("deleteUser", () => {
-                        it("should return 204 on success", async () => {
-                            mockUserFacade.deleteUser.mockResolvedValueOnce();
-                            const res = reply();
-                            await controller.deleteUser({ params: { id: "1" } }, res);
-                            expect(res.status).toHaveBeenCalledWith(204);
-                            expect(res.send).toHaveBeenCalled();
-                        });
-                        it("should handle user not found", async () => {
-                            mockUserFacade.deleteUser.mockRejectedValueOnce(
-                                new Error("User not found"),
-                            );
-                            const res = reply();
-                            await controller.deleteUser({ params: { id: "1" } }, res);
-                            expect(res.status).toHaveBeenCalledWith(404);
-                            expect(res.send).toHaveBeenCalledWith({ error: "User not found" });
-                        });
-                        it("should handle other errors", async () => {
-                            mockUserFacade.deleteUser.mockRejectedValueOnce(new Error("fail"));
-                            const res = reply();
-                            await controller.deleteUser({ params: { id: "1" } }, res);
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-                    });
+    describe("updateFcmToken", () => {
+        it("should update FCM token and return user", async () => {
+            const user = { id: 1 };
+            mockUserFacade.updateFcmToken.mockResolvedValueOnce(user);
+            const res = reply();
+            await controller.updateFcmToken(
+                { user: { id: "1" }, body: { fcmToken: "token" } },
+                res
+            );
+            expect(res.send).toHaveBeenCalledWith({
+                success: true,
+                message: "FCM token updated.",
+                data: user,
+            });
+        });
+        it("should handle errors", async () => {
+            mockUserFacade.updateFcmToken.mockRejectedValueOnce(
+                new Error("fail")
+            );
+            const res = reply();
+            await controller.updateFcmToken(
+                { user: { id: "1" }, body: { fcmToken: "token" } },
+                res
+            );
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+        });
+    });
 
-                    describe("updateFcmToken", () => {
-                        it("should update FCM token and return user", async () => {
-                            const user = { id: 1 };
-                            mockUserFacade.updateFcmToken.mockResolvedValueOnce(user);
-                            const res = reply();
-                            await controller.updateFcmToken(
-                                { user: { id: "1" }, body: { fcmToken: "token" } },
-                                res,
-                            );
-                            expect(res.send).toHaveBeenCalledWith({
-                                success: true,
-                                message: "FCM token updated.",
-                                data: user,
-                            });
-                        });
-                        it("should handle errors", async () => {
-                            mockUserFacade.updateFcmToken.mockRejectedValueOnce(
-                                new Error("fail"),
-                            );
-                            const res = reply();
-                            await controller.updateFcmToken(
-                                { user: { id: "1" }, body: { fcmToken: "token" } },
-                                res,
-                            );
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-                    });
+    describe("updateLocation", () => {
+        it("should update location and return user", async () => {
+            const user = { id: 1 };
+            mockUserFacade.updateLocation.mockResolvedValueOnce(user);
+            const res = reply();
+            await controller.updateLocation(
+                { user: { id: "1" }, body: { location: {} } },
+                res
+            );
+            expect(res.send).toHaveBeenCalledWith({
+                success: true,
+                message: "Location updated successfully.",
+                data: user,
+            });
+        });
+        it("should handle errors", async () => {
+            mockUserFacade.updateLocation.mockRejectedValueOnce(
+                new Error("fail")
+            );
+            const res = reply();
+            await controller.updateLocation(
+                { user: { id: "1" }, body: { location: {} } },
+                res
+            );
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+        });
+    });
 
-                    describe("updateLocation", () => {
-                        it("should update location and return user", async () => {
-                            const user = { id: 1 };
-                            mockUserFacade.updateLocation.mockResolvedValueOnce(user);
-                            const res = reply();
-                            await controller.updateLocation(
-                                { user: { id: "1" }, body: { location: {} } },
-                                res,
-                            );
-                            expect(res.send).toHaveBeenCalledWith({
-                                success: true,
-                                message: "Location updated successfully.",
-                                data: user,
-                            });
-                        });
-                        it("should handle errors", async () => {
-                            mockUserFacade.updateLocation.mockRejectedValueOnce(
-                                new Error("fail"),
-                            );
-                            const res = reply();
-                            await controller.updateLocation(
-                                { user: { id: "1" }, body: { location: {} } },
-                                res,
-                            );
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-                    });
+    describe("submitDriverApplication", () => {
+        it("should submit application and return result", async () => {
+            const application = { id: 1 };
+            mockUserFacade.submitDriverApplication.mockResolvedValueOnce(
+                application
+            );
+            const req = {
+                user: { id: "1" },
+                parts: jest.fn(),
+                log: { warn: jest.fn() },
+            };
+            const res = reply();
+            await controller.submitDriverApplication(req, res);
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(res.send).toHaveBeenCalledWith({
+                success: true,
+                message: "Driver application submitted.",
+                data: application,
+            });
+        });
+        it("should handle required/pending error", async () => {
+            mockUserFacade.submitDriverApplication.mockRejectedValueOnce(
+                new Error("required")
+            );
+            const req = {
+                user: { id: "1" },
+                parts: jest.fn(),
+                log: { warn: jest.fn() },
+            };
+            const res = reply();
+            await controller.submitDriverApplication(req, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.send).toHaveBeenCalledWith({ error: "required" });
+        });
+        it("should handle other errors", async () => {
+            mockUserFacade.submitDriverApplication.mockRejectedValueOnce(
+                new Error("fail")
+            );
+            const req = {
+                user: { id: "1" },
+                parts: jest.fn(),
+                log: { warn: jest.fn() },
+            };
+            const res = reply();
+            await controller.submitDriverApplication(req, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+        });
+    });
 
-                    describe("submitDriverApplication", () => {
-                        it("should submit application and return result", async () => {
-                            const application = { id: 1 };
-                            mockUserFacade.submitDriverApplication.mockResolvedValueOnce(
-                                application,
-                            );
-                            const req = {
-                                user: { id: "1" },
-                                parts: jest.fn(),
-                                log: { warn: jest.fn() },
-                            };
-                            const res = reply();
-                            await controller.submitDriverApplication(req, res);
-                            expect(res.status).toHaveBeenCalledWith(201);
-                            expect(res.send).toHaveBeenCalledWith({
-                                success: true,
-                                message: "Driver application submitted.",
-                                data: application,
-                            });
-                        });
-                        it("should handle required/pending error", async () => {
-                            mockUserFacade.submitDriverApplication.mockRejectedValueOnce(
-                                new Error("required"),
-                            );
-                            const req = {
-                                user: { id: "1" },
-                                parts: jest.fn(),
-                                log: { warn: jest.fn() },
-                            };
-                            const res = reply();
-                            await controller.submitDriverApplication(req, res);
-                            expect(res.status).toHaveBeenCalledWith(400);
-                            expect(res.send).toHaveBeenCalledWith({ error: "required" });
-                        });
-                        it("should handle other errors", async () => {
-                            mockUserFacade.submitDriverApplication.mockRejectedValueOnce(
-                                new Error("fail"),
-                            );
-                            const req = {
-                                user: { id: "1" },
-                                parts: jest.fn(),
-                                log: { warn: jest.fn() },
-                            };
-                            const res = reply();
-                            await controller.submitDriverApplication(req, res);
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-                    });
+    describe("getDriverApplicationStatus", () => {
+        it("should return status on success", async () => {
+            const status = { status: "pending" };
+            mockUserFacade.getDriverApplicationStatus.mockResolvedValueOnce(
+                status
+            );
+            const res = reply();
+            await controller.getDriverApplicationStatus(
+                { user: { id: "1" } },
+                res
+            );
+            expect(res.send).toHaveBeenCalledWith({
+                success: true,
+                data: status,
+            });
+        });
+        it("should handle errors", async () => {
+            mockUserFacade.getDriverApplicationStatus.mockRejectedValueOnce(
+                new Error("fail")
+            );
+            const res = reply();
+            await controller.getDriverApplicationStatus(
+                { user: { id: "1" } },
+                res
+            );
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+        });
+    });
 
-                    describe("getDriverApplicationStatus", () => {
-                        it("should return status on success", async () => {
-                            const status = { status: "pending" };
-                            mockUserFacade.getDriverApplicationStatus.mockResolvedValueOnce(
-                                status,
-                            );
-                            const res = reply();
-                            await controller.getDriverApplicationStatus(
-                                { user: { id: "1" } },
-                                res,
-                            );
-                            expect(res.send).toHaveBeenCalledWith({
-                                success: true,
-                                data: status,
-                            });
-                        });
-                        it("should handle errors", async () => {
-                            mockUserFacade.getDriverApplicationStatus.mockRejectedValueOnce(
-                                new Error("fail"),
-                            );
-                            const res = reply();
-                            await controller.getDriverApplicationStatus(
-                                { user: { id: "1" } },
-                                res,
-                            );
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-                    });
+    describe("blockUser", () => {
+        it("should block user and return result", async () => {
+            const user = { id: 1 };
+            mockUserFacade.blockUser.mockResolvedValueOnce(user);
+            const res = reply();
+            await controller.blockUser({ params: { id: "1" } }, res);
+            expect(res.send).toHaveBeenCalledWith({
+                success: true,
+                message: "User blocked successfully.",
+                data: user,
+            });
+        });
+        it("should handle user not found", async () => {
+            mockUserFacade.blockUser.mockRejectedValueOnce(
+                new Error("User not found")
+            );
+            const res = reply();
+            await controller.blockUser({ params: { id: "1" } }, res);
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.send).toHaveBeenCalledWith({ error: "User not found" });
+        });
+        it("should handle other errors", async () => {
+            mockUserFacade.blockUser.mockRejectedValueOnce(new Error("fail"));
+            const res = reply();
+            await controller.blockUser({ params: { id: "1" } }, res);
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+        });
+    });
 
-                    describe("blockUser", () => {
-                        it("should block user and return result", async () => {
-                            const user = { id: 1 };
-                            mockUserFacade.blockUser.mockResolvedValueOnce(user);
-                            const res = reply();
-                            await controller.blockUser({ params: { id: "1" } }, res);
-                            expect(res.send).toHaveBeenCalledWith({
-                                success: true,
-                                message: "User blocked successfully.",
-                                data: user,
-                            });
-                        });
-                        it("should handle user not found", async () => {
-                            mockUserFacade.blockUser.mockRejectedValueOnce(
-                                new Error("User not found"),
-                            );
-                            const res = reply();
-                            await controller.blockUser({ params: { id: "1" } }, res);
-                            expect(res.status).toHaveBeenCalledWith(404);
-                            expect(res.send).toHaveBeenCalledWith({ error: "User not found" });
-                        });
-                        it("should handle other errors", async () => {
-                            mockUserFacade.blockUser.mockRejectedValueOnce(new Error("fail"));
-                            const res = reply();
-                            await controller.blockUser({ params: { id: "1" } }, res);
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-                    });
+    afterAll(async () => {
+        jest.clearAllMocks();
+    });
+});
 
-                    afterAll(async () => {
-                        jest.clearAllMocks();
-                    });
-                })
+describe("userController coverage edge cases", () => {
+    it("reviewDriverApplication: should throw BadRequestError for invalid status", async () => {
+        const req = { params: { id: "1" }, body: { status: "invalid" } };
+        const res = reply();
+        await expect(
+            controller.reviewDriverApplication(req, res)
+        ).rejects.toThrow("Invalid status provided for review");
+    });
 
+    it("getUserById: should throw NotFoundError if user not found", async () => {
+        mockUserFacade.getUserById.mockResolvedValueOnce(null);
+        const req = { params: { id: "notfound" } };
+        const res = reply();
+        await expect(controller.getUserById(req, res)).rejects.toThrow(
+            "User with ID notfound not found."
+        );
+    });
 
-                    describe("userController coverage edge cases", () => {
-                        it("reviewDriverApplication: should throw BadRequestError for invalid status", async () => {
-                            const req = { params: { id: "1" }, body: { status: "invalid" } };
-                            const res = reply();
-                            await expect(
-                                controller.reviewDriverApplication(req, res),
-                            ).rejects.toThrow("Invalid status provided for review");
-                        });
+    it("requestLoginOtp: should handle facade error and return 401", async () => {
+        mockUserFacade.requestLoginOtp.mockRejectedValueOnce(new Error("fail"));
+        const req = { body: { phoneNumber: "123" } };
+        const res = reply();
+        await controller.requestLoginOtp(req, res);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+    });
 
-                        it("getUserById: should throw NotFoundError if user not found", async () => {
-                            mockUserFacade.getUserById.mockResolvedValueOnce(null);
-                            const req = { params: { id: "notfound" } };
-                            const res = reply();
-                            await expect(controller.getUserById(req, res)).rejects.toThrow(
-                                "User with ID notfound not found.",
-                            );
-                        });
+    it("login: should handle unexpected error and return 500", async () => {
+        mockUserFacade.login.mockImplementationOnce(() => {
+            throw new Error("fail");
+        });
+        const req = { body: { phoneNumber: "123", otp: "456" } };
+        const res = reply();
+        await controller.login(req, res);
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+    });
 
-                        it("requestLoginOtp: should handle facade error and return 401", async () => {
-                            mockUserFacade.requestLoginOtp.mockRejectedValueOnce(new Error("fail"));
-                            const req = { body: { phoneNumber: "123" } };
-                            const res = reply();
-                            await controller.requestLoginOtp(req, res);
-                            expect(res.status).toHaveBeenCalledWith(401);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
+    it("updateUser: should handle unexpected error and return 500", async () => {
+        mockUserFacade.updateUser.mockRejectedValueOnce(new Error("fail"));
+        const req = {
+            params: { id: "1" },
+            parts: async function* () {},
+            log: fastify.log,
+        };
+        const res = reply();
+        await controller.updateUser(req, res);
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+    });
 
-                        it("login: should handle unexpected error and return 500", async () => {
-                            mockUserFacade.login.mockImplementationOnce(() => {
-                                throw new Error("fail");
-                            });
-                            const req = { body: { phoneNumber: "123", otp: "456" } };
-                            const res = reply();
-                            await controller.login(req, res);
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-
-                        it("updateUser: should handle unexpected error and return 500", async () => {
-                            mockUserFacade.updateUser.mockRejectedValueOnce(new Error("fail"));
-                            const req = {
-                                params: { id: "1" },
-                                parts: async function* () {
-                                },
-                                log: fastify.log,
-                            };
-                            const res = reply();
-                            await controller.updateUser(req, res);
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-
-                        it("blockUser: should handle unexpected error and return 500", async () => {
-                            mockUserFacade.blockUser.mockRejectedValueOnce(new Error("fail"));
-                            const req = { params: { id: "1" } };
-                            const res = reply();
-                            await controller.blockUser(req, res);
-                            expect(res.status).toHaveBeenCalledWith(500);
-                            expect(res.send).toHaveBeenCalledWith({ error: "fail" });
-                        });
-                    });
+    it("blockUser: should handle unexpected error and return 500", async () => {
+        mockUserFacade.blockUser.mockRejectedValueOnce(new Error("fail"));
+        const req = { params: { id: "1" } };
+        const res = reply();
+        await controller.blockUser(req, res);
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({ error: "fail" });
+    });
+});

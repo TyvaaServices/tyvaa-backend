@@ -115,7 +115,7 @@ describe("Admin Controller", () => {
             Role.findAll.mockResolvedValue(roles);
             await getAllRoles(mockRequest, mockReply);
             expect(Role.findAll).toHaveBeenCalledWith({
-                include: [{ model: Permission, through: { attributes: [] } }],
+                include: [{ model: Permission, as: "permissions" }],
             });
             expect(mockReply.send).toHaveBeenCalledWith(roles);
         });
