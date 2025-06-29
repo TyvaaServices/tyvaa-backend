@@ -4,7 +4,7 @@ import router from "./routes/notificationRouter.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import broker from "../../../src/broker/broker.js";
+import broker from "#broker/broker.js";
 
 dotenv.config();
 

@@ -10,6 +10,7 @@ services:
       - NODE_ENV=production
       - REDIS_PORT=6379
       - REDIS_HOST=redis
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/tyvaa
     env_file:
       - .env
     restart: unless-stopped

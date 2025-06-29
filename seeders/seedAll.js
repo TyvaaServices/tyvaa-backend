@@ -142,7 +142,6 @@ async function seed() {
 
     // Use only valid passenger profiles for booking creation
     const rideInstances = await RideInstance.bulkCreate(
-        // eslint-disable-line
         [
             {
                 rideId: rideModels[0]?.id,

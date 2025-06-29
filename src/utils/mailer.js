@@ -19,7 +19,6 @@ let transporterInstance = null;
 try {
     const smtpHost = process.env.SMTP_HOST;
     const smtpPort = parseInt(
-        // eslint-disable-line
         process.env.SMTP_PORT ||
             (process.env.SMTP_SECURE === "false" ? "587" : "465")
     );

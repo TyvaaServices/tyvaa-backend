@@ -1,6 +1,16 @@
 import { DataTypes } from "sequelize";
 import sequelize from "#config/db.js";
 
+/**
+ * Sequelize model for Permission.
+ * Represents a permission in the system (e.g., 'reserver_trajet', 'publier_trajet').
+ *
+ * @typedef {Object} Permission
+ * @property {number} id - The unique identifier for the permission.
+ * @property {string} name - The name of the permission.
+ * @property {string} [description] - The description of the permission.
+ */
+
 const Permission = sequelize.define(
     "Permission",
     {

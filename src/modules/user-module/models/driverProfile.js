@@ -1,6 +1,17 @@
 import { DataTypes } from "sequelize";
 import sequelize from "#config/db.js";
 
+/**
+ * Sequelize model for DriverProfile (ProfilChauffeur).
+ * Represents a driver's profile in the system.
+ *
+ * @typedef {Object} DriverProfile
+ * @property {number} id - The unique identifier for the driver profile.
+ * @property {number} driverNote - The driver's note/rating.
+ * @property {string} statusProfile - The status of the driver profile (Active or Suspended).
+ * @property {number} userId - The user ID associated with this profile.
+ */
+
 const DriverProfile = sequelize.define("ProfilChauffeur", {
     id: {
         type: DataTypes.INTEGER,

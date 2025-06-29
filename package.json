@@ -17,6 +17,7 @@
     "imports": {
         "#utils/*": "./src/utils/*",
         "#config/*": "./src/config/*",
+        "#broker/*": "./src/broker/*",
         "#user-modules/*": "./src/user-modules/*",
         "#audit-modules/*": "./src/audit-modules/*",
         "#logAuddit": "./src/modules/audit-modules/services/auditService.js",

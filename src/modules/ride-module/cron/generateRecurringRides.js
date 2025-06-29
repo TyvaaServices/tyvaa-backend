@@ -14,7 +14,6 @@ const DAYS_OF_WEEK = [
 ];
 
 const RIDE_INSTANCE_GENERATION_LOOKAHEAD_DAYS = parseInt(
-    // eslint-disable-line
     process.env.RIDE_LOOKAHEAD_DAYS || "14"
 );
 

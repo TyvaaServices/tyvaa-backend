@@ -212,7 +212,6 @@ async function seedDatabase() {
                     //     `Admin user created with phone ${adminPhone}. Please set password securely if not handled by model.`
                     // );
                 } catch (_error) {
-                    // eslint-disable-line no-unused-vars
                     // console.error(
                     //     `Failed to create admin user with phone ${adminPhone}:`,
                     //     _error.message
@@ -234,7 +233,6 @@ async function seedDatabase() {
 
         // console.log("RBAC Seeding completed successfully.");
     } catch (_error) {
-        // eslint-disable-line no-unused-vars
         console.error("Error seeding database for RBAC:", _error); // Add error logging
     } finally {
         // await sequelize.close(); // Do NOT close the connection here

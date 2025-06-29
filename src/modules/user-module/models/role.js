@@ -2,6 +2,15 @@ import { DataTypes } from "sequelize";
 import sequelize from "#config/db.js";
 import Permission from "./permission.js"; // Import Permission model
 
+/**
+ * Sequelize model for Role.
+ * Represents a user role in the system (e.g., PASSAGER, CHAUFFEUR, ADMINISTRATEUR).
+ *
+ * @typedef {Object} Role
+ * @property {number} id - The unique identifier for the role.
+ * @property {string} name - The name of the role.
+ */
+
 const Role = sequelize.define(
     "Role",
     {
@@ -22,7 +31,10 @@ const Role = sequelize.define(
 );
 
 // Define Many-to-Many relationship between Role and Permission
-// This will create a join table `RolePermissions`
+/**
+ * Sets up a many-to-many association between Role and Permission models.
+ * This creates a join table `RolePermissions`.
+ */
 Role.belongsToMany(Permission, {
     through: "RolePermissions",
     foreignKey: "roleId",
@@ -30,6 +42,10 @@ Role.belongsToMany(Permission, {
     timestamps: false, // No timestamps for the join table itself
 });
 
+/**
+ * Sets up a many-to-many association between Permission and Role models.
+ * This creates a join table `RolePermissions`.
+ */
 Permission.belongsToMany(Role, {
     through: "RolePermissions",
     foreignKey: "permissionId",

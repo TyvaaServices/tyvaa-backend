@@ -1,5 +1,5 @@
-import Queue from "./queue";
-import FileStorage from "./storage";
+import Queue from "./queue.js";
+import FileStorage from "./storage.js";
 
 class Broker {
     constructor() {
