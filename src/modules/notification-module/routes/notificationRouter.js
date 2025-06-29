@@ -1,5 +1,6 @@
 import { getMessaging } from "firebase-admin/messaging";
 import createLogger from "./../../../utils/logger.js";
+import { getNotificationTemplate } from "../templates.js";
 
 const logger = createLogger("notification-router");
 
@@ -37,23 +38,28 @@ export async function sendFCM(token, title, body, data) {
 
 async function router(fastify, _options) {
     fastify.post("/send-notification", async (request, reply) => {
-        const { token, title, body, data } = request.body;
-        if (!token || !title || !body) {
-            return reply.status(400).send({ error: "Missing required fields" });
+        const { token, eventType, data } = request.body;
+        if (!token || !eventType || !data) {
+            return reply.status(400).send({ error: "Missing required fields: token, eventType, data" });
         }
-        await sendFCM(token, title, body, data || {});
+
+        const template = getNotificationTemplate(eventType, data);
+        if (!template) {
+            return reply.status(400).send({ error: "Invalid eventType or template not found" });
+        }
+
+        await sendFCM(token, template.title, template.body, data);
         reply.send({ status: "Notification sent" });
     });
 }
 
+// Example new payload:
 // {
-//   "token": "",
-//     "title": "Test Notification",
-//     "body": "This is a test message from Postman",
-//     "data": {
-//   "type": "test",
-//       "id": "12345",
-//       "route": "/test-screen"
-// }
+//   "token": "device_fcm_token_here",
+//   "eventType": "RIDER_ACCEPT_RIDE",
+//   "data": {
+//     "riderName": "John Doe",
+//     "rideDetails": "Details about the ride"
+//   }
 // }
 export default router;

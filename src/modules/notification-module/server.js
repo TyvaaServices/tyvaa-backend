@@ -33,7 +33,28 @@ export default async function (fastify, _opts) {
             "Received notification_created event from broker",
             msg
         );
-        // Here you can call your notification sending logic, e.g. send push/email
-        // await sendNotification(msg);
+
+        const { token, eventType, data } = msg;
+
+        if (!token || !eventType || !data) {
+            fastify.log.error("Missing required fields in broker message: token, eventType, data", msg);
+            return;
+        }
+
+        const { getNotificationTemplate } = await import("./templates.js"); // Dynamic import
+        const template = getNotificationTemplate(eventType, data);
+
+        if (!template) {
+            fastify.log.error(`Invalid eventType or template not found for event: ${eventType}`, msg);
+            return;
+        }
+
+        const { sendFCM } = await import("./routes/notificationRouter.js"); // Dynamic import
+        try {
+            await sendFCM(token, template.title, template.body, data);
+            fastify.log.info(`Notification sent via broker event ${eventType} to token ${token}`);
+        } catch (error) {
+            fastify.log.error(`Error sending FCM notification via broker for event ${eventType}:`, error);
+        }
     });
 }
