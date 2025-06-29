@@ -3,7 +3,7 @@ import createLogger from "./../../../utils/logger.js";
 
 const logger = createLogger("notification-router");
 
-async function sendFCM(token, title, body, data) {
+export async function sendFCM(token, title, body, data) {
     const message = {
         token,
         notification: {

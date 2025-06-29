@@ -4,6 +4,7 @@ import router from "./routes/notificationRouter.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import broker from "../../../src/broker/broker.js";
 
 dotenv.config();
 
@@ -26,4 +27,13 @@ export default async function (fastify, _opts) {
         }
     }
     fastify.register(router, { prefix: "/api/v1" });
+
+    broker.subscribe("notification_created", async (msg) => {
+        fastify.log.info(
+            "Received notification_created event from broker",
+            msg
+        );
+        // Here you can call your notification sending logic, e.g. send push/email
+        // await sendNotification(msg);
+    });
 }
