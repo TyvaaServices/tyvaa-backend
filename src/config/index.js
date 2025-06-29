@@ -8,6 +8,8 @@ import AuditAction from "./../modules/audit-module/models/actionType.js";
 import PassengerProfile from "./../modules/user-module/models/passengerProfile.js";
 import DriverProfile from "./../modules/user-module/models/driverProfile.js";
 import DriverApplication from "./../modules/user-module/models/driverApplication.js";
+import Role from "./../modules/user-module/models/role.js"; // Import Role
+// import Permission from "./../modules/user-module/models/permission.js"; // If needed later
 
 RideModel.hasMany(RideInstance, { foreignKey: "rideId" });
 RideInstance.belongsTo(RideModel, { foreignKey: "rideId" });
@@ -48,4 +50,6 @@ export {
     AuditLog,
     PassengerProfile,
     DriverProfile,
+    Role, // Export Role
+    // Permission, // If needed later
 };
