@@ -1,6 +1,6 @@
 export default {
     testEnvironment: "node",
-    testMatch: ["**/tests/**/*.test.js"],
+    testMatch: ["**/tests/**/*.test.js", "**/src/modules/**/*.test.js"],
     collectCoverage: true,
     collectCoverageFrom: [
         "src/**/*.js",
@@ -16,7 +16,7 @@ export default {
         "!src/modules/**/uploads/**",
         "!src/modules/**/config/**",
         "!src/modules/**/validations/**",
-        "!src/modules/**/routes/**",
+        // "!src/modules/**/routes/**", // Allow coverage for route files
         "!src/modules/**/services/**",
         "src/modules/**/cron/**",
         "!src/modules/**/server.js",
