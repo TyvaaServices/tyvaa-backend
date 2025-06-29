@@ -1,5 +1,5 @@
 import fp from "fastify-plugin";
-import { User } from "#config/index.js";
+import { User, Role } from "#config/index.js"; // Added Role
 
 /**
  * RBAC plugin that adds `checkPermission` and `checkRole` decorators to Fastify.
@@ -41,22 +41,62 @@ async function rbacPlugin(fastify, _opts) {
                 });
                 return;
             }
-            const userInstance = await User.findByPk(request.user.id);
 
-            if (!userInstance) {
+            if (!request.user.roles || !Array.isArray(request.user.roles)) {
                 request.log.warn(
-                    `RBAC: User with ID ${request.user.id} not found in database.`
+                    `RBAC: Roles not found or not an array in JWT payload for user ID ${request.user.id} (permission check).`
                 );
-                return reply
-                    .status(403)
-                    .send({ message: "Forbidden. User not found or invalid." });
+                return reply.status(403).send({
+                    message: "Forbidden. User roles not available in token for permission check.",
+                });
             }
 
-            const hasPerm =
-                await userInstance.hasPermission(requiredPermission);
+            // Fetch permissions for the roles found in the JWT
+            // This still requires DB access but avoids fetching the user and then their roles.
+            const userRolesFromJWT = request.user.roles;
+            let hasPerm = false;
+
+            try {
+                if (userRolesFromJWT.length > 0) {
+                    if (typeof Role.findAll !== "function") {
+                        request.log.error(
+                            "RBAC: Role.findAll is not a function. Check Role model import/definition."
+                        );
+                        return reply.status(500).send({
+                            message:
+                                "Internal Server Error: RBAC configuration issue (Role model).",
+                        });
+                    }
+                    const rolesWithPermissions = await Role.findAll({
+                        where: {
+                            name: userRolesFromJWT, // Assuming role names in JWT match DB
+                        },
+                        include: [
+                            {
+                                association: "Permissions", // This 'Permissions' should match the alias in Role model definition if any, or the model name
+                                where: { name: requiredPermission },
+                                required: true, // Ensures only roles with the specific permission are returned
+                            },
+                        ],
+                    });
+
+                    if (rolesWithPermissions && rolesWithPermissions.length > 0) {
+                        hasPerm = true;
+                    }
+                }
+            } catch (dbError) {
+                request.log.error(
+                    { err: dbError },
+                    "RBAC: Database error during permission check (Role.findAll)."
+                );
+                return reply.status(500).send({
+                    message: "Internal Server Error while checking permissions.",
+                });
+            }
+
             if (!hasPerm) {
                 request.log.info(
-                    `RBAC: User ${userInstance.id} denied access to resource requiring permission '${requiredPermission}'.`
+                    `RBAC: User ${request.user.id} (roles: ${userRolesFromJWT.join(", ")}) denied access to resource requiring permission '${requiredPermission}'.`
                 );
                 return reply.status(403).send({
                     message: `Forbidden. Required permission: '${requiredPermission}'.`,
@@ -87,26 +127,20 @@ async function rbacPlugin(fastify, _opts) {
                     message: "Unauthorized. Authentication required.",
                 });
             }
-            if (!User || typeof User.findByPk !== "function") {
-                request.log.error("RBAC: User model not found for role check.");
-                return reply.status(500).send({
-                    message: "Internal Server Error: RBAC configuration issue.",
+            if (!request.user.roles || !Array.isArray(request.user.roles)) {
+                request.log.warn(
+                    `RBAC: Roles not found or not an array in JWT payload for user ID ${request.user.id}.`
+                );
+                return reply.status(403).send({
+                    message: "Forbidden. User roles not available in token.",
                 });
             }
-            const userInstance = await User.findByPk(request.user.id);
-            if (!userInstance) {
-                request.log.warn(
-                    `RBAC: User with ID ${request.user.id} not found for role check.`
-                );
-                return reply
-                    .status(403)
-                    .send({ message: "Forbidden. User not found or invalid." });
-            }
 
-            const hasRoleFlag = await userInstance.hasRole(requiredRole);
+            const hasRoleFlag = request.user.roles.includes(requiredRole);
+
             if (!hasRoleFlag) {
                 request.log.info(
-                    `RBAC: User ${userInstance.id} denied access to resource requiring role '${requiredRole}'.`
+                    `RBAC: User ${request.user.id} denied access to resource requiring role '${requiredRole}'. User roles: ${request.user.roles.join(", ")}`
                 );
                 return reply.status(403).send({
                     message: `Forbidden. Required role: '${requiredRole}'.`,

@@ -158,7 +158,7 @@ export const userControllerFactory = (fastify) => ({
             if (!user) {
                 return reply.status(404).send({ error: "User not found" });
             }
-            let tokens = generateAuthTokens(user, fastify, email);
+            let tokens = await generateAuthTokens(user, fastify, email);
             return reply.send({ user, ...tokens });
         } catch (err) {
             return reply.status(500).send({ error: err.message });
@@ -401,16 +401,25 @@ export const userControllerFactory = (fastify) => ({
  * @param {string} [email] - The user's email, if available.
  * @returns {object} Object containing token and optionally refreshToken.
  */
-function generateAuthTokens(user, fastify, email) {
+async function generateAuthTokens(user, fastify, email) {
+    // Fetch user roles
+    const userRoles = await user.getRoles();
+    const roleNames = userRoles.map(role => role.name);
+
+    const payload = {
+        id: user.id,
+        roles: roleNames,
+    };
+
     if (email) {
-        const token = fastify.signToken({ id: user.id }, { expiresIn: "15m" });
+        const token = fastify.signToken(payload, { expiresIn: "15m" });
         const refreshToken = fastify.signToken(
-            { id: user.id, type: "refresh" },
+            { id: user.id, type: "refresh" }, // Refresh token typically doesn't need full payload
             { expiresIn: "7d" }
         );
         return { token, refreshToken };
     } else {
-        const token = fastify.signToken({ id: user.id });
+        const token = fastify.signToken(payload);
         return { token };
     }
 }

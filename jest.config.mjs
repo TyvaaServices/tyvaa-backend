@@ -26,4 +26,9 @@ export default {
     coverageReporters: ["text", "lcov"],
     setupFiles: ["./tests/setup.js"],
     transform: {},
+    moduleNameMapper: {
+        "^#config/(.*)$": "<rootDir>/src/config/$1",
+        "^#utils/(.*)$": "<rootDir>/src/utils/$1",
+        // Add other aliases from package.json imports if needed for tests
+    },
 };
