@@ -1,5 +1,5 @@
 import fp from "fastify-plugin";
-import { User, Role } from "#config/index.js"; // Added Role
+import { Role, User } from "#config/index.js";
 
 /**
  * RBAC plugin that adds `checkPermission` and `checkRole` decorators to Fastify.
@@ -47,7 +47,8 @@ async function rbacPlugin(fastify, _opts) {
                     `RBAC: Roles not found or not an array in JWT payload for user ID ${request.user.id} (permission check).`
                 );
                 return reply.status(403).send({
-                    message: "Forbidden. User roles not available in token for permission check.",
+                    message:
+                        "Forbidden. User roles not available in token for permission check.",
                 });
             }
 
@@ -80,7 +81,10 @@ async function rbacPlugin(fastify, _opts) {
                         ],
                     });
 
-                    if (rolesWithPermissions && rolesWithPermissions.length > 0) {
+                    if (
+                        rolesWithPermissions &&
+                        rolesWithPermissions.length > 0
+                    ) {
                         hasPerm = true;
                     }
                 }
@@ -90,7 +94,8 @@ async function rbacPlugin(fastify, _opts) {
                     "RBAC: Database error during permission check (Role.findAll)."
                 );
                 return reply.status(500).send({
-                    message: "Internal Server Error while checking permissions.",
+                    message:
+                        "Internal Server Error while checking permissions.",
                 });
             }
 

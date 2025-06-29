@@ -1,4 +1,3 @@
-import sequelize from "#config/db.js";
 import User from "../src/modules/user-module/models/user.js"; // Needed for context if we assign default roles
 import Role from "../src/modules/user-module/models/role.js";
 import Permission from "../src/modules/user-module/models/permission.js";
@@ -141,7 +140,7 @@ const rolePermissionsData = {
 
 async function seedDatabase() {
     try {
-        await sequelize.sync({ alter: true });
+        // await sequelize.sync({ force: true }); // REMOVE this line to avoid wiping tables again
         const createdPermissions = {};
         for (const pData of permissionsData) {
             const [permission, created] = await Permission.findOrCreate({
@@ -212,7 +211,8 @@ async function seedDatabase() {
                     // console.log(
                     //     `Admin user created with phone ${adminPhone}. Please set password securely if not handled by model.`
                     // );
-                } catch (_error) { // eslint-disable-line no-unused-vars
+                } catch (_error) {
+                    // eslint-disable-line no-unused-vars
                     // console.error(
                     //     `Failed to create admin user with phone ${adminPhone}:`,
                     //     _error.message
@@ -233,10 +233,11 @@ async function seedDatabase() {
         }
 
         // console.log("RBAC Seeding completed successfully.");
-    } catch (_error) { // eslint-disable-line no-unused-vars
-        // console.error("Error seeding database for RBAC:", _error);
+    } catch (_error) {
+        // eslint-disable-line no-unused-vars
+        console.error("Error seeding database for RBAC:", _error); // Add error logging
     } finally {
-        // await sequelize.close();
+        // await sequelize.close(); // Do NOT close the connection here
     }
 }
 
@@ -247,11 +248,11 @@ if (
     // console.log("Running RBAC Seeder...");
     seedDatabase()
         .then(() => {
-            // console.log("Seeder finished. Exiting.");
+            console.log("Seeder finished. Exiting.");
             process.exit(0);
         })
         .catch((_err) => {
-            // console.error("Seeder failed:", _err);
+            console.error("Seeder failed:", _err);
             process.exit(1);
         });
 }

@@ -1,17 +1,28 @@
-# Use official Node.js LTS image
-FROM node:22-alpine
+# Stage 1: Install dependencies
+FROM node:22-alpine AS deps
 
-# Set working directory
 WORKDIR /app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production && npm cache clean --force
 
-# Copy the rest of the application code
-COPY . .
+# Stage 2: Copy only necessary files and run app
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Copy node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Copy application source code
+COPY src ./src
+COPY .env* ./
 
 # Expose the application port (change if needed)
 EXPOSE 3000
@@ -21,4 +32,3 @@ ENV NODE_ENV=production
 
 # Start the application
 CMD ["node", "src/app.js"]
-

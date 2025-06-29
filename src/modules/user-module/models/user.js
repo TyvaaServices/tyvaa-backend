@@ -153,11 +153,6 @@ const User = sequelize.define(
                 where: { email: { [Op.ne]: null } },
             },
             {
-                name: "idx_user_phonenumber",
-                fields: ["phoneNumber"],
-                unique: true,
-            },
-            {
                 name: "idx_user_isactive_isblocked",
                 fields: ["isActive", "isBlocked"],
             },

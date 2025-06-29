@@ -286,6 +286,7 @@ describe("userController", () => {
                 phoneNumber: "123",
                 email: "foo@tyvaa.live",
                 isDriver: false,
+                getRoles: jest.fn(() => []), // Mock getRoles method
             };
             mockUserFacade.login.mockResolvedValueOnce(user);
             const res = reply();

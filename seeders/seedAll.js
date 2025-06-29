@@ -3,7 +3,6 @@ import Role from "../src/modules/user-module/models/role.js";
 
 import {
     AuditAction,
-    // Booking,
     DriverApplication,
     DriverProfile,
     PassengerProfile,
@@ -59,11 +58,16 @@ async function seed() {
         },
     ]);
 
-    // Assign a random role to each user
-    for (const user of users) {
-        const randomRole = roles[Math.floor(Math.random() * roles.length)];
-        await user.addRole(randomRole);
-    }
+    // Assign explicit roles to users
+    const passagerRole = roles.find((r) => r.name === "PASSAGER");
+    const chauffeurRole = roles.find((r) => r.name === "CHAUFFEUR");
+    const superviseurRole = roles.find((r) => r.name === "SUPERVISEUR");
+    const adminRole = roles.find((r) => r.name === "ADMINISTRATEUR");
+
+    if (users[0] && passagerRole) await users[0].addRole(passagerRole);
+    if (users[1] && chauffeurRole) await users[1].addRole(chauffeurRole);
+    if (users[2] && superviseurRole) await users[2].addRole(superviseurRole);
+    if (users[3] && adminRole) await users[3].addRole(adminRole);
 
     // Fetch users with their roles for profile creation
     const usersWithRoles = await Promise.all(
@@ -137,7 +141,8 @@ async function seed() {
     );
 
     // Use only valid passenger profiles for booking creation
-    const rideInstances = await RideInstance.bulkCreate( // eslint-disable-line
+    const rideInstances = await RideInstance.bulkCreate(
+        // eslint-disable-line
         [
             {
                 rideId: rideModels[0]?.id,
