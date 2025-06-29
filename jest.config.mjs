@@ -16,7 +16,7 @@ export default {
         "!src/modules/**/uploads/**",
         "!src/modules/**/config/**",
         "!src/modules/**/validations/**",
-        // "!src/modules/**/routes/**", // Allow coverage for route files
+        "!src/modules/**/routes/**",
         "!src/modules/**/services/**",
         "src/modules/**/cron/**",
         "!src/modules/**/server.js",

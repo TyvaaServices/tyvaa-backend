@@ -40,12 +40,18 @@ async function router(fastify, _options) {
     fastify.post("/send-notification", async (request, reply) => {
         const { token, eventType, data } = request.body;
         if (!token || !eventType || !data) {
-            return reply.status(400).send({ error: "Missing required fields: token, eventType, data" });
+            return reply
+                .status(400)
+                .send({
+                    error: "Missing required fields: token, eventType, data",
+                });
         }
 
         const template = getNotificationTemplate(eventType, data);
         if (!template) {
-            return reply.status(400).send({ error: "Invalid eventType or template not found" });
+            return reply
+                .status(400)
+                .send({ error: "Invalid eventType or template not found" });
         }
 
         await sendFCM(token, template.title, template.body, data);

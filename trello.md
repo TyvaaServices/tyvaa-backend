@@ -145,4 +145,5 @@
     **Description:** Étoffer le `CONTRIBUTING.md` avec des instructions claires sur le setup, les conventions de code, et le workflow de PR.
 
 ---
-*Fin des tâches Trello*
+
+_Fin des tâches Trello_

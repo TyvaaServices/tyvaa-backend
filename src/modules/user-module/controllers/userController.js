@@ -404,7 +404,7 @@ export const userControllerFactory = (fastify) => ({
 async function generateAuthTokens(user, fastify, email) {
     // Fetch user roles
     const userRoles = await user.getRoles();
-    const roleNames = userRoles.map(role => role.name);
+    const roleNames = userRoles.map((role) => role.name);
 
     const payload = {
         id: user.id,

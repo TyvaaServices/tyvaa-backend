@@ -1,4 +1,11 @@
-import { beforeEach, describe, expect, it, jest, beforeAll } from "@jest/globals";
+import {
+    beforeEach,
+    describe,
+    expect,
+    it,
+    jest,
+    beforeAll,
+} from "@jest/globals";
 // import rbacPluginFp from "../../src/utils/rbacPlugin.js"; // Will be imported dynamically in beforeAll
 import User from "../../src/modules/user-module/models/user.js"; // Still needed for User.findByPk manipulation in one test
 
@@ -38,7 +45,7 @@ describe("RBAC Plugin", () => {
         if (roleFindAllSpy) {
             roleFindAllSpy.mockRestore(); // Restore original and remove spy
         }
-        roleFindAllSpy = jest.spyOn(ActualRole, 'findAll');
+        roleFindAllSpy = jest.spyOn(ActualRole, "findAll");
 
         mockFastify = {
             decorate: jest.fn((name, funcFactory) => {
@@ -97,7 +104,8 @@ describe("RBAC Plugin", () => {
             await checkPermissionHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(403);
             expect(mockReply.send).toHaveBeenCalledWith({
-                message: "Forbidden. User roles not available in token for permission check.",
+                message:
+                    "Forbidden. User roles not available in token for permission check.",
             });
             expect(mockRequest.log.warn).toHaveBeenCalledWith(
                 "RBAC: Roles not found or not an array in JWT payload for user ID 1 (permission check)."
@@ -109,7 +117,8 @@ describe("RBAC Plugin", () => {
             await checkPermissionHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(403);
             expect(mockReply.send).toHaveBeenCalledWith({
-                message: "Forbidden. User roles not available in token for permission check.",
+                message:
+                    "Forbidden. User roles not available in token for permission check.",
             });
         });
 
@@ -157,10 +166,9 @@ describe("RBAC Plugin", () => {
                 message: "Internal Server Error: RBAC configuration issue.",
             });
             expect(mockRequest.log.error).toHaveBeenCalledWith(
-                 "RBAC: User model not found on fastify.models. Ensure models are registered."
+                "RBAC: User model not found on fastify.models. Ensure models are registered."
             );
         });
-
 
         it("should return 403 if user's roles from JWT do not grant the required permission", async () => {
             mockRequest.user.roles = ["role_without_permission"];
@@ -174,11 +182,13 @@ describe("RBAC Plugin", () => {
             });
             expect(roleFindAllSpy).toHaveBeenCalledWith({
                 where: { name: ["role_without_permission"] },
-                include: [{
-                    association: "Permissions",
-                    where: { name: "test_permission" },
-                    required: true,
-                }],
+                include: [
+                    {
+                        association: "Permissions",
+                        where: { name: "test_permission" },
+                        required: true,
+                    },
+                ],
             });
             expect(mockRequest.log.info).toHaveBeenCalledWith(
                 "RBAC: User 1 (roles: role_without_permission) denied access to resource requiring permission 'test_permission'."
@@ -188,7 +198,12 @@ describe("RBAC Plugin", () => {
         it("should proceed if user's roles from JWT grant the required permission", async () => {
             mockRequest.user.roles = ["role_with_permission"];
             // Simulate DB returning at least one role that has the permission
-            roleFindAllSpy.mockResolvedValue([{ name: "role_with_permission", Permissions: [{name: "test_permission"}] }]);
+            roleFindAllSpy.mockResolvedValue([
+                {
+                    name: "role_with_permission",
+                    Permissions: [{ name: "test_permission" }],
+                },
+            ]);
 
             await checkPermissionHandler(mockRequest, mockReply);
 
@@ -196,11 +211,13 @@ describe("RBAC Plugin", () => {
             expect(mockReply.send).not.toHaveBeenCalled();
             expect(roleFindAllSpy).toHaveBeenCalledWith({
                 where: { name: ["role_with_permission"] },
-                include: [{
-                    association: "Permissions",
-                    where: { name: "test_permission" },
-                    required: true,
-                }],
+                include: [
+                    {
+                        association: "Permissions",
+                        where: { name: "test_permission" },
+                        required: true,
+                    },
+                ],
             });
         });
 
@@ -212,7 +229,7 @@ describe("RBAC Plugin", () => {
             expect(mockReply.send).toHaveBeenCalledWith({
                 message: "Forbidden. Required permission: 'test_permission'.",
             });
-             expect(mockRequest.log.info).toHaveBeenCalledWith(
+            expect(mockRequest.log.info).toHaveBeenCalledWith(
                 "RBAC: User 1 (roles: ) denied access to resource requiring permission 'test_permission'."
             );
         });
@@ -237,7 +254,6 @@ describe("RBAC Plugin", () => {
                 "RBAC: Database error during permission check (Role.findAll)."
             );
         });
-
     });
 
     describe("checkRole Handler", () => {
