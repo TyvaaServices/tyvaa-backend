@@ -48,6 +48,15 @@ function generateOtp() {
 }
 
 /**
+ * Normalize a phone number to always include country code (e.g., +221781706184)
+ * If already starts with '+', return as is. Otherwise, prepend '+221'.
+ */
+function normalizePhoneNumber(phone) {
+    if (!phone) return phone;
+    return phone.startsWith("+") ? phone : `+221${phone}`;
+}
+
+/**
  * @file User Service: Handles business logic related to users, profiles, OTP, and file uploads.
  */
 export const userService = {
@@ -98,20 +107,26 @@ export const userService = {
      * @throws {AppError} If OTP generation or storage fails.
      */
     generateAndSendOtp: async (identifier, context) => {
+        // Normalize phone number if context is registration/login and identifier is a phone
+        let normalizedIdentifier = normalizePhoneNumber(identifier);
         const otp = generateOtp();
         const redisKey =
             (context === "login" ? OTP_PREFIX_LOGIN : OTP_PREFIX_REGISTER) +
-            identifier;
+            normalizedIdentifier;
         try {
             await RedisCache.set(redisKey, otp, OTP_TTL_SECONDS);
             logger.info(
-                `Generated and stored OTP for ${identifier} (context: ${context}). OTP: ${otp}`
+                `Generated and stored OTP for ${normalizedIdentifier} (context: ${context}). OTP: ${otp}`
+            );
+            // Log to console for debugging
+            console.log(
+                `OTP for ${normalizedIdentifier} (${context}): ${otp} saved to Redis with key: ${redisKey}`
             );
             // TODO: Implement actual sending of OTP via SMS/Email service here.
             return otp;
         } catch (error) {
             logger.error(
-                { error, identifier, context },
+                { error, identifier: normalizedIdentifier, context },
                 "Failed to generate or store OTP."
             );
             throw new AppError("Failed to process OTP request.", 500, error);
@@ -127,32 +142,46 @@ export const userService = {
      * @throws {AuthenticationError} If OTP is invalid or expired.
      */
     verifyOtp: async (identifier, otp, context) => {
+        // Normalize phone number if context is registration/login and identifier is a phone
+        let normalizedIdentifier = identifier;
+        if (context === "registration" || context === "login") {
+            if (/^\d{9}$/.test(identifier)) {
+                normalizedIdentifier = normalizePhoneNumber(identifier);
+            }
+        }
         const redisKey =
             (context === "login" ? OTP_PREFIX_LOGIN : OTP_PREFIX_REGISTER) +
-            identifier;
+            normalizedIdentifier;
+        // Extra debug logging
+        console.log(
+            `[OTP VERIFY] identifier: '${identifier}', normalized: '${normalizedIdentifier}', context: '${context}', redisKey: '${redisKey}', provided OTP: '${otp}'`
+        );
         const storedOtp = await RedisCache.get(redisKey);
-
+        console.log(
+            `[OTP VERIFY] Redis GET for key '${redisKey}' returned:`,
+            storedOtp
+        );
         if (!storedOtp) {
             logger.warn(
-                `OTP verification failed: No OTP found for ${identifier} (context: ${context}).`
+                `OTP verification failed: No OTP found for ${normalizedIdentifier} (context: ${context}).`
             );
             throw new AuthenticationError(
                 "OTP expired or not found. Please request a new one."
             );
         }
         logger.debug(
-            `Verifying OTP for ${identifier} (context: ${context}). Stored OTP: ${storedOtp}, Provided OTP: ${otp}`
+            `Verifying OTP for ${normalizedIdentifier} (context: ${context}). Stored OTP: ${storedOtp}, Provided OTP: ${otp}`
         );
         if (String(storedOtp) !== String(otp)) {
             logger.warn(
-                `OTP verification failed: Invalid OTP for ${identifier} (context: ${context}).`
+                `OTP verification failed: Invalid OTP for ${normalizedIdentifier} (context: ${context}).`
             );
             // TODO: Implement attempt limiting / account lockout for multiple failed OTPs.
             throw new AuthenticationError("Invalid OTP provided.");
         }
         await RedisCache.del(redisKey);
         logger.info(
-            `OTP verified and deleted for ${identifier} (context: ${context}).`
+            `OTP verified and deleted for ${normalizedIdentifier} (context: ${context}).`
         );
     },
 
@@ -167,6 +196,10 @@ export const userService = {
      */
     createUserWithProfile: async (userData) => {
         const { profileType = "passenger", ...userInfo } = userData;
+        // Normalize phone number before any DB operation
+        if (userInfo.phoneNumber) {
+            userInfo.phoneNumber = normalizePhoneNumber(userInfo.phoneNumber);
+        }
         logger.info("Service: Creating user with profile", {
             phoneNumber: userInfo.phoneNumber,
             profileType,
@@ -184,6 +217,15 @@ export const userService = {
             (await User.findOne({ where: { email: userInfo.email } }))
         ) {
             throw new ConflictError("User with this email already exists.");
+        }
+
+        // Ensure isBlocked is set to false by default
+        if (userInfo.isBlocked === undefined || userInfo.isBlocked === null) {
+            userInfo.isBlocked = false;
+        }
+        // If email is an empty string, set it to null
+        if (userInfo.email === "") {
+            userInfo.email = null;
         }
 
         const transaction = await sequelize.transaction();
@@ -214,8 +256,13 @@ export const userService = {
             return user;
         } catch (error) {
             await transaction.rollback();
-            logger.error(
-                { error, userData },
+            console.log(
+                {
+                    errorMessage: error.message,
+                    errorStack: error.stack,
+                    userInfo,
+                    profileType,
+                },
                 "Failed to create user with profile."
             );
             if (error instanceof ConflictError) throw error;

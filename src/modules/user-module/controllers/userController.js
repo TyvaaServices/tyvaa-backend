@@ -94,6 +94,9 @@ export const userControllerFactory = (fastify) => ({
     requestLoginOtp: async (request, reply) => {
         try {
             const { phoneNumber, email } = request.body;
+            console.log(
+                `Requesting  ${request.body}` // Log the request for debugging
+            );
             if (!phoneNumber && !email) {
                 return reply
                     .status(400)
@@ -118,6 +121,9 @@ export const userControllerFactory = (fastify) => ({
                 message: "OTP has been sent to your registered contact.",
             });
         } catch (err) {
+            console.log(
+                `Error requesting login OTP: ${err.message}` // Log the error for debugging
+            );
             return reply.status(401).send({ error: err.message });
         }
     },
@@ -175,6 +181,7 @@ export const userControllerFactory = (fastify) => ({
         try {
             const { phoneNumber } = request.body;
             const otp = await userFacade.requestRegisterOtp(phoneNumber);
+            console.log(`Requested OTP for registration: ${otp}`);
             return reply.send({ success: true, otp });
         } catch (err) {
             return reply.status(400).send({ error: err.message });
@@ -189,10 +196,10 @@ export const userControllerFactory = (fastify) => ({
      */
     createUser: async (request, reply) => {
         try {
-            const userData = request.body;
-            let user;
+            const { user, otp } = request.body;
+            let createdUser;
             try {
-                user = await userFacade.createUser(userData);
+                createdUser = await userFacade.createUser(user, otp);
             } catch (err) {
                 if (err.message === "User already exists") {
                     return reply
@@ -202,11 +209,17 @@ export const userControllerFactory = (fastify) => ({
                 if (err.message === "Invalid OTP") {
                     return reply.status(400).send({ error: "Invalid OTP" });
                 }
+                console.log(
+                    `Error creating user: ${err.message}` // Log the error for debugging
+                );
                 return reply.status(500).send({ error: err.message });
             }
             const token = fastify.signToken({ id: user.id });
             return reply.status(201).send({ user, token });
         } catch (err) {
+            console.log(
+                `Error creating user: ${err.message}` // Log the error for debugging
+            );
             return reply.status(500).send({ error: err.message });
         }
     },

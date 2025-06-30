@@ -17,15 +17,16 @@ const swaggerOptions = {
             },
             {
                 name: "Driver Applications",
-                description: "Driver application submission and review"
+                description: "Driver application submission and review",
             },
             {
                 name: "Admin",
-                description: "Administrative tasks including RBAC and application management"
+                description:
+                    "Administrative tasks including RBAC and application management",
             },
             {
                 name: "RBAC",
-                description: "Role-Based Access Control management"
+                description: "Role-Based Access Control management",
             },
             {
                 name: "Rides",
@@ -33,7 +34,8 @@ const swaggerOptions = {
             },
             {
                 name: "Ride Instances",
-                description: "Management of specific occurrences of recurring rides"
+                description:
+                    "Management of specific occurrences of recurring rides",
             },
             { name: "Bookings", description: "Booking management" },
             { name: "Ratings", description: "Ride ratings" },
@@ -229,7 +231,8 @@ const swaggerOptions = {
                     ],
                     responses: {
                         200: {
-                            description: "User logged in/registered successfully",
+                            description:
+                                "User logged in/registered successfully",
                             schema: { $ref: "#/definitions/User" },
                         },
                         400: { description: "Invalid OTP or request" },
@@ -298,37 +301,38 @@ const swaggerOptions = {
                             in: "formData",
                             name: "document",
                             type: "file",
-                            description: "Driver's license or other identification document.",
-                            required: true
+                            description:
+                                "Driver's license or other identification document.",
+                            required: true,
                         },
                         {
                             in: "formData",
                             name: "vehicleMake",
                             type: "string",
                             description: "Make of the vehicle",
-                            required: true
+                            required: true,
                         },
                         {
                             in: "formData",
                             name: "vehicleModel",
                             type: "string",
                             description: "Model of the vehicle",
-                            required: true
+                            required: true,
                         },
-                         {
+                        {
                             in: "formData",
                             name: "vehicleYear",
                             type: "integer",
                             description: "Year of the vehicle",
-                            required: true
+                            required: true,
                         },
                         {
                             in: "formData",
                             name: "licensePlate",
                             type: "string",
                             description: "License plate of the vehicle",
-                            required: true
-                        }
+                            required: true,
+                        },
                     ],
                     responses: {
                         201: {
@@ -361,7 +365,9 @@ const swaggerOptions = {
                             description: "List of driver applications",
                             schema: {
                                 type: "array",
-                                items: { $ref: "#/definitions/DriverApplication" },
+                                items: {
+                                    $ref: "#/definitions/DriverApplication",
+                                },
                             },
                         },
                     },
@@ -380,8 +386,11 @@ const swaggerOptions = {
                             schema: {
                                 type: "object",
                                 properties: {
-                                    status: { type: "string", enum: ["approved", "rejected"] },
-                                    adminComments: { type: "string" }
+                                    status: {
+                                        type: "string",
+                                        enum: ["approved", "rejected"],
+                                    },
+                                    adminComments: { type: "string" },
                                 },
                                 required: ["status"],
                             },
@@ -559,7 +568,7 @@ const swaggerOptions = {
                 },
             },
             "/api/v1/admin/users/{userId}/roles": {
-                 get: {
+                get: {
                     tags: ["Admin", "RBAC"],
                     summary: "Get roles for a user (Admin)",
                     security: [{ Bearer: [] }],
@@ -577,12 +586,12 @@ const swaggerOptions = {
                             description: "List of roles for the user",
                             schema: {
                                 type: "array",
-                                items: { $ref: "#/definitions/Role" }
-                            }
+                                items: { $ref: "#/definitions/Role" },
+                            },
                         },
-                        404: { $ref: "#/swagger/responses/NotFound" }
-                    }
-                 }
+                        404: { $ref: "#/swagger/responses/NotFound" },
+                    },
+                },
             },
             "/api/v1/admin/users/{userId}/roles/{roleId}": {
                 post: {
@@ -920,20 +929,23 @@ const swaggerOptions = {
                                 type: "object",
                                 properties: {
                                     rideInstanceId: { type: "integer" },
-                                    seatsBooked: { type: "integer" }
+                                    seatsBooked: { type: "integer" },
                                 },
-                                required: ["rideInstanceId", "seatsBooked"]
-                            }
-                        }
+                                required: ["rideInstanceId", "seatsBooked"],
+                            },
+                        },
                     ],
                     responses: {
                         201: {
                             description: "Ride booked successfully",
-                            schema: { $ref: "#/definitions/Booking" }
+                            schema: { $ref: "#/definitions/Booking" },
                         },
-                        400: { description: "Invalid booking details or ride not available" }
-                    }
-                }
+                        400: {
+                            description:
+                                "Invalid booking details or ride not available",
+                        },
+                    },
+                },
             },
             "/api/v1/bookings/{bookingId}/cancel": {
                 post: {
@@ -946,17 +958,17 @@ const swaggerOptions = {
                             in: "path",
                             required: true,
                             type: "integer",
-                            description: "Booking identifier"
-                        }
+                            description: "Booking identifier",
+                        },
                     ],
                     responses: {
                         200: {
                             description: "Booking cancelled successfully",
-                            schema: { $ref: "#/definitions/Booking" }
+                            schema: { $ref: "#/definitions/Booking" },
                         },
-                        404: { $ref: "#/swagger/responses/NotFound" }
-                    }
-                }
+                        404: { $ref: "#/swagger/responses/NotFound" },
+                    },
+                },
             },
             "/api/v1/ratings": {
                 get: {
@@ -1011,14 +1023,17 @@ const swaggerOptions = {
             "/api/v1/notifications/send-notification": {
                 post: {
                     tags: ["Notifications"],
-                    summary: "Send a push notification (primarily for server-to-server or admin use)",
+                    summary:
+                        "Send a push notification (primarily for server-to-server or admin use)",
                     security: [{ Bearer: [] }], // Or a different security scheme if applicable
                     parameters: [
                         {
                             in: "body",
                             name: "notificationPayload",
-                            schema: { $ref: "#/definitions/NotificationRequest" }
-                        }
+                            schema: {
+                                $ref: "#/definitions/NotificationRequest",
+                            },
+                        },
                     ],
                     responses: {
                         200: {
@@ -1026,19 +1041,20 @@ const swaggerOptions = {
                             schema: {
                                 type: "object",
                                 properties: {
-                                    status: { type: "string" }
-                                }
-                            }
+                                    status: { type: "string" },
+                                },
+                            },
                         },
-                        400: { description: "Invalid request payload" }
-                    }
-                }
+                        400: { description: "Invalid request payload" },
+                    },
+                },
             },
             "/api/v1/chatbot": {
                 post: {
                     tags: ["Chatbot"],
                     summary: "Interact with the support chatbot",
-                    description: "Send a message to the support chatbot and get a reply. Optionally include conversation history.",
+                    description:
+                        "Send a message to the support chatbot and get a reply. Optionally include conversation history.",
                     parameters: [
                         {
                             in: "body",
@@ -1064,20 +1080,23 @@ const swaggerOptions = {
                                 properties: {
                                     error: { type: "string" },
                                     message: { type: "string" },
-                                    issues: { type: "array", items: { type: "object"} }
-                                }
-                            }
+                                    issues: {
+                                        type: "array",
+                                        items: { type: "object" },
+                                    },
+                                },
+                            },
                         },
                         500: {
                             description: "Server error",
-                             schema: {
+                            schema: {
                                 type: "object",
                                 properties: {
                                     error: { type: "string" },
-                                    message: { type: "string" }
-                                }
-                            }
-                        }
+                                    message: { type: "string" },
+                                },
+                            },
+                        },
                     },
                 },
             },
@@ -1090,12 +1109,13 @@ const swaggerOptions = {
                     message: {
                         type: "string",
                         minLength: 1,
-                        description: "User's message to the chatbot."
+                        description: "User's message to the chatbot.",
                     },
                     personality: {
                         type: "string",
                         enum: ["f", "m"],
-                        description: "Personality of the chatbot (f for female, m for male)."
+                        description:
+                            "Personality of the chatbot (f for female, m for male).",
                     },
                     history: {
                         type: "array",
@@ -1106,17 +1126,19 @@ const swaggerOptions = {
                                 text: {
                                     type: "string",
                                     minLength: 1,
-                                    description: "Text of the message in history."
+                                    description:
+                                        "Text of the message in history.",
                                 },
                                 isUserMessage: {
                                     type: "boolean",
-                                    description: "True if the message was from the user, false if from the chatbot."
-                                }
-                            }
+                                    description:
+                                        "True if the message was from the user, false if from the chatbot.",
+                                },
+                            },
                         },
-                        description: "Optional conversation history."
-                    }
-                }
+                        description: "Optional conversation history.",
+                    },
+                },
             },
             User: {
                 type: "object",
@@ -1141,31 +1163,34 @@ const swaggerOptions = {
                     vehicleModel: { type: "string" },
                     vehicleYear: { type: "integer" },
                     licensePlate: { type: "string" },
-                    status: { type: "string", enum: ["pending", "approved", "rejected"] },
+                    status: {
+                        type: "string",
+                        enum: ["pending", "approved", "rejected"],
+                    },
                     adminComments: { type: "string" },
                     createdAt: { type: "string", format: "date-time" },
                     updatedAt: { type: "string", format: "date-time" },
-                }
+                },
             },
             Role: {
                 type: "object",
                 properties: {
                     id: { type: "integer" },
                     name: { type: "string", unique: true },
-                    description: {type: "string"},
+                    description: { type: "string" },
                     createdAt: { type: "string", format: "date-time" },
                     updatedAt: { type: "string", format: "date-time" },
-                }
+                },
             },
             Permission: {
                 type: "object",
                 properties: {
                     id: { type: "integer" },
                     name: { type: "string", unique: true },
-                    description: {type: "string"},
+                    description: { type: "string" },
                     createdAt: { type: "string", format: "date-time" },
                     updatedAt: { type: "string", format: "date-time" },
-                }
+                },
             },
             Ride: {
                 type: "object",
@@ -1196,11 +1221,19 @@ const swaggerOptions = {
                     id: { type: "integer" },
                     rideId: { type: "integer" },
                     rideDateTime: { type: "string", format: "date-time" },
-                    status: { type: "string", enum: ["scheduled", "cancelled", "completed", "in_progress"]},
+                    status: {
+                        type: "string",
+                        enum: [
+                            "scheduled",
+                            "cancelled",
+                            "completed",
+                            "in_progress",
+                        ],
+                    },
                     availableSeats: { type: "integer" },
                     createdAt: { type: "string", format: "date-time" },
                     updatedAt: { type: "string", format: "date-time" },
-                }
+                },
             },
             Booking: {
                 type: "object",
@@ -1242,10 +1275,18 @@ const swaggerOptions = {
                 required: ["token", "eventType", "data"],
                 properties: {
                     token: { type: "string", description: "FCM device token" },
-                    eventType: { type: "string", description: "Type of event triggering the notification (e.g., RIDER_ACCEPT_RIDE)" },
-                    data: { type: "object", description: "Additional data for the notification template" }
-                }
-            }
+                    eventType: {
+                        type: "string",
+                        description:
+                            "Type of event triggering the notification (e.g., RIDER_ACCEPT_RIDE)",
+                    },
+                    data: {
+                        type: "object",
+                        description:
+                            "Additional data for the notification template",
+                    },
+                },
+            },
         },
     },
 };

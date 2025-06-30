@@ -30,7 +30,7 @@ class RedisCacheService {
         }
         try {
             this.redisClient = Redis.fromEnv();
-            logger.info(
+            console.log(
                 "Upstash Redis client initialized successfully from environment variables."
             );
         } catch (error) {
@@ -55,6 +55,41 @@ class RedisCacheService {
     }
 
     /**
+     * Tests the Redis connection by performing a simple set and get operation.
+     * Logs the result and returns true if successful, false otherwise.
+     * @static
+     * @returns {Promise<boolean>} True if the connection test succeeds, false otherwise.
+     */
+    static async testConnection() {
+        try {
+            const instance = RedisCacheService.getInstance();
+            if (!instance.redisClient) {
+                logger.error(
+                    "Redis client is not initialized. Upstash Redis is not available."
+                );
+                return false;
+            }
+            // Try a simple ping or set/get
+            await instance.redisClient.set("__redis_test__", "ok", { ex: 10 });
+            const value = await instance.redisClient.get("__redis_test__");
+            if (value === "ok") {
+                console.log(
+                    "Redis connection test succeeded. Upstash Redis is reachable."
+                );
+                return true;
+            } else {
+                console.log(
+                    "Redis connection test failed: test value not found."
+                );
+                return false;
+            }
+        } catch (err) {
+            console.log({ err }, "Redis connection test failed with error.");
+            return false;
+        }
+    }
+
+    /**
      * Retrieves a value from the cache by key.
      * The value is expected to be JSON-stringified and will be parsed.
      * @param {string} key - The cache key.
@@ -62,15 +97,19 @@ class RedisCacheService {
      */
     async get(key) {
         if (!this.redisClient) {
-            logger.warn(`Redis client not available. Cannot GET key: ${key}`);
+            console.log(`Redis client not available. Cannot GET key: ${key}`);
             return null;
         }
         try {
             const data = await this.redisClient.get(key);
-            if (data === null || data === undefined) return null; // Key not found or empty
+            logger.info(`Redis GET key: ${key} | value: ${data}`);
+            if (data === null || data === undefined) {
+                logger.warn(`Redis key not found: ${key}`);
+                return null;
+            }
             return JSON.parse(data); // Assumes data is stored as a JSON string
         } catch (error) {
-            logger.error(
+            console.log(
                 { error, key },
                 `Error getting value from Redis for key: ${key}`
             );
@@ -88,7 +127,7 @@ class RedisCacheService {
      */
     async set(key, value, ttlSeconds = 3600) {
         if (!this.redisClient) {
-            logger.warn(`Redis client not available. Cannot SET key: ${key}`);
+            console.log(`Redis client not available. Cannot SET key: ${key}`);
             return false;
         }
         try {
@@ -96,9 +135,12 @@ class RedisCacheService {
             const result = await this.redisClient.set(key, jsonValue, {
                 ex: ttlSeconds,
             });
+            console.log(
+                `Redis SET key: ${key} | value: ${jsonValue} | result: ${result}`
+            );
             return result === "OK";
         } catch (error) {
-            logger.error(
+            console.log(
                 { error, key },
                 `Error setting value in Redis for key: ${key}`
             );

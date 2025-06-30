@@ -122,10 +122,10 @@ export const userFacade = {
      * @throws {ConflictError} If user already exists (double check).
      * @throws {AppError}
      */
-    createUser: async (userData) => {
+    createUser: async (userData, otp) => {
         logger.debug("Creating user from facade with data:", userData);
         const identifier = userData.email || userData.phoneNumber;
-        await userService.verifyOtp(identifier, userData.otp, "registration");
+        await userService.verifyOtp(identifier, otp, "registration");
         const user = await userService.createUserWithProfile(userData);
         logger.info(`User created successfully with ID: ${user.id}`);
         return user;
