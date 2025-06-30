@@ -1,5 +1,3 @@
-// FileStorage is a simple persistent storage for queue messages using the filesystem.
-// It saves each queue's messages in a separate .jsonl file (one JSON object per line).
 import fs from "fs";
 import path from "path";
 
@@ -30,8 +28,28 @@ class FileStorage {
     load(queue) {
         const file = path.join(this.dir, `${queue}.jsonl`);
         if (!fs.existsSync(file)) return [];
-        const lines = fs.readFileSync(file, "utf-8").trim().split("\n");
-        return lines.map((line) => JSON.parse(line));
+
+        const content = fs.readFileSync(file, "utf-8").trim();
+        if (!content) return [];
+
+        const lines = content.split("\n");
+        const messages = [];
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine) {
+                try {
+                    messages.push(JSON.parse(trimmedLine));
+                } catch (error) {
+                    console.warn(
+                        `Warning: Failed to parse line in ${file}: ${trimmedLine}`
+                    );
+                    // Skip malformed lines and continue
+                }
+            }
+        }
+
+        return messages;
     }
 }
 

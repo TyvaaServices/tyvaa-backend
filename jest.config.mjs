@@ -19,6 +19,7 @@ export default {
         "!src/modules/**/routes/**",
         "!src/modules/**/services/**",
         "src/modules/**/cron/**",
+        "!src/broker/advanced-test.js",
         "!src/modules/**/server.js",
         "!src/plugins/**",
         "!**/seeder/**",
