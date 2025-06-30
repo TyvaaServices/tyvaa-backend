@@ -375,7 +375,7 @@ describe("userController", () => {
             const user = { id: 1, phoneNumber: "123" };
             mockUserFacade.createUser.mockResolvedValueOnce(user);
             const res = reply();
-            await controller.createUser({ body: user }, res);
+            await controller.createUser({ body: { user, otp: "1234" } }, res);
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.send).toHaveBeenCalledWith({
                 user,

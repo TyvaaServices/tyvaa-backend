@@ -29,6 +29,12 @@ describe("Mailer Utility", () => {
         mockLoggerWarn.mockClear();
         mockLoggerInfo.mockClear();
         jest.resetModules();
+        // Ensure a clean state for SMTP environment variables
+        delete process.env.SMTP_HOST;
+        delete process.env.SMTP_PORT;
+        delete process.env.SMTP_USER;
+        delete process.env.SMTP_PASS;
+        delete process.env.SMTP_SECURE;
     });
 
     afterEach(() => {

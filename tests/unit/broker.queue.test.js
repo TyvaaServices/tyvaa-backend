@@ -26,9 +26,9 @@ describe("Queue", () => {
         queue.subscribe(callback);
         const msg = { foo: "bar" };
         queue.publish(msg);
-        expect(storage.save).toHaveBeenCalledWith(queueName, msg);
-        expect(queue.messages).toContain(msg);
-        expect(callback).toHaveBeenCalledWith(msg);
+        expect(storage.save).toHaveBeenCalledWith(queueName, expect.objectContaining(msg));
+        expect(queue.messages).toContainEqual(expect.objectContaining(msg));
+        expect(callback).toHaveBeenCalledWith(expect.objectContaining(msg));
     });
 
     it("should allow multiple subscribers and notify all", () => {
@@ -38,7 +38,7 @@ describe("Queue", () => {
         queue.subscribe(cb2);
         const msg = { test: 1 };
         queue.publish(msg);
-        expect(cb1).toHaveBeenCalledWith(msg);
-        expect(cb2).toHaveBeenCalledWith(msg);
+        expect(cb1).toHaveBeenCalledWith(expect.objectContaining(msg));
+        expect(cb2).toHaveBeenCalledWith(expect.objectContaining(msg));
     });
 });

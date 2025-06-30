@@ -18,21 +18,10 @@ let transporterInstance = null;
 
 try {
     const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = parseInt(
-        process.env.SMTP_PORT ||
-            (process.env.SMTP_SECURE === "false" ? "587" : "465")
-    );
-    let secureConnection;
-    if (process.env.SMTP_SECURE?.toLowerCase() === "true") {
-        secureConnection = true;
-    } else if (process.env.SMTP_SECURE?.toLowerCase() === "false") {
-        secureConnection = false;
-    } else {
-        secureConnection = smtpPort === 465;
-    }
-
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
+    const smtpSecureEnv = process.env.SMTP_SECURE?.toLowerCase();
+    const smtpPortEnv = process.env.SMTP_PORT;
 
     if (!smtpHost || !smtpUser || !smtpPass) {
         logger.warn(
@@ -40,6 +29,21 @@ try {
                 "Email functionality will be disabled. Check environment variables."
         );
     } else {
+        let secureConnection;
+        let smtpPort;
+
+        if (smtpSecureEnv === "true") {
+            secureConnection = true;
+            smtpPort = parseInt(smtpPortEnv || "465"); // Default to 465 for secure
+        } else if (smtpSecureEnv === "false") {
+            secureConnection = false;
+            smtpPort = parseInt(smtpPortEnv || "587"); // Default to 587 for non-secure
+        } else {
+            // SMTP_SECURE not explicitly set, infer from port
+            smtpPort = parseInt(smtpPortEnv || "465"); // Assume secure by default if not specified
+            secureConnection = smtpPort === 465;
+        }
+
         transporterInstance = nodemailer.createTransport({
             host: smtpHost,
             port: smtpPort,

@@ -109,7 +109,7 @@ class RedisCacheService {
             }
             return JSON.parse(data); // Assumes data is stored as a JSON string
         } catch (error) {
-            console.log(
+            logger.error(
                 { error, key },
                 `Error getting value from Redis for key: ${key}`
             );
@@ -140,7 +140,7 @@ class RedisCacheService {
             );
             return result === "OK";
         } catch (error) {
-            console.log(
+            logger.error(
                 { error, key },
                 `Error setting value in Redis for key: ${key}`
             );
