@@ -4,9 +4,11 @@ import router from "./routes/notificationRouter.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import broker from "#broker/broker.js";
+import brokerManager from "#broker/broker.js";
 
 dotenv.config();
+
+const broker = brokerManager.getInstance();
 
 export default async function (fastify, _opts) {
     const base64Key = process.env.FIREBASE_KEY_BASE64;
@@ -29,72 +31,96 @@ export default async function (fastify, _opts) {
     fastify.register(router, { prefix: "/api/v1" });
 
     console.log("Notification subscriber starting...");
-    broker.subscribe("notification_created", async (msg) => {
-        try {
-            console.log("[Notification Subscriber] Received message:", msg);
-            fastify.log.info(
-                "Received notification_created event from broker",
-                msg
-            );
 
-            const { token, eventType, data } = msg;
+    // Connect the broker
+    try {
+        await broker.connect();
+        fastify.log.info("Broker connected successfully for notification module.");
+    } catch (error) {
+        fastify.log.error("Failed to connect broker for notification module:", error);
+        // Depending on recovery strategy, might want to throw or exit
+        // For now, it will prevent subscriptions if connection fails
+    }
 
-            if (!token || !eventType || !data) {
-                console.log(
-                    "[Notification Subscriber] Missing required fields",
-                    msg
-                );
-                fastify.log.error(
-                    "Missing required fields in broker message: token, eventType, data",
-                    msg
-                );
-                return;
-            }
-
-            const { getNotificationTemplate } = await import("./templates.js"); // Dynamic import
-            const language = data.language === "fr" ? "fr" : "en";
-            const template = getNotificationTemplate(eventType, data, language);
-
-            if (!template) {
-                console.log(
-                    `[Notification Subscriber] Invalid eventType or template not found for event: ${eventType}`,
-                    msg
-                );
-                fastify.log.error(
-                    `Invalid eventType or template not found for event: ${eventType}`,
-                    msg
-                );
-                return;
-            }
-
-            const { sendFCM } = await import("./routes/notificationRouter.js"); // Dynamic import
+    // Subscribe to the notification_created queue.
+    // The callback receives the parsed message content (payload) and the original AMQP message (originalMessage).
+    broker.subscribe(
+        "notification_created", // queueName
+        async (payload, originalMessage) => { // callback
             try {
-                console.log(
-                    "[Notification Subscriber] Sending FCM notification",
-                    { token, title: template.title, body: template.body, data }
-                );
-                await sendFCM(token, template.title, template.body, data);
                 fastify.log.info(
-                    `Notification sent via broker event ${eventType} to token ${token}`
+                    `[Notification Subscriber] Received message from notification_created queue. Message ID: ${originalMessage.properties.messageId}`,
+                    { payload }
                 );
-                if (msg.messageId) {
-                    broker.acknowledge("notification_created", msg.messageId);
-                    fastify.log.info(
-                        `Acknowledged messageId: ${msg.messageId}`
+
+                const { token, eventType, data } = payload;
+
+                if (!token || !eventType || !data) {
+                    fastify.log.error(
+                        "Missing required fields in broker message: token, eventType, or data.",
+                        { payload }
                     );
+                    // Do not requeue messages with malformed/missing critical data.
+                    broker.nack(originalMessage, false, false);
+                    fastify.log.warn(`Nacked message due to missing fields. Message ID: ${originalMessage.properties.messageId}`);
+                    return;
                 }
-            } catch (error) {
-                console.log(
-                    "[Notification Subscriber] Error sending FCM notification",
-                    error
-                );
+
+                const { getNotificationTemplate } = await import("./templates.js");
+                const language = data.language === "fr" ? "fr" : "en"; // Default to 'en'
+                const template = getNotificationTemplate(eventType, data, language);
+
+                if (!template) {
+                    fastify.log.error(
+                        `Invalid eventType or template not found for event: ${eventType}.`,
+                        { payload }
+                    );
+                    // Do not requeue if template is not found for this event type.
+                    broker.nack(originalMessage, false, false);
+                    fastify.log.warn(`Nacked message due to invalid eventType/template. Message ID: ${originalMessage.properties.messageId}`);
+                    return;
+                }
+
+                const { sendFCM } = await import("./routes/notificationRouter.js");
+                try {
+                    fastify.log.info(
+                        `[Notification Subscriber] Attempting to send FCM notification for event ${eventType} to token ${token}. Message ID: ${originalMessage.properties.messageId}`
+                    );
+                    await sendFCM(token, template.title, template.body, data);
+                    fastify.log.info(
+                        `FCM Notification sent successfully for event ${eventType} to token ${token}. Message ID: ${originalMessage.properties.messageId}`
+                    );
+                    broker.acknowledge(originalMessage); // Acknowledge successful processing
+                    fastify.log.info(`Acknowledged message. Message ID: ${originalMessage.properties.messageId}`);
+
+                } catch (fcmError) {
+                    fastify.log.error(
+                        `Error sending FCM notification for event ${eventType}. Message ID: ${originalMessage.properties.messageId}`,
+                        { error: fcmError, payload }
+                    );
+                    // Decide on requeue strategy for FCM errors.
+                    // For example, requeue for transient errors, don't for permanent ones (e.g., invalid token).
+                    // For simplicity here, let's not requeue on FCM error to avoid potential loops with bad tokens.
+                    // A more robust solution might inspect fcmError.
+                    broker.nack(originalMessage, false, false);
+                    fastify.log.warn(`Nacked message due to FCM send error. Message ID: ${originalMessage.properties.messageId}`);
+                }
+            } catch (topLevelError) {
                 fastify.log.error(
-                    `Error sending FCM notification via broker for event ${eventType}:`,
-                    error
+                    `[Notification Subscriber] Unexpected top-level error processing message. Message ID: ${originalMessage?.properties?.messageId}`,
+                    { error: topLevelError, payload }
                 );
+                // Don't requeue for unexpected errors to prevent processing loops.
+                // Ensure message is nacked if originalMessage is available.
+                if (originalMessage) {
+                    broker.nack(originalMessage, false, false);
+                    fastify.log.warn(`Nacked message due to unexpected top-level error. Message ID: ${originalMessage.properties.messageId}`);
+                }
             }
-        } catch (err) {
-            console.error("[Notification Subscriber] Top-level error:", err);
-        }
+        },
+        { noAck: false } // options for consume: ensure we handle acknowledgements explicitly
+    ).catch(error => {
+        fastify.log.error("Failed to subscribe to notification_created queue:", error);
+        // Handle subscription failure (e.g., retry, log critical error)
     });
 }
