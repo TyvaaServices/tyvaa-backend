@@ -78,11 +78,21 @@ function normalizePhoneNumber(phone) {
 /**
  * @file User Service: Handles business logic related to users, profiles, OTP, and file uploads.
  */
+
+/**
+ * @namespace userService
+ * @description A service object that encapsulates all business logic related to user management,
+ * authentication, profile updates, driver applications, and OTP handling.
+ */
 export const userService = {
     /**
-     * Finds a user by their phone number or email.
-     * @param {{phoneNumber?: string, email?: string}} contactDetails
-     * @returns {Promise<User|null>}
+     * Finds a user by their phone number or email, including their roles and profiles.
+     * @async
+     * @param {object} contactDetails - The contact details to search by.
+     * @param {string} [contactDetails.phoneNumber] - The user's phone number.
+     * @param {string} [contactDetails.email] - The user's email address.
+     * @returns {Promise<UserInstance|null>} The Sequelize User instance with roles and profiles, or null if not found.
+     * @memberof userService
      */
     findUserByPhoneOrEmail: async ({ phoneNumber, email }) => {
         logger.debug("Service: Finding user by phone or email", {
@@ -120,14 +130,19 @@ export const userService = {
     /**
      * Generates an OTP, stores it in Redis, and (conceptually) sends it.
      * In a real app, this would integrate with an SMS/Email service.
-     * @param {string} identifier - Phone number or email.
-     * @param {"login"|"registration"} context - Purpose of the OTP.
-     * @returns {Promise<string>} The generated OTP (for testing/dev; not for prod response).
-     * @throws {AppError} If OTP generation or storage fails.
+     * @async
+     * @param {string} identifier - Phone number or email address of the user.
+     * @param {"login"|"registration"} context - The context for which the OTP is generated (e.g., 'login', 'registration').
+     * @returns {Promise<string>} The generated OTP. Note: In production, this OTP would be sent via SMS/email, not returned.
+     * @throws {AppError} If there's an issue generating or storing the OTP in Redis.
+     * @memberof userService
      */
     generateAndSendOtp: async (identifier, context) => {
-        // Normalize phone number if context is registration/login and identifier is a phone
-        let normalizedIdentifier = normalizePhoneNumber(identifier);
+        let normalizedIdentifier = identifier;
+        // Normalize phone number only if it looks like a phone number and not an email
+        if (!identifier.includes('@') && /^\d+$/.test(identifier.replace('+', ''))) {
+            normalizedIdentifier = normalizePhoneNumber(identifier);
+        }
         const otp = generateOtp();
         const redisKey =
             (context === "login" ? OTP_PREFIX_LOGIN : OTP_PREFIX_REGISTER) +
@@ -154,19 +169,18 @@ export const userService = {
 
     /**
      * Verifies an OTP against the stored value in Redis.
-     * @param {string} identifier - Phone number or email.
-     * @param {string} otp - The OTP submitted by the user.
-     * @param {"login"|"registration"} context - Purpose of the OTP.
-     * @returns {Promise<void>}
-     * @throws {AuthenticationError} If OTP is invalid or expired.
+     * @async
+     * @param {string} identifier - Phone number or email address of the user.
+     * @param {string} otp - The OTP submitted by the user for verification.
+     * @param {"login"|"registration"} context - The context for which the OTP was generated.
+     * @returns {Promise<void>} Resolves if OTP is valid.
+     * @throws {AuthenticationError} If the OTP is invalid, expired, or not found.
+     * @memberof userService
      */
     verifyOtp: async (identifier, otp, context) => {
-        // Normalize phone number if context is registration/login and identifier is a phone
         let normalizedIdentifier = identifier;
-        if (context === "registration" || context === "login") {
-            if (/^\d{9}$/.test(identifier)) {
-                normalizedIdentifier = normalizePhoneNumber(identifier);
-            }
+        if (!identifier.includes('@') && /^\d+$/.test(identifier.replace('+', ''))) {
+            normalizedIdentifier = normalizePhoneNumber(identifier);
         }
         const redisKey =
             (context === "login" ? OTP_PREFIX_LOGIN : OTP_PREFIX_REGISTER) +
@@ -204,17 +218,24 @@ export const userService = {
     },
 
     /**
-     * Creates a new user along with their default passenger profile.
-     * Optionally creates a driver profile if specified.
-     * Assigns default roles.
-     * @param {object} userData - User data including profileType ('passenger' or 'driver').
-     * @returns {Promise<UserInstance>} The created User instance with profiles.
-     * @throws {ConflictError} If user already exists with phone/email.
-     * @throws {AppError} For other creation errors.
+     * Creates a new standard user (passenger or driver) with associated profiles and default roles.
+     * Publishes a 'USER_WELCOME' notification event to the broker.
+     * @async
+     * @param {object} userData - Data for the new user.
+     * @param {string} [userData.profileType="passenger"] - Type of profile to create ('passenger' or 'driver').
+     * @param {string} userData.phoneNumber - User's phone number.
+     * @param {string} [userData.email] - User's email.
+     * @param {string} [userData.fullName] - User's full name.
+     * @param {string} [userData.fcmToken] - User's Firebase Cloud Messaging token.
+     * @param {string} [userData.appLanguage="fr"] - User's preferred application language.
+     * @param {boolean} [userInfo.isBlocked=false] - User's blocked status.
+     * @returns {Promise<UserInstance>} The created Sequelize User instance with profile information.
+     * @throws {ConflictError} If a user with the given phone number or email already exists.
+     * @throws {AppError} If user creation fails for other reasons.
+     * @memberof userService
      */
     createUserWithProfile: async (userData) => {
         const { profileType = "passenger", ...userInfo } = userData;
-        // Normalize phone number before any DB operation
         if (userInfo.phoneNumber) {
             userInfo.phoneNumber = normalizePhoneNumber(userInfo.phoneNumber);
         }
@@ -263,11 +284,14 @@ export const userService = {
             );
 
             if (profileType === "passenger" || profileType === "driver") {
-                broker.publish(
-                    "notification_created",
-                    {
+                // Using sendToQueue for direct message to the notification_created queue
+                // Corrected eventType to USER_WELCOME
+                // Standard message options; removed delay and maxRetries as they are not standard AMQP props here
+                broker.sendToQueue(
+                    "notification_created", // Queue name
+                    { // Message payload
                         token: user.fcmToken || userInfo.fcmToken || "",
-                        eventType: "welcome",
+                        eventType: "USER_WELCOME",
                         data: {
                             userName: user.fullName,
                             profileType,
@@ -275,8 +299,11 @@ export const userService = {
                             language: user.appLanguage || "fr",
                         },
                     },
-                    { delay: 5 * 60 * 1000, priority: 5, maxRetries: 5 }
-                );
+                    { persistent: true, priority: 5 } // Message options
+                ).catch(err => {
+                    logger.error({ error: err, userId: user.id }, "Failed to send welcome notification to broker");
+                    // Decide if this failure should affect user creation outcome - currently it does not.
+                });
             }
             return user;
         } catch (error) {
@@ -411,19 +438,22 @@ export const userService = {
     },
 
     /**
-     * Updates a user's profile information, including potentially a profile image.
-     * @param userId
-     * @param {object} fieldsToUpdate - Key-value pairs of user model fields.
-     * @param {object} [fileData] - Optional file data for the profile image.
-     * @param {Buffer} [fileData.buffer]
-     * @param {string} [fileData.filename]
-     * @param {string} [fileData.mimetype]
-     * @returns {Promise<User>} The updated User instance.
-     * @throws {AppError} For update errors or invalid file type.
+     * Updates a user's profile information, including optional profile image upload.
+     * @async
+     * @param {number|string} userId - The ID of the user to update.
+     * @param {object} fieldsToUpdate - An object containing fields to update (e.g., fullName, email, sexe, dateOfBirth).
+     * @param {object} [fileData] - Optional file data for profile image.
+     * @param {Buffer} [fileData.buffer] - Buffer containing the image data.
+     * @param {string} [fileData.filename] - Original filename of the image.
+     * @param {string} [fileData.mimetype] - Mimetype of the image.
+     * @returns {Promise<UserInstance>} The updated Sequelize User instance.
+     * @throws {NotFoundError} If the user with the given ID is not found.
+     * @throws {AppError} If image upload fails, validation fails, or for other update errors.
+     * @memberof userService
      */
     updateUserProfile: async (userId, fieldsToUpdate, fileData) => {
         logger.info(`Service: Updating profile for User ID: ${userId}`);
-        const userInstance = await User.findByPk(userId); // Fetch user
+        const userInstance = await User.findByPk(userId);
         if (!userInstance) {
             throw new NotFoundError(
                 `User with ID ${userId} not found for update in service.`
@@ -494,11 +524,16 @@ export const userService = {
     },
 
     /**
-     * Saves a PDF file from a multipart stream for a driver application.
-     * @param userId
-     * @param {any} partsStream - The multipart stream from Fastify.
-     * @returns {Promise<string>} The relative path to the saved PDF file.
-     * @throws {AppError} If no PDF file is found or saving fails.
+     * Processes a driver application submission, saving uploaded documents (PDF).
+     * Creates a new DriverApplication record.
+     * @async
+     * @param {number|string} userId - The ID of the user submitting the application.
+     * @param {AsyncIterable<import('@fastify/multipart').MultipartPart>} partsStream - The multipart stream from Fastify containing form data and files.
+     * @returns {Promise<DriverApplication>} The created DriverApplication instance.
+     * @throws {NotFoundError} If the user's passenger profile is not found.
+     * @throws {ConflictError} If the user already has a pending application.
+     * @throws {AppError} If no PDF document is provided or if there's an error processing the upload/saving the application.
+     * @memberof userService
      */
     processDriverApplicationSubmission: async (userId, partsStream) => {
         logger.info(
@@ -588,6 +623,15 @@ export const userService = {
         return application;
     },
 
+    /**
+     * Retrieves the status of a user's most recent driver application.
+     * @async
+     * @param {number|string} userId - The ID of the user.
+     * @returns {Promise<{status: string, comments: string|null}>} An object with the application status and comments.
+     *          Status can be 'not_applied' if no application is found.
+     * @throws {NotFoundError} If the user's passenger profile is not found.
+     * @memberof userService
+     */
     getDriverApplicationStatus: async (userId) => {
         logger.debug(
             `Service: Getting driver application status for User ID: ${userId}.`
@@ -596,8 +640,8 @@ export const userService = {
             where: { userId },
         });
         if (!passengerProfile) {
-            throw new NotFoundError(
-                "No driver application found for this user (no passenger profile in service)."
+            throw new NotFoundError( // This error might be misleading if the goal is just to say "no application"
+                "Passenger profile not found for this user. Cannot determine driver application status."
             );
         }
         const application = await DriverApplication.findOne({
@@ -618,8 +662,10 @@ export const userService = {
 
     /**
      * Finds a passenger profile by user ID.
-     * @param {string|number} userId
-     * @returns {Promise<PassengerProfile|null>}
+     * @async
+     * @param {number|string} userId - The ID of the user.
+     * @returns {Promise<PassengerProfile|null>} The Sequelize PassengerProfile instance or null if not found.
+     * @memberof userService
      */
     findPassengerProfileByUserId: async (userId) => {
         logger.debug(
@@ -628,6 +674,14 @@ export const userService = {
         return PassengerProfile.findOne({ where: { userId } });
     },
 
+    /**
+     * Blocks a user by setting their `isBlocked` flag to true and `isActive` to false.
+     * @async
+     * @param {number|string} userIdToBlock - The ID of the user to block.
+     * @returns {Promise<UserInstance>} The updated Sequelize User instance.
+     * @throws {NotFoundError} If the user with the given ID is not found.
+     * @memberof userService
+     */
     blockUser: async (userIdToBlock) => {
         logger.debug(`Service: Blocking user ID: ${userIdToBlock}.`);
         const user = await User.findByPk(userIdToBlock);
@@ -637,16 +691,18 @@ export const userService = {
             );
         }
         user.isBlocked = true;
-        user.isActive = false;
+        user.isActive = false; // Also mark as inactive
         await user.save();
         logger.info(`Service: User ID ${userIdToBlock} has been blocked.`);
         return user;
     },
 
     /**
-     * Retrieves all driver applications with associated user details.
-     * @returns {Promise<DriverApplicationAttributes[]>}
-     * @throws {AppError} If database query fails.
+     * Retrieves all driver applications, including applicant's user details.
+     * @async
+     * @returns {Promise<DriverApplication[]>} An array of DriverApplication instances.
+     * @throws {AppError} If there's an error querying the database.
+     * @memberof userService
      */
     getAllDriverApplications: async () => {
         logger.debug("Service: Fetching all driver applications.");
@@ -686,6 +742,18 @@ export const userService = {
         }
     },
 
+    /**
+     * Reviews a driver application, updating its status and comments.
+     * If approved, creates/activates a driver profile and assigns the 'CHAUFFEUR' role.
+     * @async
+     * @param {number|string} applicationId - The ID of the driver application to review.
+     * @param {"approved"|"rejected"|"pending"} status - The new status for the application.
+     * @param {string} [comments] - Optional comments regarding the review.
+     * @returns {Promise<DriverApplication>} The updated DriverApplication instance.
+     * @throws {NotFoundError} If the application is not found.
+     * @throws {AppError} If applicant profile information is missing, user for role assignment is not found, or for other processing errors.
+     * @memberof userService
+     */
     reviewDriverApplication: async (applicationId, status, comments) => {
         logger.debug(
             `Service: Reviewing driver application ID: ${applicationId} with status: ${status}`
@@ -779,12 +847,19 @@ export const userService = {
         }
     },
 
+    /**
+     * Retrieves all users, excluding sensitive fields.
+     * @async
+     * @returns {Promise<UserInstance[]>} An array of Sequelize User instances.
+     * @throws {AppError} If there's an error querying the database.
+     * @memberof userService
+     */
     getAllUsers: async () => {
         logger.debug("Service: Fetching all users.");
         try {
             return User.findAll({
                 attributes: {
-                    exclude: ["passwordHash", "otpSecret", "fcmToken"],
+                    exclude: ["passwordHash", "otpSecret", "fcmToken"], // fcmToken also sensitive
                 },
             });
         } catch (error) {
@@ -800,11 +875,20 @@ export const userService = {
         }
     },
 
+    /**
+     * Retrieves a single user by their ID, excluding sensitive fields.
+     * @async
+     * @param {number|string} id - The ID of the user to retrieve.
+     * @returns {Promise<UserInstance>} The Sequelize User instance.
+     * @throws {NotFoundError} If the user with the given ID is not found.
+     * @throws {AppError} If there's an error querying the database.
+     * @memberof userService
+     */
     getUserById: async (id) => {
         logger.debug(`Service: Fetching user by ID: ${id}.`);
         try {
             const user = await User.findByPk(id, {
-                attributes: { exclude: ["passwordHash", "otpSecret"] },
+                attributes: { exclude: ["passwordHash", "otpSecret"] }, // fcmToken might be okay here if user is requesting own data
             });
             if (!user) {
                 throw new NotFoundError(
@@ -826,11 +910,22 @@ export const userService = {
         }
     },
 
-    loginUser: async function (identifier, otp) {
+    /**
+     * Logs in a user after verifying their identifier (phone/email) and OTP.
+     * Updates the user's last login timestamp.
+     * @async
+     * @param {string} identifier - The user's phone number or email.
+     * @param {string} otp - The One-Time Password submitted by the user.
+     * @returns {Promise<UserInstance>} The logged-in Sequelize User instance.
+     * @throws {NotFoundError} If the user is not found.
+     * @throws {AuthenticationError} If the account is inactive/blocked or OTP is invalid.
+     * @memberof userService
+     */
+    loginUser: async function (identifier, otp) { // Retained `function` for `this` context if it was intentional, though not used here.
         logger.debug(`Service: Processing login for identifier: ${identifier}`);
         const contactDetails = identifier.includes("@")
             ? { email: identifier }
-            : { phoneNumber: identifier };
+            : { phoneNumber: normalizePhoneNumber(identifier) }; // Normalize phone for lookup
         const user = await this.findUserByPhoneOrEmail(contactDetails);
 
         if (!user) {
@@ -839,7 +934,7 @@ export const userService = {
         if (!user.isActive || user.isBlocked) {
             throw new AuthenticationError("Account is inactive or blocked.");
         }
-        await this.verifyOtp(identifier, otp, "login");
+        await this.verifyOtp(identifier, otp, "login"); // identifier for verifyOtp should match what was used for generateAndSendOtp
         user.lastLogin = new Date();
         await user.save();
         logger.info(
@@ -848,19 +943,37 @@ export const userService = {
         return user;
     },
 
-    requestRegisterOtp: async function (phoneNumber) {
+    /**
+     * Requests an OTP for user registration. Ensures the phone number is not already in use.
+     * @async
+     * @param {string} phoneNumber - The phone number for which to request a registration OTP.
+     * @returns {Promise<string>} The generated OTP.
+     * @throws {ConflictError} If a user with the given phone number already exists.
+     * @memberof userService
+     */
+    requestRegisterOtp: async function (phoneNumber) { // Retained `function`
+        const normalizedPhone = normalizePhoneNumber(phoneNumber);
         logger.debug(
-            `Service: Requesting registration OTP for phone: ${phoneNumber}.`
+            `Service: Requesting registration OTP for phone: ${normalizedPhone}.`
         );
-        const existingUser = await User.findOne({ where: { phoneNumber } });
+        const existingUser = await User.findOne({ where: { phoneNumber: normalizedPhone } });
         if (existingUser) {
             throw new ConflictError(
                 "A user with this phone number already exists."
             );
         }
-        return this.generateAndSendOtp(phoneNumber, "registration");
+        return this.generateAndSendOtp(normalizedPhone, "registration");
     },
 
+    /**
+     * Deletes a user by their ID (soft delete if paranoid, hard delete if not).
+     * Currently performs a hard delete via `user.destroy()`.
+     * @async
+     * @param {number|string} userId - The ID of the user to delete.
+     * @returns {Promise<boolean>} True if deletion was successful.
+     * @throws {NotFoundError} If the user with the given ID is not found.
+     * @memberof userService
+     */
     deleteUser: async (userId) => {
         logger.debug(`Service: Deleting user ID: ${userId}.`);
         const user = await User.findByPk(userId);
@@ -869,11 +982,20 @@ export const userService = {
                 `User with ID ${userId} not found for deletion in service.`
             );
         }
-        await user.destroy();
+        await user.destroy(); // This is a hard delete.
         logger.info(`Service: User ID ${userId} marked as deleted.`);
         return true;
     },
 
+    /**
+     * Updates the Firebase Cloud Messaging (FCM) token for a user.
+     * @async
+     * @param {number|string} userId - The ID of the user.
+     * @param {string} fcmToken - The new FCM token.
+     * @returns {Promise<UserInstance>} The updated Sequelize User instance.
+     * @throws {NotFoundError} If the user with the given ID is not found.
+     * @memberof userService
+     */
     updateFcmToken: async (userId, fcmToken) => {
         logger.debug(`Service: Updating FCM token for user ID: ${userId}.`);
         const user = await User.findByPk(userId);
@@ -888,6 +1010,15 @@ export const userService = {
         return user;
     },
 
+    /**
+     * Updates the last known location (latitude and longitude) for a user.
+     * @async
+     * @param {number|string} userId - The ID of the user.
+     * @param {{latitude: number, longitude: number}} location - An object with latitude and longitude.
+     * @returns {Promise<UserInstance>} The updated Sequelize User instance.
+     * @throws {NotFoundError} If the user with the given ID is not found.
+     * @memberof userService
+     */
     updateLocation: async (userId, location) => {
         logger.debug(`Service: Updating location for user ID: ${userId}.`);
         const user = await User.findByPk(userId);
@@ -904,18 +1035,16 @@ export const userService = {
     },
 
     /**
-     * Assigns the UTILISATEUR_BASE role and any additional roles to a user.
-     * @param {User} user - The user instance.
-     * @param {string[]} roles - Array of role names to assign (excluding duplicates).
-     * @param {object} transaction - The sequelize transaction.
-     */
-    /**
-     * Assigns the UTILISATEUR_BASE role and any additional unique roles to a user.
-     * Ensures UTILISATEUR_BASE is always present and avoids duplicate role assignments.
-     * @param {User} user - The Sequelize User instance.
-     * @param {string[]} extraRoleNames - Array of additional role names to assign.
-     * @param {object} transaction - The Sequelize transaction object.
-     * @throws {AppError} If the UTILISATEUR_BASE role is not found in the database.
+     * Assigns the base 'UTILISATEUR_BASE' role and any specified additional roles to a user.
+     * This method ensures that 'UTILISATEUR_BASE' is always present and avoids duplicate role assignments.
+     * It's designed to be used internally, often within a transaction.
+     * @async
+     * @param {UserInstance} user - The Sequelize User instance to assign roles to.
+     * @param {string[]} [extraRoleNames=[]] - An array of additional role names (e.g., 'PASSENGER', 'CHAUFFEUR', 'ADMINISTRATEUR').
+     * @param {import('sequelize').Transaction} transaction - The Sequelize transaction object.
+     * @returns {Promise<void>}
+     * @throws {AppError} If the essential 'UTILISATEUR_BASE' role is not found in the database.
+     * @memberof userService
      */
     assignBaseAndExtraRoles: async (user, extraRoleNames = [], transaction) => {
         logger.debug(

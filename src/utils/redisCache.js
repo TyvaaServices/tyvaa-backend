@@ -10,6 +10,15 @@ const logger = createLogger("redis-cache-service");
  * It supports basic get, set, delete operations, and a utility to retrieve data as a Sequelize model instance.
  */
 
+/**
+ * @class RedisCacheService
+ * @classdesc Provides a singleton wrapper around the Upstash Redis client
+ * for common caching operations like get, set, delete, and retrieving
+ * data as Sequelize model instances. It handles JSON serialization/deserialization
+ * and graceful degradation if the Redis client fails to initialize.
+ *
+ * @property {Redis | null} redisClient - The Upstash Redis client instance, or null if initialization failed.
+ */
 class RedisCacheService {
     /**
      * @private
@@ -18,11 +27,15 @@ class RedisCacheService {
      */
     static instance = null;
 
+    /** @type {import("@upstash/redis").Redis | null} */
+    redisClient;
+
     /**
      * Private constructor to enforce singleton pattern.
      * Initializes the Redis client using environment variables (handled by `Redis.fromEnv()`).
+     * Logs success or failure of client initialization.
      * @private
-     * @throws {Error} If an attempt is made to construct directly more than once.
+     * @throws {Error} If an attempt is made to construct directly after an instance already exists.
      */
     constructor() {
         if (RedisCacheService.instance) {
@@ -94,7 +107,7 @@ class RedisCacheService {
      */
     async set(key, value, ttlSeconds = 3600) {
         if (!this.redisClient) {
-            console.log(`Redis client not available. Cannot SET key: ${key}`);
+            logger.error(`Redis client not available. Cannot SET key: ${key}`);
             return false;
         }
         try {
@@ -102,7 +115,7 @@ class RedisCacheService {
             const result = await this.redisClient.set(key, jsonValue, {
                 ex: ttlSeconds,
             });
-            console.log(
+            logger.info(
                 `Redis SET key: ${key} | value: ${jsonValue} | result: ${result}`
             );
             return result === "OK";
