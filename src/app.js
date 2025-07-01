@@ -4,7 +4,6 @@ import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import compress from "@fastify/compress";
 import swaggerConfig from "./config/swagger.js";
-import { RedisCache } from "./utils/redisCache.js";
 
 dotenv.config();
 
@@ -60,10 +59,6 @@ export async function buildApp() {
 }
 
 export async function startServer() {
-    // Test Redis connection on boot
-    if (process.env.NODE_ENV !== "test") {
-        await RedisCache.testConnection();
-    }
     const fastify = await buildApp();
     const sequelize = (await import("./config/db.js")).default;
     return new Promise((resolve, reject) => {

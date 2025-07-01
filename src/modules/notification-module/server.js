@@ -21,51 +21,80 @@ export default async function (fastify, _opts) {
         const keyPath = path.join(__dirname, "temp_service_account.json");
         if (!fs.existsSync(keyPath)) {
             fs.writeFileSync(keyPath, jsonString);
-            initializeApp({
-                credential: cert(keyPath),
-            });
         }
+        initializeApp({
+            credential: cert(keyPath),
+        });
     }
     fastify.register(router, { prefix: "/api/v1" });
 
+    console.log("Notification subscriber starting...");
     broker.subscribe("notification_created", async (msg) => {
-        fastify.log.info(
-            "Received notification_created event from broker",
-            msg
-        );
-
-        const { token, eventType, data } = msg;
-
-        if (!token || !eventType || !data) {
-            fastify.log.error(
-                "Missing required fields in broker message: token, eventType, data",
-                msg
-            );
-            return;
-        }
-
-        const { getNotificationTemplate } = await import("./templates.js"); // Dynamic import
-        const template = getNotificationTemplate(eventType, data);
-
-        if (!template) {
-            fastify.log.error(
-                `Invalid eventType or template not found for event: ${eventType}`,
-                msg
-            );
-            return;
-        }
-
-        const { sendFCM } = await import("./routes/notificationRouter.js"); // Dynamic import
         try {
-            await sendFCM(token, template.title, template.body, data);
+            console.log("[Notification Subscriber] Received message:", msg);
             fastify.log.info(
-                `Notification sent via broker event ${eventType} to token ${token}`
+                "Received notification_created event from broker",
+                msg
             );
-        } catch (error) {
-            fastify.log.error(
-                `Error sending FCM notification via broker for event ${eventType}:`,
-                error
-            );
+
+            const { token, eventType, data } = msg;
+
+            if (!token || !eventType || !data) {
+                console.log(
+                    "[Notification Subscriber] Missing required fields",
+                    msg
+                );
+                fastify.log.error(
+                    "Missing required fields in broker message: token, eventType, data",
+                    msg
+                );
+                return;
+            }
+
+            const { getNotificationTemplate } = await import("./templates.js"); // Dynamic import
+            const language = data.language === "fr" ? "fr" : "en";
+            const template = getNotificationTemplate(eventType, data, language);
+
+            if (!template) {
+                console.log(
+                    `[Notification Subscriber] Invalid eventType or template not found for event: ${eventType}`,
+                    msg
+                );
+                fastify.log.error(
+                    `Invalid eventType or template not found for event: ${eventType}`,
+                    msg
+                );
+                return;
+            }
+
+            const { sendFCM } = await import("./routes/notificationRouter.js"); // Dynamic import
+            try {
+                console.log(
+                    "[Notification Subscriber] Sending FCM notification",
+                    { token, title: template.title, body: template.body, data }
+                );
+                await sendFCM(token, template.title, template.body, data);
+                fastify.log.info(
+                    `Notification sent via broker event ${eventType} to token ${token}`
+                );
+                if (msg.messageId) {
+                    broker.acknowledge("notification_created", msg.messageId);
+                    fastify.log.info(
+                        `Acknowledged messageId: ${msg.messageId}`
+                    );
+                }
+            } catch (error) {
+                console.log(
+                    "[Notification Subscriber] Error sending FCM notification",
+                    error
+                );
+                fastify.log.error(
+                    `Error sending FCM notification via broker for event ${eventType}:`,
+                    error
+                );
+            }
+        } catch (err) {
+            console.error("[Notification Subscriber] Top-level error:", err);
         }
     });
 }

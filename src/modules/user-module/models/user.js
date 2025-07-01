@@ -1,27 +1,6 @@
 import { DataTypes, Op } from "sequelize";
 import sequelize from "#config/db.js";
 import Role from "./role.js";
-/**
- * @typedef {import("sequelize").Model & {
- *   id: number,
- *   phoneNumber: string,
- *   fullName?: string,
- *   fcmToken?: string,
- *   profileImage?: string,
- *   sexe: "male" | "female",
- *   dateOfBirth?: Date,
- *   email?: string,
- *   isActive: boolean,
- *   isBlocked: boolean,
- *   latitude?: number,
- *   longitude?: number,
- *   lastLogin?: Date,
- *   getRoles: () => Promise<Role[]>,
- *   hasRole: (roleName: string) => Promise<boolean>,
- *   getPermissions: () => Promise<Permission[]>,
- *   hasPermission: (permissionName: string) => Promise<boolean>
- * }} UserInstance
- */
 
 /**
  * @file Defines the User model, including attributes, associations, and instance methods for RBAC.
@@ -39,13 +18,14 @@ import Role from "./role.js";
  * @property {number} [latitude] - Last known latitude of the user.
  * @property {number} [longitude] - Last known longitude of the user.
  * @property {Date} [lastLogin] - Timestamp of the user's last login.
+ * @property {string} appLanguage - User's preferred app language (e.g., 'fr', 'en').
  */
 
 /**
  * Sequelize model for User.
  * Represents a user in the system with authentication details and profile information.
  * Includes instance methods for Role-Based Access Control (RBAC).
- * @type {import("sequelize").ModelCtor<import("sequelize").Model<UserAttributes, any> & UserInstanceMethods>}
+ * @type {import("sequelize").ModelCtor<import("sequelize").Model<UserAttributes, any> &UserAttributes& UserInstanceMethods>}
  */
 
 const User = sequelize.define(
@@ -138,6 +118,12 @@ const User = sequelize.define(
             allowNull: true,
             comment: "Timestamp of the user's last successful login.",
         },
+        appLanguage: {
+            type: DataTypes.STRING(8),
+            allowNull: false,
+            defaultValue: "fr",
+            comment: "User's preferred app language (e.g., 'fr', 'en')",
+        },
     },
     {
         tableName: "Users",
@@ -174,7 +160,6 @@ Role.belongsToMany(User, {
     otherKey: "userId",
 });
 
-// --- RBAC Instance Methods ---
 /**
  * @typedef {Object} UserInstanceMethods
  * @property {() => Promise<Role[]>} getRoles - Sequelize mixin to get associated roles.
@@ -207,7 +192,6 @@ User.prototype.getPermissions = async function () {
         const permissions = await role.getPermissions(); // Sequelize mixin from Role.belongsToMany(Permission)
         for (const permission of permissions) {
             if (!allPermissionsMap.has(permission.id)) {
-                // Use ID for uniqueness of permission objects
                 allPermissionsMap.set(permission.id, permission);
             }
         }

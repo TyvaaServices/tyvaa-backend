@@ -32,7 +32,15 @@ export async function sendFCM(token, title, body, data) {
         const response = await getMessaging().send(message);
         logger.info("Notification sent:", response);
     } catch (err) {
-        logger.error("Error:", err);
+        console.error("Raw FCM error:", err);
+        logger.error("Error sending FCM notification:", {
+            error: err && (err.stack || err.message || err),
+            errorString: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+            token,
+            title,
+            body,
+            data,
+        });
     }
 }
 
@@ -44,8 +52,9 @@ async function router(fastify, _options) {
                 error: "Missing required fields: token, eventType, data",
             });
         }
-
-        const template = getNotificationTemplate(eventType, data);
+        const { getNotificationTemplate } = await import("./../templates.js"); // Dynamic import
+        const language = data.language === "fr" ? "fr" : "en";
+        const template = getNotificationTemplate(eventType, data, language);
         if (!template) {
             return reply
                 .status(400)

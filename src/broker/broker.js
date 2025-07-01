@@ -1,7 +1,12 @@
 import Queue from "./queue.js";
-import FileStorage from "./storage.js";
+import RedisStorage from "./redisStorage.js";
 import { EventEmitter } from "events";
-import fs from "fs";
+import createLogger from "#utils/logger.js";
+import dotenv from "dotenv";
+dotenv.config();
+const logger = createLogger("broker");
+
+console.log("[BROKER] process.cwd():", process.cwd());
 
 class Broker extends EventEmitter {
     /**
@@ -11,7 +16,7 @@ class Broker extends EventEmitter {
     constructor(config = {}) {
         super();
         this.queues = {};
-        this.storage = new FileStorage(config.storageDir);
+        this.storage = new RedisStorage();
         this.config = {
             autoStart: true,
             globalRetryPolicy: {
@@ -22,29 +27,7 @@ class Broker extends EventEmitter {
             ...config,
         };
 
-        // Load existing queues from storage
-        this.loadPersistedQueues();
-
-        // Global event handlers
         this.setupGlobalEventHandlers();
-    }
-
-    loadPersistedQueues() {
-        if (!this.storage.dir) return;
-        try {
-            const files = fs.readdirSync(this.storage.dir);
-            files.forEach((file) => {
-                if (file.endsWith(".jsonl")) {
-                    const queueName = file.replace(".jsonl", "");
-                    if (!this.queues[queueName]) {
-                        // Don't createIfMissing: false, we want to register it
-                        this.getQueue(queueName);
-                    }
-                }
-            });
-        } catch (e) {
-            // Ignore if storage dir doesn't exist or can't be read
-        }
     }
 
     /**
@@ -99,7 +82,6 @@ class Broker extends EventEmitter {
             if (!createIfMissing) return undefined;
             const queue = new Queue(name, this.storage);
 
-            // Apply global and queue-specific configuration
             if (this.config.globalRetryPolicy) {
                 Object.assign(queue.config, this.config.globalRetryPolicy);
             }

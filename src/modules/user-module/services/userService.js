@@ -21,6 +21,7 @@ import { fileURLToPath } from "url";
 import sanitize from "sanitize-filename";
 import sequelize from "#config/db.js";
 import Role from "./../models/role.js";
+import broker from "#broker/broker.js";
 
 const pumpAsync = promisify(pump);
 
@@ -55,6 +56,24 @@ function normalizePhoneNumber(phone) {
     if (!phone) return phone;
     return phone.startsWith("+") ? phone : `+221${phone}`;
 }
+
+/**
+ * @typedef {Object} UserInstance
+ * @property {number} id - The unique identifier for the user.
+ * @property {string} phoneNumber - The user's phone number (unique).
+ * @property {string} [fullName] - The user's full name.
+ * @property {string} [fcmToken] - Firebase Cloud Messaging token for push notifications.
+ * @property {string} [profileImage] - URL or path to the user's profile image.
+ * @property {("male"|"female"|"other"|"prefer_not_to_say")} sexe - The user's gender.
+ * @property {Date} [dateOfBirth] - The user's date of birth.
+ * @property {string} [email] - The user's email address (optional, could be unique if primary identifier).
+ * @property {boolean} isActive - Flag indicating if the user's account is active.
+ * @property {boolean} isBlocked - Flag indicating if the user's account is blocked by an admin.
+ * @property {number} [latitude] - Last known latitude of the user.
+ * @property {number} [longitude] - Last known longitude of the user.
+ * @property {Date} [lastLogin] - Timestamp of the user's last login.
+ * @property {string} appLanguage - User's preferred app language (e.g., 'fr', 'en').
+ */
 
 /**
  * @file User Service: Handles business logic related to users, profiles, OTP, and file uploads.
@@ -152,12 +171,11 @@ export const userService = {
         const redisKey =
             (context === "login" ? OTP_PREFIX_LOGIN : OTP_PREFIX_REGISTER) +
             normalizedIdentifier;
-        // Extra debug logging
-        console.log(
+        logger.info(
             `[OTP VERIFY] identifier: '${identifier}', normalized: '${normalizedIdentifier}', context: '${context}', redisKey: '${redisKey}', provided OTP: '${otp}'`
         );
         const storedOtp = await RedisCache.get(redisKey);
-        console.log(
+        logger.info(
             `[OTP VERIFY] Redis GET for key '${redisKey}' returned:`,
             storedOtp
         );
@@ -190,7 +208,7 @@ export const userService = {
      * Optionally creates a driver profile if specified.
      * Assigns default roles.
      * @param {object} userData - User data including profileType ('passenger' or 'driver').
-     * @returns {Promise<User>} The created User instance with profiles.
+     * @returns {Promise<UserInstance>} The created User instance with profiles.
      * @throws {ConflictError} If user already exists with phone/email.
      * @throws {AppError} For other creation errors.
      */
@@ -223,7 +241,6 @@ export const userService = {
         if (userInfo.isBlocked === undefined || userInfo.isBlocked === null) {
             userInfo.isBlocked = false;
         }
-        // If email is an empty string, set it to null
         if (userInfo.email === "") {
             userInfo.email = null;
         }
@@ -236,16 +253,7 @@ export const userService = {
             );
             await PassengerProfile.create({ userId: user.id }, { transaction });
             logger.info(`Created PassengerProfile for User ID: ${user.id}`);
-            // if (profileType === "driver") {
-            //     await DriverProfile.create(
-            //         { userId: user.id, status: "pending_approval" },
-            //         { transaction }
-            //     );
-            //     logger.info(
-            //         `Created DriverProfile (pending_approval) for User ID: ${user.id}`
-            //     );
-            // }
-            // Assign base and extra roles (PASSENGER, DRIVER)
+
             const roles = ["PASSENGER"];
             if (profileType === "driver") roles.push("CHAUFFEUR");
             await userService.assignBaseAndExtraRoles(user, roles, transaction);
@@ -253,6 +261,23 @@ export const userService = {
             logger.info(
                 `User and profile(s) created successfully for User ID: ${user.id}`
             );
+
+            if (profileType === "passenger" || profileType === "driver") {
+                broker.publish(
+                    "notification_created",
+                    {
+                        token: user.fcmToken || userInfo.fcmToken || "",
+                        eventType: "welcome",
+                        data: {
+                            userName: user.fullName,
+                            profileType,
+                            userId: user.id,
+                            language: user.appLanguage || "fr",
+                        },
+                    },
+                    { delay: 5 * 60 * 1000, priority: 5, maxRetries: 5 }
+                );
+            }
             return user;
         } catch (error) {
             await transaction.rollback();

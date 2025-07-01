@@ -1,22 +1,18 @@
-import fs from "fs";
 import { EventEmitter } from "events";
 
 class Queue extends EventEmitter {
     /**
      * @param {string} name - The queue name.
-     * @param {FileStorage} storage - The storage backend for persisting messages.
+     * @param {RedisStorage} storage - The storage backend for persisting messages.
      */
     constructor(name, storage) {
         super();
         this.name = name;
         this.storage = storage;
         this.subscribers = [];
-        this.messages = this.storage.load(name);
         this.processing = false;
         this.processingInterval = null;
         this.retryTimeouts = new Map(); // Track retry timeouts
-        this.deadLetterQueue = [];
-
         this.config = {
             maxRetries: 3,
             retryDelay: process.env.NODE_ENV === "test" ? 10 : 1000,
@@ -25,7 +21,6 @@ class Queue extends EventEmitter {
             maxConcurrentProcessing: 1,
             deadLetterQueueEnabled: true,
         };
-
         // Start queue processing
         this.startProcessing();
     }
@@ -39,7 +34,7 @@ class Queue extends EventEmitter {
      * @param {number} options.maxRetries - Override default max retries for this message
      * @returns {string} messageId
      */
-    publish(msg, options = {}) {
+    async publish(msg, options = {}) {
         const messageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const now = Date.now();
 
@@ -57,33 +52,14 @@ class Queue extends EventEmitter {
             error: null,
         };
 
-        this.storage.save(this.name, messageWithMetadata);
-        this.messages.push(messageWithMetadata);
-
-        // Sort messages by priority (desc) then by availableAt (asc) for FIFO within priority
-        this.sortMessages();
-
+        await this.storage.save(this.name, messageWithMetadata);
+        // No in-memory push; always rely on Redis for multi-process
         this.emit("message-published", {
             messageId,
             queueName: this.name,
             message: messageWithMetadata,
         });
-
         return messageId;
-    }
-
-    /**
-     * Sort messages for FIFO processing with priority support
-     */
-    sortMessages() {
-        this.messages.sort((a, b) => {
-            // First by priority (higher priority first)
-            if (a.priority !== b.priority) {
-                return b.priority - a.priority;
-            }
-            // Then by availableAt (FIFO within same priority)
-            return a.availableAt - b.availableAt;
-        });
     }
 
     /**
@@ -91,11 +67,9 @@ class Queue extends EventEmitter {
      */
     startProcessing() {
         if (this.processingInterval) return;
-
         this.processingInterval = setInterval(() => {
             this.processNextMessage();
         }, this.config.processingInterval);
-
         this.emit("processing-started", { queueName: this.name });
     }
 
@@ -107,11 +81,8 @@ class Queue extends EventEmitter {
             clearInterval(this.processingInterval);
             this.processingInterval = null;
         }
-
-        // Clear any pending retry timeouts
         this.retryTimeouts.forEach((timeout) => clearTimeout(timeout));
         this.retryTimeouts.clear();
-
         this.emit("processing-stopped", { queueName: this.name });
     }
 
@@ -120,61 +91,54 @@ class Queue extends EventEmitter {
      */
     async processNextMessage() {
         if (this.processing) return;
-
-        const now = Date.now();
-
-        // Find the next message that's ready to be processed
-        const messageIndex = this.messages.findIndex(
-            (msg) =>
-                msg.status === "pending" &&
-                msg.availableAt <= now &&
-                !msg.acknowledged
-        );
-
-        if (messageIndex === -1) return;
-
-        const message = this.messages[messageIndex];
-
         this.processing = true;
-        message.status = "processing";
-        message.lastAttempt = now;
-
-        this.emit("message-processing", {
-            messageId: message.messageId,
-            queueName: this.name,
-        });
-
         try {
-            // Notify all subscribers
-            await this.notifySubscribers(message);
-
-            // If message is acknowledged by a subscriber, mark as completed
-            if (message.acknowledged) {
-                message.status = "completed";
-                this.emit("message-completed", {
-                    messageId: message.messageId,
-                    queueName: this.name,
-                });
-            } else {
-                // If not acknowledged, it will be retried
-                this.scheduleRetry(message);
+            // Pop the next message from Redis
+            const message = await this.storage.pop(this.name);
+            if (!message) {
+                this.processing = false;
+                return;
             }
-        } catch (error) {
-            this.handleMessageError(message, error);
-        }
 
-        this.processing = false;
-        this.persistMessages();
+            message.status = "processing";
+            message.lastAttempt = Date.now();
+
+            this.emit("message-processing", {
+                messageId: message.messageId,
+                queueName: this.name,
+            });
+
+            try {
+                // Notify all subscribers
+                await this.notifySubscribers(message);
+
+                // If message is acknowledged by a subscriber, mark as completed
+                if (message.acknowledged) {
+                    message.status = "completed";
+                    this.emit("message-completed", {
+                        messageId: message.messageId,
+                        queueName: this.name,
+                    });
+                } else {
+                    // If not acknowledged, it will be retried
+                    await this.scheduleRetry(message);
+                }
+            } catch (error) {
+                await this.handleMessageError(message, error);
+            }
+        } finally {
+            this.processing = false;
+        }
     }
 
     /**
      * Schedule a retry for a failed message
      */
-    scheduleRetry(message) {
+    async scheduleRetry(message) {
         message.retries++;
 
         if (message.retries >= message.maxRetries) {
-            this.moveToDeadLetterQueue(message);
+            await this.moveToDeadLetterQueue(message);
             return;
         }
 
@@ -183,6 +147,9 @@ class Queue extends EventEmitter {
             Math.pow(this.config.retryBackoffMultiplier, message.retries - 1);
         message.availableAt = Date.now() + retryDelay;
         message.status = "pending";
+
+        // Push the message back to Redis for retry
+        await this.storage.save(this.name, message);
 
         this.emit("message-retry-scheduled", {
             messageId: message.messageId,
@@ -193,35 +160,12 @@ class Queue extends EventEmitter {
     }
 
     /**
-     * Handle message processing error
+     * Move message to dead letter queue (in-memory for now, or could be a Redis list)
      */
-    handleMessageError(message, error) {
-        message.error = error.message;
-
-        this.emit("message-error", {
-            messageId: message.messageId,
-            queueName: this.name,
-            error: error.message,
-            retryCount: message.retries,
-        });
-
-        this.scheduleRetry(message);
-    }
-
-    /**
-     * Move message to dead letter queue
-     */
-    moveToDeadLetterQueue(message) {
+    async moveToDeadLetterQueue(message) {
         message.status = "dead";
-
-        if (this.config.deadLetterQueueEnabled) {
-            this.deadLetterQueue.push({
-                ...message,
-                deadLetterAt: Date.now(),
-                originalQueue: this.name,
-            });
-        }
-
+        // Optionally, push to a Redis dead letter list
+        await this.storage.save(`${this.name}:dead`, message);
         this.emit("message-dead-letter", {
             messageId: message.messageId,
             queueName: this.name,
@@ -229,20 +173,41 @@ class Queue extends EventEmitter {
     }
 
     /**
-     * Acknowledge a message by messageId.
-     * @param {string} messageId
+     * Handle message processing error
      */
-    acknowledge(messageId) {
-        const msg = this.messages.find((m) => m.messageId === messageId);
-        if (msg && !msg.acknowledged) {
-            msg.acknowledged = true;
-            msg.status = "completed";
-            this.emit("message-acknowledged", {
-                messageId,
-                queueName: this.name,
-            });
-            this.persistMessages();
-        }
+    async handleMessageError(message, error) {
+        message.error = error
+            ? error.stack || error.message || error
+            : "Unknown error";
+
+        await this.scheduleRetry(message);
+
+        this.emit("message-error", {
+            messageId: message.messageId,
+            queueName: this.name,
+            error: message.error,
+        });
+    }
+
+    /**
+     * Notifies all subscribers of a message.
+     * @param {Object} msg - The message to send to subscribers.
+     */
+    async notifySubscribers(msg) {
+        const promises = this.subscribers.map(async (callback) => {
+            try {
+                await callback(msg);
+            } catch (error) {
+                this.emit("subscriber-error", {
+                    messageId: msg.messageId,
+                    queueName: this.name,
+                    error: error.message,
+                });
+                throw error;
+            }
+        });
+
+        await Promise.all(promises);
     }
 
     /**
@@ -273,93 +238,15 @@ class Queue extends EventEmitter {
     }
 
     /**
-     * Notifies all subscribers of a message.
-     * @param {Object} msg - The message to send to subscribers.
+     * Acknowledge a message by messageId.
+     * @param {string} messageId
      */
-    async notifySubscribers(msg) {
-        const promises = this.subscribers.map(async (callback) => {
-            try {
-                await callback(msg);
-            } catch (error) {
-                this.emit("subscriber-error", {
-                    messageId: msg.messageId,
-                    queueName: this.name,
-                    error: error.message,
-                });
-                throw error;
-            }
-        });
-
-        await Promise.all(promises);
-    }
-
-    /**
-     * Persist all messages to disk
-     */
-    persistMessages() {
-        const file = this.storage.dir + "/" + this.name + ".jsonl";
-
-        try {
-            fs.writeFileSync(
-                file,
-                this.messages.map((m) => JSON.stringify(m)).join("\n") + "\n"
-            );
-        } catch (error) {
-            this.emit("persistence-error", {
-                queueName: this.name,
-                error: error.message,
-            });
-        }
-    }
-
-    /**
-     * Get queue statistics
-     */
-    getStats() {
-        const stats = {
+    async acknowledge(messageId) {
+        // Optionally, store acknowledged IDs in Redis for audit
+        this.emit("message-acknowledged", {
+            messageId,
             queueName: this.name,
-            totalMessages: this.messages.length,
-            pendingMessages: this.messages.filter((m) => m.status === "pending")
-                .length,
-            processingMessages: this.messages.filter(
-                (m) => m.status === "processing"
-            ).length,
-            completedMessages: this.messages.filter(
-                (m) => m.status === "completed"
-            ).length,
-            failedMessages: this.messages.filter((m) => m.status === "failed")
-                .length,
-            deadLetterMessages: this.deadLetterQueue.length,
-            subscriberCount: this.subscribers.length,
-            isProcessing: this.processing,
-        };
-
-        return stats;
-    }
-
-    /**
-     * Purge completed and acknowledged messages
-     */
-    purgeCompleted() {
-        const initialCount = this.messages.length;
-        this.messages = this.messages.filter(
-            (m) => m.status !== "completed" || !m.acknowledged
-        );
-        const purgedCount = initialCount - this.messages.length;
-
-        this.persistMessages();
-        this.emit("messages-purged", { queueName: this.name, purgedCount });
-
-        return purgedCount;
-    }
-
-    /**
-     * Clean up resources
-     */
-    destroy() {
-        this.stopProcessing();
-        this.removeAllListeners();
-        this.subscribers = [];
+        });
     }
 }
 
