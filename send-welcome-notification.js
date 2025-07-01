@@ -46,14 +46,9 @@ async function sendWelcomeNotification() {
         };
 
         // Publish the message to the notification_created queue
-        await broker.sendToQueue(
-            "notification_created",
-            notificationMessage
-        );
+        await broker.sendToQueue("notification_created", notificationMessage);
 
-        logger.info(
-            `Welcome notification published successfully`
-        );
+        logger.info(`Welcome notification published successfully`);
         logger.info(`Notification will be sent to FCM token: ${FCM_TOKEN}`);
 
         // Wait a bit to allow processing
@@ -103,14 +98,9 @@ async function sendAlternativeWelcomeNotification() {
             messageId: `user-registered-${Date.now()}`,
         };
 
-        await broker.sendToQueue(
-            "notification_created",
-            notificationMessage
-        );
+        await broker.sendToQueue("notification_created", notificationMessage);
 
-        logger.info(
-            `Alternative welcome notification published successfully`
-        );
+        logger.info(`Alternative welcome notification published successfully`);
 
         setTimeout(async () => {
             if (broker) {
@@ -157,10 +147,7 @@ async function sendRideNotification() {
             messageId: `ride-accept-${Date.now()}`,
         };
 
-        await broker.sendToQueue(
-            "notification_created",
-            notificationMessage
-        );
+        await broker.sendToQueue("notification_created", notificationMessage);
 
         logger.info(`Ride notification published successfully`);
 

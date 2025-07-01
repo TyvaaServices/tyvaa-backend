@@ -32,14 +32,9 @@ async function sendWelcomeNotification() {
             messageId: `welcome-${Date.now()}`,
         };
 
-        await broker.sendToQueue(
-            "notification_created",
-            notificationMessage
-        );
+        await broker.sendToQueue("notification_created", notificationMessage);
 
-        logger.info(
-            `Welcome notification published successfully`
-        );
+        logger.info(`Welcome notification published successfully`);
         logger.info(`FCM Token: ${FCM_TOKEN}`);
 
         // Wait for processing
@@ -86,14 +81,9 @@ async function sendFrenchWelcomeNotification() {
             messageId: `welcome-fr-${Date.now()}`,
         };
 
-        await broker.sendToQueue(
-            "notification_created",
-            notificationMessage
-        );
+        await broker.sendToQueue("notification_created", notificationMessage);
 
-        logger.info(
-            `French welcome notification published successfully`
-        );
+        logger.info(`French welcome notification published successfully`);
 
         setTimeout(async () => {
             logger.info("Notification française envoyée avec succès!");

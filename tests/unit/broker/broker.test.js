@@ -84,7 +84,7 @@ describe("Broker (RabbitMQ)", () => {
         // broker = new BrokerModule.BrokerClass();
 
         // Spy on the emit method of the specific broker instance for each test
-        jest.spyOn(broker, 'emit');
+        jest.spyOn(broker, "emit");
     });
 
     afterEach(async () => {
@@ -111,7 +111,10 @@ describe("Broker (RabbitMQ)", () => {
                 new Error("Connection failed")
             );
             await expect(broker.connect()).rejects.toThrow("Connection failed");
-            expect(broker.emit).toHaveBeenCalledWith("error", expect.any(Error));
+            expect(broker.emit).toHaveBeenCalledWith(
+                "error",
+                expect.any(Error)
+            );
         });
     });
 
@@ -195,7 +198,9 @@ describe("Broker (RabbitMQ)", () => {
             broker.channel = null;
 
             // Configure rabbitmqConnector.getChannel (mockGetChannel) to fail for this specific test scenario
-            mockGetChannel.mockRejectedValueOnce(new Error("Simulated underlying connection failure"));
+            mockGetChannel.mockRejectedValueOnce(
+                new Error("Simulated underlying connection failure")
+            );
 
             // sendToQueue will call this.connect(), which will fail due to mockGetChannel rejecting.
             // The error from this.connect() (which is "Simulated underlying connection failure") will propagate.
@@ -203,7 +208,7 @@ describe("Broker (RabbitMQ)", () => {
                 "Simulated underlying connection failure"
             );
             // Ensure mockGetChannel is reset for subsequent tests if needed, though beforeEach should handle it.
-             mockGetChannel.mockResolvedValue(mockBrokerChannel); // Reset to default behavior
+            mockGetChannel.mockResolvedValue(mockBrokerChannel); // Reset to default behavior
         });
     });
 

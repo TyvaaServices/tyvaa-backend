@@ -40,7 +40,6 @@ describe("startServer", () => {
         Redis: { fromEnv: mockRedisFromEnv },
     }));
 
-
     beforeAll(() => {
         originalEnv = { ...process.env }; // Shallow copy to restore later
         process.env.NODE_ENV = "test";
@@ -48,9 +47,12 @@ describe("startServer", () => {
         // e.g., process.env.RABBITMQ_URL = "amqp://localhosttest";
         // process.env.FIREBASE_KEY_BASE64 = "mockbase64key"; // If notification module init runs
 
-        processOnSpy = jest.spyOn(process, "on").mockImplementation(() => process);
-        processExitSpy = jest.spyOn(process, "exit").mockImplementation(() => { throw new Error("process.exit called"); });
-
+        processOnSpy = jest
+            .spyOn(process, "on")
+            .mockImplementation(() => process);
+        processExitSpy = jest.spyOn(process, "exit").mockImplementation(() => {
+            throw new Error("process.exit called");
+        });
     });
     afterAll(() => {
         process.env = originalEnv; // Restore original environment variables

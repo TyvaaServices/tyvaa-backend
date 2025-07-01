@@ -34,13 +34,13 @@ try {
 
         if (smtpSecureEnv === "true") {
             secureConnection = true;
-            smtpPort = parseInt(smtpPortEnv || "465"); // Default to 465 for secure
+            smtpPort = parseInt(smtpPortEnv || "465", 10); // Default to 465 for secure
         } else if (smtpSecureEnv === "false") {
             secureConnection = false;
-            smtpPort = parseInt(smtpPortEnv || "587"); // Default to 587 for non-secure
+            smtpPort = parseInt(smtpPortEnv || "587", 10); // Default to 587 for non-secure
         } else {
             // SMTP_SECURE not explicitly set, infer from port
-            smtpPort = parseInt(smtpPortEnv || "465"); // Assume secure by default if not specified
+            smtpPort = parseInt(smtpPortEnv || "465", 10); // Assume secure by default if not specified
             secureConnection = smtpPort === 465;
         }
 
@@ -54,7 +54,7 @@ try {
             },
         });
 
-        transporterInstance.verify((error, _success) => {
+        transporterInstance.verify((error) => {
             if (error) {
                 logger.error(
                     { error },

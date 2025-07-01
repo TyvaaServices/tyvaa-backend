@@ -9,13 +9,13 @@ import fp from "fastify-plugin";
 async function errorHandlerPlugin(fastify) {
     const { AppError } = await import("../utils/customErrors.js");
     fastify.setErrorHandler((error, request, reply) => {
-        if (error && error.statusCode && error instanceof AppError) {
+        if (error?.statusCode && error instanceof AppError) {
             reply.status(error.statusCode).send({
                 error: error.name,
                 message: error.message,
                 ...(error.details ? { details: error.details } : {}),
             });
-        } else if (error && error.statusCode) {
+        } else if (error?.statusCode) {
             reply.status(error.statusCode).send({
                 error: error.name || "Error",
                 message: error.message,

@@ -140,7 +140,10 @@ export const userService = {
     generateAndSendOtp: async (identifier, context) => {
         let normalizedIdentifier = identifier;
         // Normalize phone number only if it looks like a phone number and not an email
-        if (!identifier.includes('@') && /^\d+$/.test(identifier.replace('+', ''))) {
+        if (
+            !identifier.includes("@") &&
+            /^\d+$/.test(identifier.replace("+", ""))
+        ) {
             normalizedIdentifier = normalizePhoneNumber(identifier);
         }
         const otp = generateOtp();
@@ -179,7 +182,10 @@ export const userService = {
      */
     verifyOtp: async (identifier, otp, context) => {
         let normalizedIdentifier = identifier;
-        if (!identifier.includes('@') && /^\d+$/.test(identifier.replace('+', ''))) {
+        if (
+            !identifier.includes("@") &&
+            /^\d+$/.test(identifier.replace("+", ""))
+        ) {
             normalizedIdentifier = normalizePhoneNumber(identifier);
         }
         const redisKey =
@@ -289,23 +295,29 @@ export const userService = {
                 // Using sendToQueue for direct message to the notification_created queue
                 // Corrected eventType to USER_WELCOME
                 // Standard message options; removed delay and maxRetries as they are not standard AMQP props here
-                broker.sendToQueue(
-                    "notification_created", // Queue name
-                    { // Message payload
-                        token: user.fcmToken || userInfo.fcmToken || "",
-                        eventType: "USER_WELCOME",
-                        data: {
-                            userName: user.fullName,
-                            profileType,
-                            userId: user.id,
-                            language: user.appLanguage || "fr",
+                broker
+                    .sendToQueue(
+                        "notification_created", // Queue name
+                        {
+                            // Message payload
+                            token: user.fcmToken || userInfo.fcmToken || "",
+                            eventType: "USER_WELCOME",
+                            data: {
+                                userName: user.fullName,
+                                profileType,
+                                userId: user.id,
+                                language: user.appLanguage || "fr",
+                            },
                         },
-                    },
-                    { persistent: true, priority: 5 } // Message options
-                ).catch(err => {
-                    logger.error({ error: err, userId: user.id }, "Failed to send welcome notification to broker");
-                    // Decide if this failure should affect user creation outcome - currently it does not.
-                });
+                        { persistent: true, priority: 5 } // Message options
+                    )
+                    .catch((err) => {
+                        logger.error(
+                            { error: err, userId: user.id },
+                            "Failed to send welcome notification to broker"
+                        );
+                        // Decide if this failure should affect user creation outcome - currently it does not.
+                    });
             }
             return user;
         } catch (error) {
@@ -932,7 +944,8 @@ export const userService = {
      * @throws {AuthenticationError} If the account is inactive/blocked or OTP is invalid.
      * @memberof userService
      */
-    loginUser: async function (identifier, otp) { // Retained `function` for `this` context if it was intentional, though not used here.
+    loginUser: async function (identifier, otp) {
+        // Retained `function` for `this` context if it was intentional, though not used here.
         logger.debug(`Service: Processing login for identifier: ${identifier}`);
         const contactDetails = identifier.includes("@")
             ? { email: identifier }
@@ -962,12 +975,15 @@ export const userService = {
      * @throws {ConflictError} If a user with the given phone number already exists.
      * @memberof userService
      */
-    requestRegisterOtp: async function (phoneNumber) { // Retained `function`
+    requestRegisterOtp: async function (phoneNumber) {
+        // Retained `function`
         const normalizedPhone = normalizePhoneNumber(phoneNumber);
         logger.debug(
             `Service: Requesting registration OTP for phone: ${normalizedPhone}.`
         );
-        const existingUser = await User.findOne({ where: { phoneNumber: normalizedPhone } });
+        const existingUser = await User.findOne({
+            where: { phoneNumber: normalizedPhone },
+        });
         if (existingUser) {
             throw new ConflictError(
                 undefined,

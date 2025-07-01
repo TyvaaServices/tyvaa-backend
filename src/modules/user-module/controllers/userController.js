@@ -12,6 +12,36 @@ import { BadRequestError, NotFoundError } from "#utils/customErrors.js";
 const logger = createLogger("user-controller");
 
 /**
+ * Helper function to generate authentication tokens
+ * @param {object} user - The user object
+ * @param {FastifyAugmentedInstance} fastify - The Fastify instance with signToken method
+ * @param {string} email - Optional email for token expiration logic
+ * @returns {Promise<object>} Token object containing token and optionally refreshToken
+ */
+async function generateAuthTokens(user, fastify, email) {
+    // Fetch user roles
+    const userRoles = await user.getRoles();
+    const roleNames = userRoles.map((role) => role.name);
+
+    const payload = {
+        id: user.id,
+        roles: roleNames,
+    };
+
+    if (email) {
+        const token = fastify.signToken(payload, { expiresIn: "15m" });
+        const refreshToken = fastify.signToken(
+            { id: user.id, type: "refresh" }, // Refresh token typically doesn't need full payload
+            { expiresIn: "7d" }
+        );
+        return { token, refreshToken };
+    } else {
+        const token = fastify.signToken(payload);
+        return { token };
+    }
+}
+
+/**
  * Factory function to create user controller methods.
  * @param {FastifyAugmentedInstance} fastify - The Fastify instance, augmented with `signToken`.
  * @returns {object} User controller methods.
@@ -95,9 +125,10 @@ export const userControllerFactory = (fastify) => ({
     requestLoginOtp: async (request, reply) => {
         try {
             const { phoneNumber, email } = request.body;
-            console.log(
-                `Requesting  ${request.body}` // Log the request for debugging
-            );
+            logger.info("Requesting OTP for login", {
+                phoneNumber: phoneNumber ? "[REDACTED]" : undefined,
+                email: email ? "[REDACTED]" : undefined,
+            });
             if (!phoneNumber && !email) {
                 return reply
                     .status(400)
@@ -122,9 +153,7 @@ export const userControllerFactory = (fastify) => ({
                 message: "OTP has been sent to your registered contact.",
             });
         } catch (err) {
-            console.log(
-                `Error requesting login OTP: ${err.message}` // Log the error for debugging
-            );
+            logger.error("Error requesting login OTP", { error: err.message });
             return reply.status(401).send({ error: err.message });
         }
     },
@@ -182,7 +211,9 @@ export const userControllerFactory = (fastify) => ({
         try {
             const { phoneNumber } = request.body;
             const otp = await userFacade.requestRegisterOtp(phoneNumber);
-            console.log(`Requested OTP for registration: ${otp}`);
+            logger.info("Requested OTP for registration", {
+                phoneNumber: "[REDACTED]",
+            });
             return reply.send({ success: true, otp });
         } catch (err) {
             return reply.status(400).send({ error: err.message });
@@ -408,32 +439,4 @@ export const userControllerFactory = (fastify) => ({
     },
 });
 
-/**
- * Helper to generate authentication tokens for a user.
- * @param {object} user - The user object (must have an id).
- * @param {FastifyAugmentedInstance} fastify - The Fastify instance with signToken.
- * @param {string} [email] - The user's email, if available.
- * @returns {object} Object containing token and optionally refreshToken.
- */
-async function generateAuthTokens(user, fastify, email) {
-    // Fetch user roles
-    const userRoles = await user.getRoles();
-    const roleNames = userRoles.map((role) => role.name);
 
-    const payload = {
-        id: user.id,
-        roles: roleNames,
-    };
-
-    if (email) {
-        const token = fastify.signToken(payload, { expiresIn: "15m" });
-        const refreshToken = fastify.signToken(
-            { id: user.id, type: "refresh" }, // Refresh token typically doesn't need full payload
-            { expiresIn: "7d" }
-        );
-        return { token, refreshToken };
-    } else {
-        const token = fastify.signToken(payload);
-        return { token };
-    }
-}
