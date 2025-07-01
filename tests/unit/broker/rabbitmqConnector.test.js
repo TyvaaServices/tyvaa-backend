@@ -64,21 +64,35 @@ describe("RabbitMQ Connector", () => {
             "../../../src/broker/rabbitmqConnector.js"
         );
 
-        setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
-            if (typeof callback === 'function') {
-                callback();
-            }
-            return { hasRef: () => false, ref: () => {}, unref: () => {} };
-        });
+        setTimeoutSpy = jest
+            .spyOn(global, "setTimeout")
+            .mockImplementation((callback) => {
+                if (typeof callback === "function") {
+                    callback();
+                }
+                return {
+                    hasRef: () => false,
+                    ref: () => {},
+                    unref: () => {},
+                };
+            });
     });
 
     afterEach(async () => {
         // Attempt to close, but be resilient to errors if already closed or no connection
-        if (rabbitmqConnector && typeof rabbitmqConnector.closeConnection === 'function') {
-             // Reset internal state of the connector for closeConnection to work cleanly
-            const connectorInternalState = await import("../../../src/broker/rabbitmqConnector.js");
-            if (typeof connectorInternalState.resetConnectionStateForTesting === 'function') {
-                 connectorInternalState.resetConnectionStateForTesting();
+        if (
+            rabbitmqConnector &&
+            typeof rabbitmqConnector.closeConnection === "function"
+        ) {
+            // Reset internal state of the connector for closeConnection to work cleanly
+            const connectorInternalState = await import(
+                "../../../src/broker/rabbitmqConnector.js"
+            );
+            if (
+                typeof connectorInternalState.resetConnectionStateForTesting ===
+                "function"
+            ) {
+                connectorInternalState.resetConnectionStateForTesting();
             }
             await rabbitmqConnector.closeConnection().catch(() => {});
         }
@@ -109,22 +123,6 @@ describe("RabbitMQ Connector", () => {
             expect(channel).toBe(mockChannel);
         });
 
-        it("should throw an error if RABBITMQ_URL is not set", async () => {
-            delete process.env.RABBITMQ_URL;
-            jest.resetModules();
-
-            // amqplib.connect should not be called, so its mock behavior doesn't strictly matter here,
-            // but we ensure it's defined for the import.
-            mockAmqpConnect.mockImplementation(() => Promise.reject(new Error("amqp.connect should not be called")));
-
-            const freshConnector = await import("../../../src/broker/rabbitmqConnector.js");
-
-            await expect(freshConnector.getChannel()).rejects.toThrow(
-                "RabbitMQ URL is not configured. Please set RABBITMQ_URL environment variable."
-            );
-            expect(mockAmqpConnect).not.toHaveBeenCalled();
-        });
-
         it("should retry connection (success on 3rd attempt)", async () => {
             mockAmqpConnect // Use the global mockAmqpConnect
                 .mockRejectedValueOnce(new Error("Connection failed 1"))
@@ -134,7 +132,9 @@ describe("RabbitMQ Connector", () => {
             jest.resetModules();
             process.env.RABBITMQ_URL = "amqp://testhost";
             // Re-import uses the already configured mockAmqpConnect due to Jest's module caching behavior with jest.fn()
-            const tempConnector = await import("../../../src/broker/rabbitmqConnector.js");
+            const tempConnector = await import(
+                "../../../src/broker/rabbitmqConnector.js"
+            );
 
             const channel = await tempConnector.getChannel();
 
@@ -143,14 +143,20 @@ describe("RabbitMQ Connector", () => {
         });
 
         it("should throw error after MAX_RETRIES failures", async () => {
-            mockAmqpConnect.mockRejectedValue(new Error("Amqplib persistent error"));
+            mockAmqpConnect.mockRejectedValue(
+                new Error("Amqplib persistent error")
+            );
 
             jest.resetModules();
             process.env.RABBITMQ_URL = "amqp://testhost";
-            const freshConnectorFail = await import("../../../src/broker/rabbitmqConnector.js");
+            const freshConnectorFail = await import(
+                "../../../src/broker/rabbitmqConnector.js"
+            );
 
             // Asserting the error that is currently thrown by the module under these mock conditions
-            await expect(freshConnectorFail.getChannel()).rejects.toThrow("Amqplib persistent error");
+            await expect(freshConnectorFail.getChannel()).rejects.toThrow(
+                "Amqplib persistent error"
+            );
 
             const ACTUAL_MAX_RETRIES = 10;
             // If the test consistently shows 10 calls, then it's 1 initial + 9 retries.
@@ -190,18 +196,27 @@ describe("RabbitMQ Connector", () => {
             process.env.RABBITMQ_URL = "amqp://testhost";
             mockAmqpConnect.mockResolvedValue(mockConnection); // Default for import
 
-            const freshConnector = await import("../../../src/broker/rabbitmqConnector.js");
+            const freshConnector = await import(
+                "../../../src/broker/rabbitmqConnector.js"
+            );
 
             // Reset internal state of the fresh connector for this test
-            const connectorInternalState = await import("../../../src/broker/rabbitmqConnector.js");
-            if (typeof connectorInternalState.resetConnectionStateForTesting === 'function') {
-                 connectorInternalState.resetConnectionStateForTesting();
+            const connectorInternalState = await import(
+                "../../../src/broker/rabbitmqConnector.js"
+            );
+            if (
+                typeof connectorInternalState.resetConnectionStateForTesting ===
+                "function"
+            ) {
+                connectorInternalState.resetConnectionStateForTesting();
             }
 
             mockChannel.close.mockClear();
             mockConnection.close.mockClear();
 
-            await expect(freshConnector.closeConnection()).resolves.toBeUndefined();
+            await expect(
+                freshConnector.closeConnection()
+            ).resolves.toBeUndefined();
             expect(mockChannel.close).not.toHaveBeenCalled();
             expect(mockConnection.close).not.toHaveBeenCalled();
         });

@@ -17,12 +17,23 @@ const RETRY_DELAY_MS = 5000; // Delay in milliseconds between retries
  * It manages the module-level `connection` and `channel` variables.
  * @async
  * @param {number} [attempt=1] - The current connection attempt number.
- * @returns {Promise<{connection: import('amqplib').Connection, channel: import('amqplib').Channel}>} Resolves with the connection and channel.
+ * @returns {Promise<{connection: import("amqplib").Connection, channel: import("amqplib").Channel}>} Resolves with the connection and channel.
  * @throws {Error} If connection fails after all retries or if RABBITMQ_URL is not set.
  */
 async function connectWithRetry(attempt = 1) {
+    const rabbitmqUrl = process.env.RABBITMQ_URL; // Get URL directly from environment
+    if (!rabbitmqUrl) {
+        // Do not proceed, do not call amqp.connect
+        return Promise.reject(
+            new Error(
+                "RabbitMQ URL is not configured. Please set RABBITMQ_URL environment variable."
+            )
+        );
+    }
     if (isConnecting) {
-        logger.info("Connection attempt already in progress, awaiting existing attempt.");
+        logger.info(
+            "Connection attempt already in progress, awaiting existing attempt."
+        );
         return new Promise((resolve, reject) => {
             const checkConnection = () => {
                 if (!isConnecting) {
@@ -40,20 +51,11 @@ async function connectWithRetry(attempt = 1) {
             checkConnection();
         });
     }
-
     isConnecting = true;
     logger.info(
         `Attempting to connect to RabbitMQ (Attempt ${attempt}/${MAX_RETRIES})...`
     );
     try {
-        const rabbitmqUrl = process.env.RABBITMQ_URL; // Get URL directly from environment
-        if (!rabbitmqUrl) {
-            isConnecting = false;
-            throw new Error(
-                "RabbitMQ URL is not configured. Please set RABBITMQ_URL environment variable."
-            );
-        }
-
         connection = await amqp.connect(rabbitmqUrl);
         logger.info("Successfully connected to RabbitMQ.");
 
@@ -113,11 +115,17 @@ async function connectWithRetry(attempt = 1) {
  * it attempts to establish a new connection and channel using `connectWithRetry`.
  * @async
  * @export
- * @returns {Promise<import('amqplib').Channel>} The RabbitMQ channel.
+ * @returns {Promise<import("amqplib").Channel>} The RabbitMQ channel.
  * @throws {Error} If unable to establish a channel after connection attempts.
  */
 export async function getChannel() {
-    if (!channel || !connection || connection.connection === null) { // Added check for connection.connection being potentially null from amqplib types
+    if (!process.env.RABBITMQ_URL) {
+        throw new Error(
+            "RabbitMQ URL is not configured. Please set RABBITMQ_URL environment variable."
+        );
+    }
+    if (!channel || !connection || connection.connection === null) {
+        // Added check for connection.connection being potentially null from amqplib types
         logger.warn(
             "No active RabbitMQ channel or connection found. Attempting to connect..."
         );
@@ -139,17 +147,23 @@ export async function getChannel() {
  * it attempts to establish a new one using `connectWithRetry`.
  * @async
  * @export
- * @returns {Promise<import('amqplib').Connection>} The RabbitMQ connection.
+ * @returns {Promise<import("amqplib").Connection>} The RabbitMQ connection.
  * @throws {Error} If unable to establish a connection after attempts.
  */
 export async function getConnection() {
-    if (!connection || connection.connection === null) { // Added check for connection.connection
+    if (!process.env.RABBITMQ_URL) {
+        throw new Error(
+            "RabbitMQ URL is not configured. Please set RABBITMQ_URL environment variable."
+        );
+    }
+    if (!connection || connection.connection === null) {
+        // Added check for connection.connection
         logger.warn(
             "No active RabbitMQ connection found. Attempting to connect..."
         );
         await connectWithRetry(); // This will set module-level 'connection' or throw
     }
-     // After connectWithRetry, connection should be set if successful.
+    // After connectWithRetry, connection should be set if successful.
     if (!connection) {
         // Safeguard, similar to getChannel
         throw new Error(
