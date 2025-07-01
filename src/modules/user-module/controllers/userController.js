@@ -44,6 +44,7 @@ export const userControllerFactory = (fastify) => ({
         // Basic validation, schema should ideally handle this
         if (!["approved", "rejected"].includes(status)) {
             throw new BadRequestError(
+                undefined,
                 "Invalid status provided for review. Must be 'approved' or 'rejected'."
             );
         }
@@ -79,7 +80,7 @@ export const userControllerFactory = (fastify) => ({
         const { id } = request.params;
         const user = await userFacade.getUserById(id);
         if (!user) {
-            throw new NotFoundError(`User with ID ${id} not found.`);
+            throw new NotFoundError(undefined, `User with ID ${id} not found.`);
         }
         logger.info("Fetched user by ID", { id });
         return reply.send({ success: true, data: user });

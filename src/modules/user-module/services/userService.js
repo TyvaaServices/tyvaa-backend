@@ -198,6 +198,7 @@ export const userService = {
                 `OTP verification failed: No OTP found for ${normalizedIdentifier} (context: ${context}).`
             );
             throw new AuthenticationError(
+                undefined,
                 "OTP expired or not found. Please request a new one."
             );
         }
@@ -209,7 +210,7 @@ export const userService = {
                 `OTP verification failed: Invalid OTP for ${normalizedIdentifier} (context: ${context}).`
             );
             // TODO: Implement attempt limiting / account lockout for multiple failed OTPs.
-            throw new AuthenticationError("Invalid OTP provided.");
+            throw new AuthenticationError(undefined, "Invalid OTP provided.");
         }
         await RedisCache.del(redisKey);
         logger.info(
@@ -248,6 +249,7 @@ export const userService = {
             await User.findOne({ where: { phoneNumber: userInfo.phoneNumber } })
         ) {
             throw new ConflictError(
+                undefined,
                 "User with this phone number already exists."
             );
         }
@@ -255,7 +257,7 @@ export const userService = {
             userInfo.email &&
             (await User.findOne({ where: { email: userInfo.email } }))
         ) {
-            throw new ConflictError("User with this email already exists.");
+            throw new ConflictError(undefined, "User with this email already exists.");
         }
 
         // Ensure isBlocked is set to false by default
@@ -384,6 +386,7 @@ export const userService = {
 
         if (await User.findOne({ where: { email: userData.email } })) {
             throw new ConflictError(
+                undefined,
                 `User with email ${userData.email} already exists.`
             );
         }
@@ -395,6 +398,7 @@ export const userService = {
             }))
         ) {
             throw new ConflictError(
+                undefined,
                 `User with phone number ${userData.phoneNumber} already exists.`
             );
         }
@@ -456,6 +460,7 @@ export const userService = {
         const userInstance = await User.findByPk(userId);
         if (!userInstance) {
             throw new NotFoundError(
+                undefined,
                 `User with ID ${userId} not found for update in service.`
             );
         }
@@ -545,6 +550,7 @@ export const userService = {
         });
         if (!passengerProfile) {
             throw new NotFoundError(
+                undefined,
                 "Passenger profile not found for this user. Cannot submit driver application."
             );
         }
@@ -557,6 +563,7 @@ export const userService = {
         });
         if (existingApplication) {
             throw new ConflictError(
+                undefined,
                 "You already have a pending driver application."
             );
         }
@@ -640,7 +647,8 @@ export const userService = {
             where: { userId },
         });
         if (!passengerProfile) {
-            throw new NotFoundError( // This error might be misleading if the goal is just to say "no application"
+            throw new NotFoundError(
+                undefined, // This error might be misleading if the goal is just to say "no application"
                 "Passenger profile not found for this user. Cannot determine driver application status."
             );
         }
@@ -687,6 +695,7 @@ export const userService = {
         const user = await User.findByPk(userIdToBlock);
         if (!user) {
             throw new NotFoundError(
+                undefined,
                 `User with ID ${userIdToBlock} not found for blocking in service.`
             );
         }
@@ -772,6 +781,7 @@ export const userService = {
 
             if (!application) {
                 throw new NotFoundError(
+                    undefined,
                     `Driver application with ID ${applicationId} not found.`
                 );
             }
@@ -892,6 +902,7 @@ export const userService = {
             });
             if (!user) {
                 throw new NotFoundError(
+                    undefined,
                     `User with ID ${id} not found in service.`
                 );
             }
@@ -929,10 +940,10 @@ export const userService = {
         const user = await this.findUserByPhoneOrEmail(contactDetails);
 
         if (!user) {
-            throw new NotFoundError("User not found with these credentials.");
+            throw new NotFoundError(undefined, "User not found with these credentials.");
         }
         if (!user.isActive || user.isBlocked) {
-            throw new AuthenticationError("Account is inactive or blocked.");
+            throw new AuthenticationError(undefined, "Account is inactive or blocked.");
         }
         await this.verifyOtp(identifier, otp, "login"); // identifier for verifyOtp should match what was used for generateAndSendOtp
         user.lastLogin = new Date();
@@ -959,6 +970,7 @@ export const userService = {
         const existingUser = await User.findOne({ where: { phoneNumber: normalizedPhone } });
         if (existingUser) {
             throw new ConflictError(
+                undefined,
                 "A user with this phone number already exists."
             );
         }
@@ -979,6 +991,7 @@ export const userService = {
         const user = await User.findByPk(userId);
         if (!user) {
             throw new NotFoundError(
+                undefined,
                 `User with ID ${userId} not found for deletion in service.`
             );
         }
@@ -1001,6 +1014,7 @@ export const userService = {
         const user = await User.findByPk(userId);
         if (!user) {
             throw new NotFoundError(
+                undefined,
                 `User with ID ${userId} not found for FCM token update in service.`
             );
         }
@@ -1024,6 +1038,7 @@ export const userService = {
         const user = await User.findByPk(userId);
         if (!user) {
             throw new NotFoundError(
+                undefined,
                 `User with ID ${userId} not found for location update in service.`
             );
         }

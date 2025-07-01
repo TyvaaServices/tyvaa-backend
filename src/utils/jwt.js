@@ -22,6 +22,7 @@ function jwtPlugin(fastify, opts, done) {
                 "JWT authentication failed."
             );
             throw new AuthenticationError(
+                undefined,
                 `Authentication failed: ${err.message}`
             );
         }
