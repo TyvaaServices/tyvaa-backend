@@ -35,10 +35,10 @@ class AppError extends Error {
 class BadRequestError extends AppError {
     /**
      * Creates an instance of BadRequestError.
-     * @param {string} [message="Bad Request"] - The error message.
      * @param {object} [details] - Optional additional details.
+     * @param {string} [message="Bad Request"] - The error message.
      */
-    constructor(message = "Bad Request", details) {
+    constructor(details, message = "Bad Request") {
         super(message, 400, "BAD_REQUEST", details);
     }
 }
@@ -51,10 +51,10 @@ class BadRequestError extends AppError {
 class AuthenticationError extends AppError {
     /**
      * Creates an instance of AuthenticationError.
-     * @param {string} [message="Unauthorized"] - The error message.
      * @param {object} [details] - Optional additional details.
+     * @param {string} [message="Unauthorized"] - The error message.
      */
-    constructor(message = "Unauthorized", details) {
+    constructor(details, message = "Unauthorized") {
         super(message, 401, "AUTHENTICATION_FAILURE", details);
     }
 }
@@ -68,10 +68,10 @@ class AuthenticationError extends AppError {
 class ForbiddenError extends AppError {
     /**
      * Creates an instance of ForbiddenError.
-     * @param {string} [message="Forbidden"] - The error message.
      * @param {object} [details] - Optional additional details.
+     * @param {string} [message="Forbidden"] - The error message.
      */
-    constructor(message = "Forbidden", details) {
+    constructor(details, message = "Forbidden") {
         super(message, 403, "FORBIDDEN_ACCESS", details);
     }
 }
@@ -84,10 +84,10 @@ class ForbiddenError extends AppError {
 class NotFoundError extends AppError {
     /**
      * Creates an instance of NotFoundError.
-     * @param {string} [message="Not Found"] - The error message.
      * @param {object} [details] - Optional additional details.
+     * @param {string} [message="Not Found"] - The error message.
      */
-    constructor(message = "Not Found", details) {
+    constructor(details, message = "Not Found") {
         super(message, 404, "RESOURCE_NOT_FOUND", details);
     }
 }
@@ -101,10 +101,10 @@ class NotFoundError extends AppError {
 class ConflictError extends AppError {
     /**
      * Creates an instance of ConflictError.
-     * @param {string} [message="Conflict"] - The error message.
      * @param {object} [details] - Optional additional details.
+     * @param {string} [message="Conflict"] - The error message.
      */
-    constructor(message = "Conflict", details) {
+    constructor(details, message = "Conflict") {
         super(message, 409, "RESOURCE_CONFLICT", details);
     }
 }
@@ -118,10 +118,10 @@ class ConflictError extends AppError {
 class InternalServerError extends AppError {
     /**
      * Creates an instance of InternalServerError.
-     * @param {string} [message="Internal Server Error"] - The error message.
      * @param {object} [details] - Optional additional details.
+     * @param {string} [message="Internal Server Error"] - The error message.
      */
-    constructor(message = "Internal Server Error", details) {
+    constructor(details, message = "Internal Server Error") {
         super(message, 500, "INTERNAL_SERVER_ERROR", details);
     }
 }
