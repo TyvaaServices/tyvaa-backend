@@ -2,7 +2,7 @@
 
 import dotenv from "dotenv";
 dotenv.config();
-import broker from "./src/broker/broker.js";
+import brokerModule from "./src/broker/broker.js";
 import createLogger from "./src/utils/logger.js";
 
 console.log(
@@ -24,8 +24,14 @@ const FCM_TOKEN =
  * Publishes a welcome notification event to the broker
  */
 async function sendWelcomeNotification() {
+    let broker;
     try {
         logger.info("Starting welcome notification process...");
+
+        // Get broker instance and connect
+        broker = brokerModule.getInstance();
+        await broker.connect();
+        logger.info("Broker connected successfully");
 
         // Message payload that matches the notification module's expected format
         const notificationMessage = {
@@ -40,23 +46,33 @@ async function sendWelcomeNotification() {
         };
 
         // Publish the message to the notification_created queue
-        const messageId = await broker.publish(
+        await broker.sendToQueue(
             "notification_created",
             notificationMessage
         );
 
         logger.info(
-            `Welcome notification published successfully with messageId: ${messageId}`
+            `Welcome notification published successfully`
         );
         logger.info(`Notification will be sent to FCM token: ${FCM_TOKEN}`);
 
         // Wait a bit to allow processing
-        setTimeout(() => {
+        setTimeout(async () => {
             logger.info("Welcome notification process completed");
+            if (broker) {
+                await broker.destroy();
+            }
             process.exit(0);
         }, 2000);
     } catch (error) {
         console.error("Error sending welcome notification:", error);
+        if (broker) {
+            try {
+                await broker.destroy();
+            } catch (closeError) {
+                console.error("Error closing broker:", closeError);
+            }
+        }
         process.exit(1);
     }
 }
@@ -65,8 +81,14 @@ async function sendWelcomeNotification() {
  * Alternative function using different event types that might already exist in your templates
  */
 async function sendAlternativeWelcomeNotification() {
+    let broker;
     try {
         logger.info("Starting alternative welcome notification...");
+
+        // Get broker instance and connect
+        broker = brokerModule.getInstance();
+        await broker.connect();
+        logger.info("Broker connected successfully");
 
         // Try with a user registration event type (this might already exist in your templates)
         const notificationMessage = {
@@ -81,20 +103,30 @@ async function sendAlternativeWelcomeNotification() {
             messageId: `user-registered-${Date.now()}`,
         };
 
-        const messageId = broker.publish(
+        await broker.sendToQueue(
             "notification_created",
             notificationMessage
         );
 
         logger.info(
-            `Alternative welcome notification published with messageId: ${messageId}`
+            `Alternative welcome notification published successfully`
         );
 
-        setTimeout(() => {
+        setTimeout(async () => {
+            if (broker) {
+                await broker.destroy();
+            }
             process.exit(0);
         }, 2000);
     } catch (error) {
         logger.error("Error sending alternative welcome notification:", error);
+        if (broker) {
+            try {
+                await broker.destroy();
+            } catch (closeError) {
+                console.error("Error closing broker:", closeError);
+            }
+        }
         process.exit(1);
     }
 }
@@ -103,8 +135,14 @@ async function sendAlternativeWelcomeNotification() {
  * Test function to send a ride-related notification (likely to have existing templates)
  */
 async function sendRideNotification() {
+    let broker;
     try {
         logger.info("Starting ride notification test...");
+
+        // Get broker instance and connect
+        broker = brokerModule.getInstance();
+        await broker.connect();
+        logger.info("Broker connected successfully");
 
         const notificationMessage = {
             token: FCM_TOKEN,
@@ -119,18 +157,28 @@ async function sendRideNotification() {
             messageId: `ride-accept-${Date.now()}`,
         };
 
-        const messageId = broker.publish(
+        await broker.sendToQueue(
             "notification_created",
             notificationMessage
         );
 
-        logger.info(`Ride notification published with messageId: ${messageId}`);
+        logger.info(`Ride notification published successfully`);
 
-        setTimeout(() => {
+        setTimeout(async () => {
+            if (broker) {
+                await broker.destroy();
+            }
             process.exit(0);
         }, 2000);
     } catch (error) {
         logger.error("Error sending ride notification:", error);
+        if (broker) {
+            try {
+                await broker.destroy();
+            } catch (closeError) {
+                console.error("Error closing broker:", closeError);
+            }
+        }
         process.exit(1);
     }
 }

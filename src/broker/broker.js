@@ -25,9 +25,9 @@ class Broker extends EventEmitter {
     constructor(brokerConfig = {}) {
         super();
         this.config = { ...brokerConfig };
-        /** @type {import('amqplib').Channel | null} */
+        /** @type {import("amqplib").Channel | null} */
         this.channel = null;
-        /** @type {import('amqplib').Connection | null} */
+        /** @type {import("amqplib").Connection | null} */
         this.connection = null;
         /** @type {Map<string, string>} */
         this.consumers = new Map(); // Map of consumerTag to queueName
@@ -72,7 +72,7 @@ class Broker extends EventEmitter {
      * Will attempt to connect if not already connected.
      * @async
      * @param {string} queueName - The name of the queue.
-     * @param {import('amqplib').Options.AssertQueue} [options={ durable: true }] - Options for queue assertion.
+     * @param {import("amqplib").Options.AssertQueue} [options={ durable: true }] - Options for queue assertion.
      * @throws {Error} If asserting queue fails or connection cannot be established.
      */
     async assertQueue(queueName, options = { durable: true }) {
@@ -101,7 +101,7 @@ class Broker extends EventEmitter {
      * @param {string | null} exchangeName - The name of the exchange. Use null or "" for the default exchange.
      * @param {string} routingKey - The routing key.
      * @param {object} msg - The message object to publish (will be JSON-stringified).
-     * @param {import('amqplib').Options.Publish} [options={ persistent: true }] - Options for publishing.
+     * @param {import("amqplib").Options.Publish} [options={ persistent: true }] - Options for publishing.
      * @returns {Promise<boolean>} True if successful.
      * @throws {Error} If publishing fails, connection issues, or invalid parameters (e.g. no routingKey for default exchange).
      */
@@ -125,8 +125,9 @@ class Broker extends EventEmitter {
             // If connect() failed, it would have thrown, and we wouldn't reach here.
             // Thus, the original error throw here might be for a state not covered by a failing connect().
             // For now, retaining original behavior of throwing if channel isn't set after trying to connect.
-            if (!this.channel) { // Re-check after attempting connect
-                 const err = new Error(
+            if (!this.channel) {
+                // Re-check after attempting connect
+                const err = new Error(
                     "Broker not connected after attempting to connect. Cannot publish message."
                 );
                 logger.error(err.message, { exchangeName, routingKey, msg });
@@ -178,8 +179,8 @@ class Broker extends EventEmitter {
      * @async
      * @param {string} queueName - The name of the target queue.
      * @param {object} msg - The message object (will be JSON-stringified).
-     * @param {import('amqplib').Options.AssertQueue} [queueOptions={ durable: true }] - Options for asserting the queue.
-     * @param {import('amqplib').Options.Publish} [messageOptions={ persistent: true }] - Options for sending the message.
+     * @param {import("amqplib").Options.AssertQueue} [queueOptions={ durable: true }] - Options for asserting the queue.
+     * @param {import("amqplib").Options.Publish} [messageOptions={ persistent: true }] - Options for sending the message.
      * @returns {Promise<boolean>} True if successful.
      * @throws {Error} If sending fails or connection issues.
      */
@@ -190,9 +191,10 @@ class Broker extends EventEmitter {
         messageOptions = { persistent: true }
     ) {
         if (!this.channel) {
-             // Attempt to connect if channel is not available.
+            // Attempt to connect if channel is not available.
             await this.connect();
-            if (!this.channel) { // Re-check after attempting connect
+            if (!this.channel) {
+                // Re-check after attempting connect
                 const err = new Error(
                     "Broker not connected after attempting to connect. Cannot send to queue."
                 );
@@ -223,10 +225,10 @@ class Broker extends EventEmitter {
      * Asserts the queue before subscribing. Will attempt to connect if not already connected.
      * @async
      * @param {string} queueName - The name of the queue to subscribe to.
-     * @param {(payload: object, originalMessage: import('amqplib').ConsumeMessage) => Promise<void>} callback - Async function to process the message.
+     * @param {(payload: object, originalMessage: import("amqplib").ConsumeMessage) => Promise<void>} callback - Async function to process the message.
      *        It receives the parsed JSON payload and the original AMQP message.
-     * @param {import('amqplib').Options.Consume} [options={ noAck: false }] - Options for consuming messages.
-     * @param {import('amqplib').Options.AssertQueue} [queueOptions={ durable: true }] - Options for asserting the queue.
+     * @param {import("amqplib").Options.Consume} [options={ noAck: false }] - Options for consuming messages.
+     * @param {import("amqplib").Options.AssertQueue} [queueOptions={ durable: true }] - Options for asserting the queue.
      * @returns {Promise<string>} The consumer tag associated with the subscription.
      * @throws {Error} If subscription fails or connection issues.
      */
@@ -239,7 +241,7 @@ class Broker extends EventEmitter {
         if (!this.channel) {
             await this.connect();
             if (!this.channel) {
-                 const err = new Error(
+                const err = new Error(
                     "Broker not connected after attempting to connect. Cannot subscribe."
                 );
                 logger.error(err.message, { queueName });
@@ -300,7 +302,7 @@ class Broker extends EventEmitter {
 
     /**
      * Acknowledges a message.
-     * @param {import('amqplib').ConsumeMessage} message - The message to acknowledge.
+     * @param {import("amqplib").ConsumeMessage} message - The message to acknowledge.
      */
     acknowledge(message) {
         if (!this.channel) {
@@ -323,7 +325,7 @@ class Broker extends EventEmitter {
 
     /**
      * Negatively acknowledges a message.
-     * @param {import('amqplib').ConsumeMessage} message - The message to nack.
+     * @param {import("amqplib").ConsumeMessage} message - The message to nack.
      * @param {boolean} [allUpTo=false] - If true, nack all messages up to this one.
      * @param {boolean} [requeue=false] - If true, requeue the message.
      */
@@ -388,14 +390,16 @@ class Broker extends EventEmitter {
      * Will attempt to connect if not already connected.
      * @async
      * @param {string} queueName - The name of the queue to purge.
-     * @returns {Promise<import('amqplib').Replies.PurgeQueue>} The reply from the server.
+     * @returns {Promise<import("amqplib").Replies.PurgeQueue>} The reply from the server.
      * @throws {Error} If purging fails or connection issues.
      */
     async purgeQueue(queueName) {
         if (!this.channel) {
             await this.connect();
-            if(!this.channel){
-                const err = new Error("Broker not connected after attempting to connect. Cannot purge queue.");
+            if (!this.channel) {
+                const err = new Error(
+                    "Broker not connected after attempting to connect. Cannot purge queue."
+                );
                 logger.error(err.message, { queueName });
                 this.emit("error", err);
                 throw err;
@@ -446,7 +450,7 @@ class Broker extends EventEmitter {
 
     /**
      * Gets the current RabbitMQ channel instance.
-     * @returns {import('amqplib').Channel | null} The channel, or null if not connected.
+     * @returns {import("amqplib").Channel | null} The channel, or null if not connected.
      */
     getChannelInstance() {
         return this.channel;
@@ -454,7 +458,7 @@ class Broker extends EventEmitter {
 
     /**
      * Gets the current RabbitMQ connection instance.
-     * @returns {import('amqplib').Connection | null} The connection, or null if not connected.
+     * @returns {import("amqplib").Connection | null} The connection, or null if not connected.
      */
     getConnectionInstance() {
         return this.connection;
@@ -487,3 +491,5 @@ export default {
     },
     BrokerClass: Broker,
 };
+
+export { Broker };
