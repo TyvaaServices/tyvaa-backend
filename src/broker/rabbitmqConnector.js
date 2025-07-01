@@ -8,12 +8,21 @@ const logger = createLogger("rabbitmq-connector");
 let connection = null;
 let channel = null;
 let isConnecting = false;
-const MAX_RETRIES = 10;
-const RETRY_DELAY_MS = 5000;
+const MAX_RETRIES = 10; // Maximum number of connection retries
+const RETRY_DELAY_MS = 5000; // Delay in milliseconds between retries
 
+/**
+ * Establishes a connection to RabbitMQ and creates a channel, with retry logic.
+ * This function is intended for internal use by `getChannel` and `getConnection`.
+ * It manages the module-level `connection` and `channel` variables.
+ * @async
+ * @param {number} [attempt=1] - The current connection attempt number.
+ * @returns {Promise<{connection: import('amqplib').Connection, channel: import('amqplib').Channel}>} Resolves with the connection and channel.
+ * @throws {Error} If connection fails after all retries or if RABBITMQ_URL is not set.
+ */
 async function connectWithRetry(attempt = 1) {
     if (isConnecting) {
-        logger.info("Connection attempt already in progress.");
+        logger.info("Connection attempt already in progress, awaiting existing attempt.");
         return new Promise((resolve, reject) => {
             const checkConnection = () => {
                 if (!isConnecting) {
@@ -99,14 +108,25 @@ async function connectWithRetry(attempt = 1) {
     }
 }
 
+/**
+ * Retrieves the current RabbitMQ channel. If a channel doesn't exist or connection is down,
+ * it attempts to establish a new connection and channel using `connectWithRetry`.
+ * @async
+ * @export
+ * @returns {Promise<import('amqplib').Channel>} The RabbitMQ channel.
+ * @throws {Error} If unable to establish a channel after connection attempts.
+ */
 export async function getChannel() {
-    if (!channel || !connection || connection.connection === null) {
+    if (!channel || !connection || connection.connection === null) { // Added check for connection.connection being potentially null from amqplib types
         logger.warn(
             "No active RabbitMQ channel or connection found. Attempting to connect..."
         );
-        await connectWithRetry();
+        await connectWithRetry(); // This will set module-level 'channel' and 'connection' or throw
     }
+    // After connectWithRetry, channel should be set if successful.
     if (!channel) {
+        // This state should ideally be prevented by connectWithRetry throwing an error if it fails.
+        // However, as a safeguard:
         throw new Error(
             "Failed to establish RabbitMQ channel after connection attempt."
         );
@@ -114,14 +134,24 @@ export async function getChannel() {
     return channel;
 }
 
+/**
+ * Retrieves the current RabbitMQ connection. If a connection doesn't exist,
+ * it attempts to establish a new one using `connectWithRetry`.
+ * @async
+ * @export
+ * @returns {Promise<import('amqplib').Connection>} The RabbitMQ connection.
+ * @throws {Error} If unable to establish a connection after attempts.
+ */
 export async function getConnection() {
-    if (!connection || connection.connection === null) {
+    if (!connection || connection.connection === null) { // Added check for connection.connection
         logger.warn(
             "No active RabbitMQ connection found. Attempting to connect..."
         );
-        await connectWithRetry();
+        await connectWithRetry(); // This will set module-level 'connection' or throw
     }
+     // After connectWithRetry, connection should be set if successful.
     if (!connection) {
+        // Safeguard, similar to getChannel
         throw new Error(
             "Failed to establish RabbitMQ connection after attempt."
         );
@@ -129,8 +159,15 @@ export async function getConnection() {
     return connection;
 }
 
+/**
+ * Closes the RabbitMQ channel and connection if they exist.
+ * Resets the module-level `channel` and `connection` variables to null.
+ * Sets `isConnecting` to false to allow new connection attempts.
+ * @async
+ * @export
+ */
 export async function closeConnection() {
-    isConnecting = false;
+    isConnecting = false; // Allow new connection attempts after close
     if (channel) {
         try {
             await channel.close();

@@ -13,7 +13,9 @@ import Fastify from "fastify";
 // Mock #broker/broker.js
 const mockBrokerInstance = {
     connect: jest.fn().mockResolvedValue(undefined),
-    subscribe: jest.fn(),
+    subscribe: jest.fn().mockReturnValue({ // Ensure subscribe returns a Promise-like object with .catch
+        catch: jest.fn().mockResolvedValue(undefined) // Mock .catch to avoid "cannot read prop of undefined"
+    }),
     acknowledge: jest.fn(),
     nack: jest.fn(),
     // Add any other methods called by the notification module if necessary
@@ -29,8 +31,15 @@ jest.unstable_mockModule("#broker/broker.js", () => ({
 
 // Mock templates.js
 const mockGetNotificationTemplate = jest.fn();
+// Adjusted path to be relative to project root for consistency, assuming jsconfig.json paths might not cover this specific case directly or for clarity.
+// Alternatively, if a specific alias exists like #notification-module/templates.js, that would be better.
+// For now, using a path relative to the project root.
+// Corrected: Path for unstable_mockModule should be relative to the file being tested or use project aliases.
+// The file being tested is src/modules/notification-module/server.js.
+// The test file is tests/unit/modules/notificationModule.test.js.
+// templates.js is in the same directory as server.js.
 jest.unstable_mockModule(
-    "../../src/modules/notification-module/templates.js",
+    "../../../src/modules/notification-module/templates.js", // Correct relative path from test file to target
     () => ({
         __esModule: true,
         getNotificationTemplate: mockGetNotificationTemplate,
@@ -40,13 +49,16 @@ jest.unstable_mockModule(
 // Mock notificationRouter.js (specifically for sendFCM, assuming it's an export)
 const mockSendFCM = jest.fn();
 jest.unstable_mockModule(
-    "../../src/modules/notification-module/routes/notificationRouter.js",
+    "../../../src/modules/notification-module/routes/notificationRouter.js", // Correct relative path
     () => ({
         __esModule: true,
-        sendFCM: mockSendFCM,
-        // If notificationRouter is a fastify plugin itself and sendFCM is a method on it,
-        // the mocking strategy might need to be different, e.g. mocking the plugin registration.
-        // For now, assuming sendFCM is an exported function.
+        sendFCM: mockSendFCM, // Mock for the named export sendFCM
+        default: jest.fn(async (fastify, _opts) => { // Mock for the default export (the router plugin)
+            // You can add minimal route definitions here if server.js's registration expects them
+            // or if other parts of the test rely on routes being registered.
+            // For now, a simple jest.fn() might be enough if only sendFCM is crucial.
+            // Example: fastify.post('/mock-route', async () => ({ok: true}));
+        }),
     })
 );
 
@@ -292,25 +304,71 @@ describe("Notification Module Server", () => {
     });
 
     it("should log an error if broker subscription fails", async () => {
-        mockBrokerInstance.subscribe.mockRejectedValueOnce(
-            new Error("Subscription failed")
+        // Reset modules to apply new mock behavior for subscribe
+        jest.resetModules();
+
+        // Configure the specific mock for this test case
+        const subscribeError = new Error("Subscription failed");
+        const failingMockBrokerInstance = {
+            ...mockBrokerInstance, // Spread existing mocks
+            connect: jest.fn().mockResolvedValue(undefined), // Ensure connect still works
+            subscribe: jest.fn().mockReturnValue({ // Mock subscribe to return a rejecting promise-like
+                catch: jest.fn((errorHandler) => {
+                    errorHandler(subscribeError); // Immediately call the catch handler with the error
+                    return Promise.resolve(); // The catch itself might return a resolved promise
+                })
+            })
+        };
+        const failingMockBrokerManager = {
+            getInstance: jest.fn(() => failingMockBrokerInstance),
+        };
+
+        jest.unstable_mockModule("#broker/broker.js", () => ({
+            __esModule: true,
+            default: failingMockBrokerManager,
+        }));
+
+        // Re-mock other dependencies if resetModules cleared them and they are needed
+        jest.unstable_mockModule(
+            "../../../src/modules/notification-module/templates.js",
+            () => ({
+                __esModule: true,
+                getNotificationTemplate: mockGetNotificationTemplate,
+            })
         );
+        jest.unstable_mockModule(
+            "../../../src/modules/notification-module/routes/notificationRouter.js",
+            () => ({
+                __esModule: true,
+                sendFCM: mockSendFCM,
+                default: jest.fn()
+            })
+        );
+         jest.unstable_mockModule("firebase-admin/app", () => ({
+            initializeApp: mockFirebaseInitializeApp,
+            cert: mockFirebaseCert,
+        }));
 
-        // For this test, we assume connect succeeds.
-        // We need to re-register or re-initialize the module in a state where connect has "succeeded"
-        // but subscribe will fail. This might require another jest.resetModules() and careful setup.
 
-        // Simpler: directly call the plugin function after it's been imported once.
-        // The initial beforeEach already registers it. We just need to ensure `subscribe` is called.
-        // The `await fastify.ready()` in beforeEach should have triggered the subscribe.
-        // So, if subscribe was set to reject, this test would pass if the error is logged.
+        // Re-import and re-register with the failing mock
+        const freshNotificationModuleServer = (
+            await import("../../../src/modules/notification-module/server.js")
+        ).default;
 
-        // This relies on the subscribe call during fastify.ready() in beforeEach.
-        // If the error is thrown and not caught by the plugin, fastify.ready() would throw.
-        // The current notification module catches this and logs.
-        expect(fastify.log.error).toHaveBeenCalledWith(
+        const newFastify = Fastify();
+        newFastify.log = { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() };
+
+        await newFastify.register(freshNotificationModuleServer);
+        try {
+            await newFastify.ready();
+        } catch (e) {
+            // Catch errors during ready if the plugin throws them, though server.js catches subscribe errors
+        }
+
+        expect(newFastify.log.error).toHaveBeenCalledWith(
             "Failed to subscribe to notification_created queue:",
-            expect.any(Error)
+            subscribeError
         );
+         await newFastify.close();
     });
 });

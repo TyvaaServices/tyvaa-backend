@@ -10,7 +10,15 @@ dotenv.config();
 
 const broker = brokerManager.getInstance();
 
-export default async function (fastify, _opts) {
+/**
+ * @async
+ * @param {import('fastify').FastifyInstance} fastify - The Fastify instance.
+ * @param {object} _opts - Plugin options (not used).
+ * @description Initializes Firebase Admin SDK, registers notification routes,
+ * connects to the message broker, and subscribes to the 'notification_created' queue
+ * to process and send notifications.
+ */
+export default async function notificationModule(fastify, _opts) {
     const base64Key = process.env.FIREBASE_KEY_BASE64;
     if (!base64Key) {
         fastify.log.error(

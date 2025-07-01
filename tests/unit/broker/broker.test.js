@@ -27,7 +27,8 @@ const mockGetChannel = jest.fn().mockResolvedValue(mockBrokerChannel);
 const mockGetConnection = jest.fn().mockResolvedValue(mockBrokerConnection);
 const mockCloseConnection = jest.fn().mockResolvedValue(undefined);
 
-jest.unstable_mockModule("../../src/broker/rabbitmqConnector.js", () => ({
+// Corrected path to use the alias defined in jsconfig.json
+jest.unstable_mockModule("#broker/rabbitmqConnector.js", () => ({
     getChannel: mockGetChannel,
     getConnection: mockGetConnection,
     closeConnection: mockCloseConnection,
@@ -74,17 +75,25 @@ describe("Broker (RabbitMQ)", () => {
         jest.resetModules();
         jest.clearAllMocks();
 
-        BrokerModule = await import("../../src/broker/broker.js");
+        // Use the alias for dynamic import
+        BrokerModule = await import("#broker/broker.js");
         // Default export is an object with getInstance and BrokerClass
         broker = BrokerModule.default.getInstance();
         // Ensure a clean instance for each test if getInstance is a true singleton that persists state
         // For this test structure, we might want to test BrokerClass directly for isolation
         // broker = new BrokerModule.BrokerClass();
+
+        // Spy on the emit method of the specific broker instance for each test
+        jest.spyOn(broker, 'emit');
     });
 
     afterEach(async () => {
         if (broker && typeof broker.destroy === "function") {
             await broker.destroy();
+        }
+        // Restore the spy after each test
+        if (broker && broker.emit.mockRestore) {
+            broker.emit.mockRestore();
         }
     });
 
@@ -94,7 +103,7 @@ describe("Broker (RabbitMQ)", () => {
             expect(mockGetChannel).toHaveBeenCalled();
             expect(broker.getChannelInstance()).toBe(mockBrokerChannel);
             expect(broker.getConnectionInstance()).toBe(mockBrokerConnection);
-            expect(broker).toHaveEmitted("connected");
+            expect(broker.emit).toHaveBeenCalledWith("connected");
         });
 
         it("should emit error if connect fails", async () => {
@@ -102,7 +111,7 @@ describe("Broker (RabbitMQ)", () => {
                 new Error("Connection failed")
             );
             await expect(broker.connect()).rejects.toThrow("Connection failed");
-            expect(broker).toHaveEmitted("error");
+            expect(broker.emit).toHaveBeenCalledWith("error", expect.any(Error));
         });
     });
 
@@ -145,7 +154,7 @@ describe("Broker (RabbitMQ)", () => {
                 Buffer.from(JSON.stringify(message)),
                 { persistent: true }
             );
-            expect(broker).toHaveEmitted("message-published", {
+            expect(broker.emit).toHaveBeenCalledWith("message-published", {
                 queueName,
                 msg: message,
             });
@@ -162,7 +171,7 @@ describe("Broker (RabbitMQ)", () => {
                 Buffer.from(JSON.stringify(message)),
                 { persistent: true }
             );
-            expect(broker).toHaveEmitted("message-published", {
+            expect(broker.emit).toHaveBeenCalledWith("message-published", {
                 exchangeName: exchange,
                 routingKey,
                 msg: message,
@@ -182,12 +191,19 @@ describe("Broker (RabbitMQ)", () => {
         });
 
         it("should throw error if trying to publish when not connected", async () => {
-            await broker.destroy(); // Close connection
-            broker.channel = null; // Ensure channel is null
-            mockGetChannel.mockClear(); // Clear previous connect calls
+            await broker.destroy();
+            broker.channel = null;
+
+            // Configure rabbitmqConnector.getChannel (mockGetChannel) to fail for this specific test scenario
+            mockGetChannel.mockRejectedValueOnce(new Error("Simulated underlying connection failure"));
+
+            // sendToQueue will call this.connect(), which will fail due to mockGetChannel rejecting.
+            // The error from this.connect() (which is "Simulated underlying connection failure") will propagate.
             await expect(broker.sendToQueue("q", {})).rejects.toThrow(
-                "Broker not connected. Cannot send to queue."
+                "Simulated underlying connection failure"
             );
+            // Ensure mockGetChannel is reset for subsequent tests if needed, though beforeEach should handle it.
+             mockGetChannel.mockResolvedValue(mockBrokerChannel); // Reset to default behavior
         });
     });
 
@@ -211,7 +227,7 @@ describe("Broker (RabbitMQ)", () => {
                 { noAck: false }
             );
             expect(consumerTag).toBe("mock-consumer-tag");
-            expect(broker).toHaveEmitted("subscribed", {
+            expect(broker.emit).toHaveBeenCalledWith("subscribed", {
                 queueName,
                 consumerTag,
             });
@@ -252,7 +268,7 @@ describe("Broker (RabbitMQ)", () => {
             await broker.unsubscribe(consumerTag);
             expect(mockBrokerChannel.cancel).toHaveBeenCalledWith(consumerTag);
             expect(broker.consumers.has(consumerTag)).toBe(false);
-            expect(broker).toHaveEmitted("unsubscribed", {
+            expect(broker.emit).toHaveBeenCalledWith("unsubscribed", {
                 consumerTag,
                 queueName: "some-queue",
             });
@@ -268,7 +284,7 @@ describe("Broker (RabbitMQ)", () => {
         it("acknowledge should call channel.ack", () => {
             broker.acknowledge(mockAmqpMessage);
             expect(mockBrokerChannel.ack).toHaveBeenCalledWith(mockAmqpMessage);
-            expect(broker).toHaveEmitted("message-acknowledged", {
+            expect(broker.emit).toHaveBeenCalledWith("message-acknowledged", {
                 messageId: "test-msg-id",
             });
         });
@@ -280,7 +296,7 @@ describe("Broker (RabbitMQ)", () => {
                 false,
                 true
             );
-            expect(broker).toHaveEmitted("message-nacked", {
+            expect(broker.emit).toHaveBeenCalledWith("message-nacked", {
                 messageId: "test-msg-id",
                 requeue: true,
             });
@@ -301,7 +317,7 @@ describe("Broker (RabbitMQ)", () => {
                 queueName
             );
             expect(result.messageCount).toBe(10);
-            expect(broker).toHaveEmitted("queue-purged", {
+            expect(broker.emit).toHaveBeenCalledWith("queue-purged", {
                 queueName,
                 messageCount: 10,
             });
@@ -326,59 +342,4 @@ describe("Broker (RabbitMQ)", () => {
     });
 });
 
-// Helper to check emitted events (basic version)
-expect.extend({
-    toHaveEmitted(received, eventName, eventArgs) {
-        const brokerInstance = received; // Assuming 'received' is the broker instance
-        const relevantEmits = mockLogger.info.mock.calls.filter(
-            (call) =>
-                call[0].includes(`Emitted event: ${eventName}`) || // If you had specific logging for emits
-                (brokerInstance.emit.mock &&
-                    brokerInstance.emit.mock.calls.find(
-                        (emitCall) => emitCall[0] === eventName
-                    ))
-        );
-
-        // This is a simplified check. For robust event testing,
-        // you'd spy on `brokerInstance.emit` itself.
-        // This requires `brokerInstance.emit = jest.fn(brokerInstance.emit.bind(brokerInstance));`
-        // or similar setup if `emit` is not directly mockable from outside.
-        // For now, we assume the methods that should emit events have been called.
-
-        // A more direct way if broker.emit was spied upon:
-        // const emitCalls = broker.emit.mock.calls.filter(call => call[0] === eventName);
-        // if (emitCalls.length === 0) {
-        //   return { pass: false, message: () => `expected event ${eventName} to be emitted` };
-        // }
-        // if (eventArgs !== undefined) {
-        //   const matchingCall = emitCalls.find(call => this.equals(call[1], eventArgs));
-        //   if (!matchingCall) {
-        //     return { pass: false, message: () => `event ${eventName} emitted with ${JSON.stringify(emitCalls.map(c=>c[1]))}, expected ${JSON.stringify(eventArgs)}` };
-        //   }
-        // }
-        // return { pass: true, message: () => `event ${eventName} was emitted correctly` };
-
-        // Placeholder until proper emit spying is set up
-        const brokerEmitMock = (brokerInstance.emit = jest.spyOn(
-            brokerInstance,
-            "emit"
-        ));
-        const found = brokerEmitMock.mock.calls.some((call) => {
-            if (call[0] !== eventName) return false;
-            if (eventArgs === undefined) return true;
-            return this.equals(call[1], eventArgs);
-        });
-
-        if (found) {
-            return {
-                pass: true,
-                message: () => `event ${eventName} emitted as expected`,
-            };
-        }
-        return {
-            pass: false,
-            message: () =>
-                `expected event ${eventName} to be emitted with ${eventArgs ? JSON.stringify(eventArgs) : "any arguments"}. Actual emits: ${JSON.stringify(brokerEmitMock.mock.calls)}`,
-        };
-    },
-});
+// Removed the custom toHaveEmitted matcher as direct jest.spyOn(broker, 'emit') is used.
