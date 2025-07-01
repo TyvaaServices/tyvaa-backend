@@ -1,345 +1,276 @@
-import Queue from "./queue.js";
-import RedisStorage from "./redisStorage.js";
 import { EventEmitter } from "events";
 import createLogger from "#utils/logger.js";
 import dotenv from "dotenv";
+import { getChannel, closeConnection, getConnection } from "./rabbitmqConnector.js";
+
 dotenv.config();
 const logger = createLogger("broker");
 
-console.log("[BROKER] process.cwd():", process.cwd());
-
 class Broker extends EventEmitter {
-    /**
-     * Initializes the broker with an empty set of queues and a shared storage backend.
-     * @param {Object} config - Broker configuration
-     */
-    constructor(config = {}) {
+    constructor(brokerConfig = {}) {
         super();
-        this.queues = {};
-        this.storage = new RedisStorage();
-        this.config = {
-            autoStart: true,
-            globalRetryPolicy: {
-                maxRetries: 3,
-                retryDelay: 1000,
-                retryBackoffMultiplier: 2,
-            },
-            ...config,
-        };
-
-        this.setupGlobalEventHandlers();
+        this.config = { ...brokerConfig }; // Store any specific config if needed
+        this.channel = null;
+        this.connection = null;
+        this.consumers = new Map(); // To keep track of consumers for unsubscribing
+        logger.info("Broker initialized (RabbitMQ integration)");
     }
 
-    /**
-     * Setup global event handlers for all queues
-     */
-    setupGlobalEventHandlers() {
-        // Forward queue events to broker level
-        this.on("queue-created", ({ queueName, queue }) => {
-            // Forward all queue events with broker context
-            queue.on("message-published", (data) =>
-                this.emit("message-published", data)
-            );
-            queue.on("message-processing", (data) =>
-                this.emit("message-processing", data)
-            );
-            queue.on("message-completed", (data) =>
-                this.emit("message-completed", data)
-            );
-            queue.on("message-acknowledged", (data) =>
-                this.emit("message-acknowledged", data)
-            );
-            queue.on("message-error", (data) =>
-                this.emit("message-error", data)
-            );
-            queue.on("message-retry-scheduled", (data) =>
-                this.emit("message-retry-scheduled", data)
-            );
-            queue.on("message-dead-letter", (data) =>
-                this.emit("message-dead-letter", data)
-            );
-            queue.on("subscriber-error", (data) =>
-                this.emit("subscriber-error", data)
-            );
-            queue.on("processing-started", (data) =>
-                this.emit("queue-processing-started", data)
-            );
-            queue.on("processing-stopped", (data) =>
-                this.emit("queue-processing-stopped", data)
-            );
-        });
-    }
+    async connect() {
+        try {
+            logger.info("Broker connect method called. Establishing RabbitMQ channel...");
+            this.channel = await getChannel();
+            this.connection = await getConnection(); // Get connection for health checks or advanced ops
 
-    /**
-     * Gets or creates a queue by name.
-     * @param {string} name - The queue name.
-     * @param {Object} queueConfig - Queue-specific configuration
-     * @param {boolean} createIfMissing - Whether to create the queue if it doesn't exist
-     * @returns {Queue} The queue instance.
-     */
-    getQueue(name, queueConfig = {}, createIfMissing = true) {
-        if (!this.queues[name]) {
-            if (!createIfMissing) return undefined;
-            const queue = new Queue(name, this.storage);
-
-            if (this.config.globalRetryPolicy) {
-                Object.assign(queue.config, this.config.globalRetryPolicy);
-            }
-
-            if (queueConfig) {
-                Object.assign(queue.config, queueConfig);
-            }
-
-            this.queues[name] = queue;
-            this.emit("queue-created", { queueName: name, queue });
-        }
-        return this.queues[name];
-    }
-
-    /**
-     * Publishes a message to a named queue with enhanced options.
-     * @param {string} queueName - The queue name.
-     * @param {Object} msg - The message to publish.
-     * @param {Object} options - Publishing options
-     * @param {number} options.delay - Delay in milliseconds before message becomes available
-     * @param {number} options.priority - Message priority (higher number = higher priority)
-     * @param {number} options.maxRetries - Override default max retries for this message
-     * @returns {string} messageId
-     */
-    publish(queueName, msg, options = {}) {
-        return this.getQueue(queueName).publish(msg, options);
-    }
-
-    /**
-     * Publishes a delayed message
-     * @param {string} queueName - The queue name
-     * @param {Object} msg - The message to publish
-     * @param {number} delayMs - Delay in milliseconds
-     * @returns {string} messageId
-     */
-    publishDelayed(queueName, msg, delayMs) {
-        return this.publish(queueName, msg, { delay: delayMs });
-    }
-
-    /**
-     * Publishes a priority message
-     * @param {string} queueName - The queue name
-     * @param {Object} msg - The message to publish
-     * @param {number} priority - Message priority
-     * @returns {string} messageId
-     */
-    publishPriority(queueName, msg, priority) {
-        return this.publish(queueName, msg, { priority });
-    }
-
-    /**
-     * Subscribes a callback to a named queue.
-     * @param {string} queueName - The queue name.
-     * @param {function(Object):Promise<void>|void} callback - Function called with each new message.
-     */
-    subscribe(queueName, callback) {
-        this.getQueue(queueName).subscribe(callback);
-    }
-
-    /**
-     * Unsubscribe from a queue
-     * @param {string} queueName - The queue name
-     * @param {function} callback - The callback to remove
-     */
-    unsubscribe(queueName, callback) {
-        if (this.queues[queueName]) {
-            this.queues[queueName].unsubscribe(callback);
-        }
-    }
-
-    /**
-     * Acknowledge a message
-     * @param {string} queueName - The queue name
-     * @param {string} messageId - The message ID to acknowledge
-     */
-    acknowledge(queueName, messageId) {
-        if (this.queues[queueName]) {
-            this.queues[queueName].acknowledge(messageId);
-        }
-    }
-
-    /**
-     * Get statistics for all queues or a specific queue
-     * @param {string} queueName - Optional queue name
-     * @returns {Object} Statistics
-     */
-    getStats(queueName = null) {
-        if (queueName) {
-            const queue = this.getQueue(queueName, {}, false);
-            return queue ? queue.getStats() : null;
-        }
-
-        const stats = {
-            totalQueues: Object.keys(this.queues).length,
-            queues: {},
-        };
-
-        for (const [name, queue] of Object.entries(this.queues)) {
-            stats.queues[name] = queue.getStats();
-        }
-
-        return stats;
-    }
-
-    /**
-     * Purge completed messages from all queues or a specific queue
-     * @param {string} queueName - Optional queue name
-     * @returns {Object} Purge results
-     */
-    purgeCompleted(queueName = null) {
-        if (queueName) {
-            return {
-                [queueName]: this.queues[queueName]?.purgeCompleted() || 0,
-            };
-        }
-
-        const results = {};
-        for (const [name, queue] of Object.entries(this.queues)) {
-            results[name] = queue.purgeCompleted();
-        }
-
-        return results;
-    }
-
-    /**
-     * Start processing for all queues or a specific queue
-     * @param {string} queueName - Optional queue name
-     */
-    startProcessing(queueName = null) {
-        if (queueName) {
-            this.queues[queueName]?.startProcessing();
-        } else {
-            Object.values(this.queues).forEach((queue) =>
-                queue.startProcessing()
-            );
-        }
-    }
-
-    /**
-     * Stop processing for all queues or a specific queue
-     * @param {string} queueName - Optional queue name
-     */
-    stopProcessing(queueName = null) {
-        if (queueName) {
-            this.queues[queueName]?.stopProcessing();
-        } else {
-            Object.values(this.queues).forEach((queue) =>
-                queue.stopProcessing()
-            );
-        }
-    }
-
-    /**
-     * Create a fanout exchange - publish to multiple queues
-     * @param {string[]} queueNames - Array of queue names
-     * @param {Object} msg - The message to publish
-     * @param {Object} options - Publishing options
-     * @returns {string[]} Array of message IDs
-     */
-    fanout(queueNames, msg, options = {}) {
-        return queueNames.map((queueName) =>
-            this.publish(queueName, msg, options)
-        );
-    }
-
-    /**
-     * Create a topic exchange - publish based on routing key pattern
-     * @param {string} routingKey - The routing key (e.g., 'user.created')
-     * @param {Object} msg - The message to publish
-     * @param {Object} options - Publishing options
-     * @returns {string[]} Array of message IDs
-     */
-    publishTopic(routingKey, msg, options = {}) {
-        // Simple pattern matching - can be enhanced
-        const matchingQueues = Object.keys(this.queues).filter((queueName) => {
-            return (
-                queueName.includes(routingKey) || routingKey.includes(queueName)
-            );
-        });
-
-        return this.fanout(matchingQueues, msg, options);
-    }
-
-    /**
-     * Get dead letter messages from all queues
-     * @returns {Object} Dead letter messages grouped by queue
-     */
-    getDeadLetterMessages() {
-        const deadLetters = {};
-
-        for (const [name, queue] of Object.entries(this.queues)) {
-            if (queue.deadLetterQueue.length > 0) {
-                deadLetters[name] = queue.deadLetterQueue;
-            }
-        }
-
-        return deadLetters;
-    }
-
-    /**
-     * Requeue dead letter messages
-     * @param {string} queueName - The queue name
-     * @param {string} messageId - Optional specific message ID
-     * @returns {number} Number of messages requeued
-     */
-    requeueDeadLetters(queueName, messageId = null) {
-        const queue = this.queues[queueName];
-        if (!queue) return 0;
-
-        let requeuedCount = 0;
-
-        if (messageId) {
-            const deadLetterIndex = queue.deadLetterQueue.findIndex(
-                (msg) => msg.messageId === messageId
-            );
-            if (deadLetterIndex > -1) {
-                const message = queue.deadLetterQueue.splice(
-                    deadLetterIndex,
-                    1
-                )[0];
-                message.status = "pending";
-                message.retries = 0;
-                message.error = null;
-                message.availableAt = Date.now();
-                queue.messages.push(message);
-                queue.sortMessages();
-                requeuedCount = 1;
-            }
-        } else {
-            // Requeue all dead letters for this queue
-            queue.deadLetterQueue.forEach((message) => {
-                message.status = "pending";
-                message.retries = 0;
-                message.error = null;
-                message.availableAt = Date.now();
-                queue.messages.push(message);
+            this.connection.on('error', (err) => {
+                logger.error('Broker: RabbitMQ connection error:', err.message);
+                this.emit('error', err);
+                this.channel = null; // Mark channel as unusable
+                // Reconnect logic is handled by rabbitmqConnector
             });
-            requeuedCount = queue.deadLetterQueue.length;
-            queue.deadLetterQueue = [];
-            queue.sortMessages();
-        }
+            this.connection.on('close', () => {
+                logger.warn('Broker: RabbitMQ connection closed.');
+                this.emit('close');
+                this.channel = null;
+            });
 
-        if (requeuedCount > 0) {
-            queue.persistMessages();
-            this.emit("dead-letters-requeued", { queueName, requeuedCount });
+            logger.info("RabbitMQ channel established for broker.");
+            this.emit("connected");
+        } catch (error) {
+            logger.error("Failed to connect broker to RabbitMQ:", error);
+            this.emit("error", error);
+            throw error; // Re-throw to allow caller to handle critical connection failure
         }
+    }
 
-        return requeuedCount;
+    async assertQueue(queueName, options = { durable: true }) {
+        if (!this.channel) {
+            logger.warn("No channel available for assertQueue. Attempting to connect.");
+            await this.connect();
+        }
+        try {
+            await this.channel.assertQueue(queueName, options);
+            logger.info(`Queue asserted: ${queueName}, Options: ${JSON.stringify(options)}`);
+        } catch (error) {
+            logger.error(`Failed to assert queue ${queueName}:`, error);
+            this.emit("error", error);
+            throw error;
+        }
+    }
+
+    async publish(exchangeName, routingKey, msg, options = { persistent: true }) {
+        if (!this.channel) {
+            // await this.connect(); // Or throw error if not connected
+            const err = new Error("Broker not connected. Cannot publish message.");
+            logger.error(err.message, { exchangeName, routingKey, msg });
+            this.emit("error", err);
+            throw err;
+        }
+        try {
+            const content = Buffer.from(JSON.stringify(msg));
+            // Default exchange is an empty string for direct to queue
+            const ex = exchangeName === null || typeof exchangeName === 'undefined' ? "" : exchangeName;
+            const rk = exchangeName === null || typeof exchangeName === 'undefined' ? routingKey : routingKey; // routingKey is queue name if default exchange
+
+            if (ex === "" && !rk) {
+                 const err = new Error("Routing key (queue name) must be provided when using default exchange.");
+                 logger.error(err.message);
+                 this.emit("error", err);
+                 throw err;
+            }
+
+            await this.channel.publish(ex, rk, content, options);
+            logger.info(`Message published to exchange '${ex}' with routingKey '${rk}'.`);
+            this.emit("message-published", { exchangeName: ex, routingKey: rk, msg });
+            return true;
+        } catch (error) {
+            logger.error("Failed to publish message:", error);
+            this.emit("error", error);
+            // Consider if message should be requeued or handled by publisher
+            throw error;
+        }
     }
 
     /**
-     * Destroy the broker and clean up all resources
+     * Simplified publish directly to a queue. Assumes default exchange.
+     * Ensures queue exists before publishing.
      */
-    destroy() {
-        Object.values(this.queues).forEach((queue) => queue.destroy());
-        this.queues = {};
+    async sendToQueue(queueName, msg, queueOptions = { durable: true }, messageOptions = { persistent: true }) {
+        if (!this.channel) {
+             const err = new Error("Broker not connected. Cannot send to queue.");
+            logger.error(err.message, { queueName, msg });
+            this.emit("error", err);
+            throw err;
+        }
+        try {
+            await this.assertQueue(queueName, queueOptions); // Ensure queue exists
+            const content = Buffer.from(JSON.stringify(msg));
+            this.channel.sendToQueue(queueName, content, messageOptions); // Returns boolean, but promise wrapper in publish is fine
+            logger.info(`Message sent to queue '${queueName}'.`);
+            this.emit("message-published", { queueName, msg }); // Event might need adjustment
+            return true;
+        } catch (error) {
+            logger.error(`Failed to send message to queue ${queueName}:`, error);
+            this.emit("error", error);
+            throw error;
+        }
+    }
+
+
+    async subscribe(queueName, callback, options = { noAck: false }, queueOptions = { durable: true }) {
+        if (!this.channel) {
+            // await this.connect(); // Or throw error
+             const err = new Error("Broker not connected. Cannot subscribe.");
+            logger.error(err.message, { queueName });
+            this.emit("error", err);
+            throw err;
+        }
+        try {
+            await this.assertQueue(queueName, queueOptions); // Ensure queue exists
+
+            const { consumerTag } = await this.channel.consume(queueName, async (msg) => {
+                if (msg !== null) {
+                    try {
+                        const content = JSON.parse(msg.content.toString());
+                        logger.info(`Received message from ${queueName} (consumer: ${consumerTag})`, { messageId: msg.properties.messageId });
+                        // Pass the full message object so callback can ack/nack
+                        await callback(content, msg);
+                    } catch (parseError) {
+                        logger.error(`Error parsing message from ${queueName}:`, parseError);
+                        // Decide how to handle unparseable messages - nack without requeue?
+                        if (!options.noAck) {
+                           try {
+                               this.channel.nack(msg, false, false); // Don't requeue unparseable message
+                               logger.warn(`Nacked unparseable message from ${queueName}.`);
+                           } catch (nackError) {
+                               logger.error(`Failed to NACK unparseable message: ${nackError}`, nackError)
+                           }
+                        }
+                    }
+                }
+            }, options);
+
+            this.consumers.set(consumerTag, queueName); // Store consumerTag
+            logger.info(`Subscribed to queue '${queueName}' with consumerTag '${consumerTag}'.`);
+            this.emit("subscribed", { queueName, consumerTag });
+            return consumerTag;
+        } catch (error) {
+            logger.error(`Failed to subscribe to queue ${queueName}:`, error);
+            this.emit("error", error);
+            throw error;
+        }
+    }
+
+    acknowledge(message) {
+        if (!this.channel) {
+            logger.error("No channel available to acknowledge message.");
+            return;
+        }
+        try {
+            this.channel.ack(message);
+            logger.info("Message acknowledged.", { messageId: message.properties.messageId });
+            this.emit("message-acknowledged", { messageId: message.properties.messageId });
+        } catch (error) {
+            logger.error("Failed to acknowledge message:", error);
+            this.emit("error", error);
+        }
+    }
+
+    nack(message, allUpTo = false, requeue = false) {
+        if (!this.channel) {
+            logger.error("No channel available to nack message.");
+            return;
+        }
+        try {
+            this.channel.nack(message, allUpTo, requeue);
+            logger.info(`Message nacked (requeue: ${requeue}).`, { messageId: message.properties.messageId });
+            this.emit("message-nacked", { messageId: message.properties.messageId, requeue });
+        } catch (error) {
+            logger.error("Failed to nack message:", error);
+            this.emit("error", error);
+        }
+    }
+
+    async unsubscribe(consumerTag) {
+        if (!this.channel) {
+            logger.warn("No channel available to unsubscribe.");
+            return false;
+        }
+        if (!this.consumers.has(consumerTag)) {
+            logger.warn(`Consumer tag ${consumerTag} not found for unsubscribe.`);
+            return false;
+        }
+        try {
+            await this.channel.cancel(consumerTag);
+            const queueName = this.consumers.get(consumerTag);
+            this.consumers.delete(consumerTag);
+            logger.info(`Unsubscribed consumer '${consumerTag}' from queue '${queueName}'.`);
+            this.emit("unsubscribed", { consumerTag, queueName });
+            return true;
+        } catch (error) {
+            logger.error(`Failed to unsubscribe consumer ${consumerTag}:`, error);
+            this.emit("error", error);
+            return false;
+        }
+    }
+
+    async purgeQueue(queueName) {
+        if (!this.channel) {
+             const err = new Error("Broker not connected. Cannot purge queue.");
+            logger.error(err.message, { queueName });
+            this.emit("error", err);
+            throw err;
+        }
+        try {
+            const result = await this.channel.purgeQueue(queueName);
+            logger.info(`Queue '${queueName}' purged. ${result.messageCount} messages deleted.`);
+            this.emit("queue-purged", { queueName, messageCount: result.messageCount });
+            return result;
+        } catch (error) {
+            logger.error(`Failed to purge queue ${queueName}:`, error);
+            this.emit("error", error);
+            throw error;
+        }
+    }
+
+    async destroy() {
+        logger.info("Destroying broker and closing RabbitMQ connection...");
+        // Unsubscribe all active consumers
+        for (const consumerTag of this.consumers.keys()) {
+            try {
+                await this.unsubscribe(consumerTag);
+            } catch (err) {
+                logger.error(`Error unsubscribing consumer ${consumerTag} during destroy:`, err);
+            }
+        }
+        this.consumers.clear();
+
+        await closeConnection(); // Uses the shared closeConnection from rabbitmqConnector
+        this.channel = null;
+        this.connection = null;
         this.removeAllListeners();
+        logger.info("Broker destroyed.");
+    }
+
+    // For health checks or direct channel access if absolutely needed
+    getChannelInstance() {
+        return this.channel;
+    }
+
+    getConnectionInstance() {
+        return this.connection;
     }
 }
 
-export default new Broker();
+// Singleton instance management
+let brokerInstance = null;
+
+export default {
+    getInstance: (config) => {
+        if (!brokerInstance) {
+            brokerInstance = new Broker(config);
+        }
+        return brokerInstance;
+    },
+    BrokerClass: Broker // Expose class for testing or specific instantiation
+};
