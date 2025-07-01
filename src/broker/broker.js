@@ -2,7 +2,6 @@ import { EventEmitter } from "events";
 import createLogger from "#utils/logger.js";
 import dotenv from "dotenv";
 import { getChannel, closeConnection, getConnection } from "./rabbitmqConnector.js";
-import config from '#config/index.js';
 
 dotenv.config();
 const logger = createLogger("broker");

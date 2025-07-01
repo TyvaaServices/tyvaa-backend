@@ -11,11 +11,11 @@ import path from "path";
 
 // Import the Broker class, not the singleton instance
 async function createBroker(config = {}) {
-    const { default: BrokerSingleton } = await import(
+    const { default: BrokerModule } = await import(
         "../../src/broker/broker.js"
     );
-    const BrokerClass = BrokerSingleton.constructor;
-    return new BrokerClass(config);
+    // The Broker class itself is exported as BrokerClass
+    return new BrokerModule.BrokerClass(config);
 }
 
 describe("Broker Integration Tests", () => {
@@ -34,9 +34,10 @@ describe("Broker Integration Tests", () => {
 
         // Create a fresh broker instance for each test
         broker = await createBroker({ storageDir: testStorageDir });
+        await broker.connect(); // Ensure broker is connected before each test
     });
 
-    afterEach(() => {
+    afterEach(async () => { // Make afterEach async
         if (broker) {
             broker.destroy();
         }
