@@ -1,11 +1,9 @@
 import createLogger from "./logger.js";
 import dotenv from "dotenv";
 import { Redis } from "@upstash/redis";
-import RedisClient from "ioredis";
 
 dotenv.config();
 const logger = createLogger("redis-cache-service");
-const isDev = process.env.NODE_ENV === "development";
 
 /**
  * @file Provides a singleton Redis client wrapper for caching operations using Upstash Redis.
@@ -33,9 +31,7 @@ class RedisCacheService {
             );
         }
         try {
-            this.redisClient = isDev
-                ? Redis.fromEnv() // TCP
-                : new RedisClient({});
+            this.redisClient = Redis.fromEnv();
             logger.info(
                 "Upstash Redis client initialized successfully from environment variables."
             );
