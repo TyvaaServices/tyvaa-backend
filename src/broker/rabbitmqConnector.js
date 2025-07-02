@@ -8,13 +8,12 @@ const logger = createLogger("rabbitmq-connector");
 let connection = null;
 let channel = null;
 let isConnecting = false;
-const MAX_RETRIES = 10; 
-const RETRY_DELAY_MS = 5000; 
+const MAX_RETRIES = 10;
+const RETRY_DELAY_MS = 5000;
 
 async function connectWithRetry(attempt = 1) {
-    const rabbitmqUrl = process.env.RABBITMQ_URL; 
+    const rabbitmqUrl = process.env.RABBITMQ_URL;
     if (!rabbitmqUrl) {
-        
         return Promise.reject(
             new Error(
                 "RabbitMQ URL is not configured. Please set RABBITMQ_URL environment variable."
@@ -54,14 +53,12 @@ async function connectWithRetry(attempt = 1) {
             logger.error("RabbitMQ connection error:", err);
             connection = null;
             channel = null;
-            
         });
 
         connection.on("close", () => {
             logger.warn("RabbitMQ connection closed.");
             connection = null;
             channel = null;
-            
         });
 
         channel = await connection.createChannel();
@@ -70,7 +67,6 @@ async function connectWithRetry(attempt = 1) {
         channel.on("error", (err) => {
             logger.error("RabbitMQ channel error:", err);
             channel = null;
-            
         });
 
         channel.on("close", () => {
@@ -108,16 +104,13 @@ export async function getChannel() {
         );
     }
     if (!channel || !connection || connection.connection === null) {
-        
         logger.warn(
             "No active RabbitMQ channel or connection found. Attempting to connect..."
         );
-        await connectWithRetry(); 
+        await connectWithRetry();
     }
-    
+
     if (!channel) {
-        
-        
         throw new Error(
             "Failed to establish RabbitMQ channel after connection attempt."
         );
@@ -132,15 +125,13 @@ export async function getConnection() {
         );
     }
     if (!connection || connection.connection === null) {
-        
         logger.warn(
             "No active RabbitMQ connection found. Attempting to connect..."
         );
-        await connectWithRetry(); 
+        await connectWithRetry();
     }
-    
+
     if (!connection) {
-        
         throw new Error(
             "Failed to establish RabbitMQ connection after attempt."
         );
@@ -149,7 +140,7 @@ export async function getConnection() {
 }
 
 export async function closeConnection() {
-    isConnecting = false; 
+    isConnecting = false;
     if (channel) {
         try {
             await channel.close();
@@ -169,7 +160,6 @@ export async function closeConnection() {
         connection = null;
     }
 }
-
 
 process.on("SIGINT", async () => {
     logger.info("SIGINT received, closing RabbitMQ connection...");

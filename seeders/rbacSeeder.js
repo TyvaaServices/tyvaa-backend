@@ -1,9 +1,8 @@
-import User from "../src/modules/user-module/models/user.js"; 
+import User from "../src/modules/user-module/models/user.js";
 import Role from "../src/modules/user-module/models/role.js";
 import Permission from "../src/modules/user-module/models/permission.js";
 
 const permissionsData = [
-    
     {
         name: "reserver_trajet",
         description: "Autorise à rechercher et réserver un trajet",
@@ -29,7 +28,6 @@ const permissionsData = [
         description: "Autorise à envoyer des messages (chat, support)",
     },
 
-    
     {
         name: "publier_trajet",
         description: "Autorise à créer et publier un trajet",
@@ -44,7 +42,6 @@ const permissionsData = [
             "Autorise un chauffeur à gérer ses propres trajets publiés",
     },
 
-    
     {
         name: "valider_candidature",
         description:
@@ -61,7 +58,6 @@ const permissionsData = [
             "Autorise à consulter une vue restreinte du journal d’audit",
     },
 
-    
     {
         name: "gerer_utilisateurs",
         description:
@@ -107,15 +103,14 @@ const rolePermissionsData = {
         "soumettre_candidature",
         "envoyer_message",
     ],
-    PASSAGER: ["reserver_trajet", "annuler_reservation"], 
-    CHAUFFEUR: ["publier_trajet", "terminer_trajet", "gerer_mes_trajets"], 
+    PASSAGER: ["reserver_trajet", "annuler_reservation"],
+    CHAUFFEUR: ["publier_trajet", "terminer_trajet", "gerer_mes_trajets"],
     SUPERVISEUR: [
         "valider_candidature",
         "voir_candidatures",
         "acceder_journal_audit_superviseur",
     ],
 
-    
     ADMINISTRATEUR: [
         "reserver_trajet",
         "annuler_reservation",
@@ -140,7 +135,6 @@ const rolePermissionsData = {
 
 async function seedDatabase() {
     try {
-        
         const createdPermissions = {};
         for (const pData of permissionsData) {
             const [permission, created] = await Permission.findOrCreate({
@@ -149,9 +143,7 @@ async function seedDatabase() {
             });
             createdPermissions[pData.name] = permission;
             if (created) {
-                
             } else {
-                
             }
         }
 
@@ -162,9 +154,7 @@ async function seedDatabase() {
             });
             createdRoles[rData.name] = role;
             if (created) {
-                
             } else {
-                
             }
         }
 
@@ -175,10 +165,7 @@ async function seedDatabase() {
                 const permissionInstances = permissionsToAssign
                     .map((pName) => createdPermissions[pName])
                     .filter((p) => p);
-                await role.addPermissions(permissionInstances); 
-                
-                
-                
+                await role.addPermissions(permissionInstances);
             }
         }
         const adminEmail = process.env.ADMIN_EMAIL || "admin@tyvaa.live";
@@ -195,10 +182,6 @@ async function seedDatabase() {
             }
 
             if (!adminUser && process.env.ADMIN_PASSWORD) {
-                
-                
-                
-                
                 try {
                     adminUser = await User.create({
                         phoneNumber: adminPhone,
@@ -208,51 +191,28 @@ async function seedDatabase() {
                         dateOfBirth: "1990-01-01",
                         isActive: true,
                     });
-                    
-                    
-                    
-                } catch (_error) {
-                    
-                    
-                    
-                    
-                }
+                } catch (_error) {}
             }
 
             if (adminUser) {
                 await adminUser.setRoles([createdRoles.ADMINISTRATEUR]);
-                
-                
-                
             } else {
-                
-                
-                
             }
         }
-
-        
     } catch (_error) {
-        console.error("Error seeding database for RBAC:", _error); 
+        console.error("Error seeding database for RBAC:", _error);
     } finally {
-        
     }
 }
 
-if (
-    import.meta.url === `file:
-    process.env.NODE_ENV !== "test"
-) {
-    
-    seedDatabase()
-        .then(() => {
-            console.log("Seeder finished. Exiting.");
-            process.exit(0);
-        })
-        .catch((_err) => {
-            console.error("Seeder failed:", _err);
-            process.exit(1);
-        });
-}
+seedDatabase()
+    .then(() => {
+        console.log("Seeder finished. Exiting.");
+        process.exit(0);
+    })
+    .catch((_err) => {
+        console.error("Seeder failed:", _err);
+        process.exit(1);
+    });
 
 export { seedDatabase };

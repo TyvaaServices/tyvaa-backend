@@ -1,6 +1,4 @@
-
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-
 
 const mockGetAllBookings = jest.fn();
 const mockGetBookingById = jest.fn();

@@ -43,7 +43,10 @@ describe("Custom Errors", () => {
             expect(error.errorCode).toBe("BAD_REQUEST");
         });
         it("should allow custom message and details", () => {
-            const error = new BadRequestError({ field: "email" }, "Custom bad request");
+            const error = new BadRequestError(
+                { field: "email" },
+                "Custom bad request"
+            );
             expect(error.message).toBe("Custom bad request");
             expect(error.details).toEqual({ field: "email" });
         });
@@ -58,7 +61,10 @@ describe("Custom Errors", () => {
             expect(error.errorCode).toBe("AUTHENTICATION_FAILURE");
         });
         it("should allow custom message and details", () => {
-            const error = new AuthenticationError({ reason: "token_expired" }, "Custom auth error");
+            const error = new AuthenticationError(
+                { reason: "token_expired" },
+                "Custom auth error"
+            );
             expect(error.message).toBe("Custom auth error");
             expect(error.details).toEqual({ reason: "token_expired" });
         });
@@ -73,7 +79,10 @@ describe("Custom Errors", () => {
             expect(error.errorCode).toBe("FORBIDDEN_ACCESS");
         });
         it("should allow custom message and details", () => {
-            const error = new ForbiddenError({ resource: "admin_panel" }, "Custom forbidden");
+            const error = new ForbiddenError(
+                { resource: "admin_panel" },
+                "Custom forbidden"
+            );
             expect(error.message).toBe("Custom forbidden");
             expect(error.details).toEqual({ resource: "admin_panel" });
         });
@@ -103,7 +112,10 @@ describe("Custom Errors", () => {
             expect(error.errorCode).toBe("RESOURCE_CONFLICT");
         });
         it("should allow custom message and details", () => {
-            const error = new ConflictError({ field: "username" }, "Custom conflict");
+            const error = new ConflictError(
+                { field: "username" },
+                "Custom conflict"
+            );
             expect(error.message).toBe("Custom conflict");
             expect(error.details).toEqual({ field: "username" });
         });
@@ -118,14 +130,15 @@ describe("Custom Errors", () => {
             expect(error.errorCode).toBe("INTERNAL_SERVER_ERROR");
         });
         it("should allow custom message and details", () => {
-            const error = new InternalServerError({ traceId: "xyz" }, "Custom internal error");
+            const error = new InternalServerError(
+                { traceId: "xyz" },
+                "Custom internal error"
+            );
             expect(error.message).toBe("Custom internal error");
             expect(error.details).toEqual({ traceId: "xyz" });
         });
     });
 
-    
-    
     it("AppError should have a stack trace", () => {
         const error = new AppError("Error with stack", 500);
         expect(typeof error.stack).toBe("string");

@@ -438,5 +438,3 @@ export const userControllerFactory = (fastify) => ({
         }
     },
 });
-
-

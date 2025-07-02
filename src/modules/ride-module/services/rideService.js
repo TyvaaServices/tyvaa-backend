@@ -92,11 +92,11 @@ const rideService = {
             include: [
                 {
                     model: RideModel,
-                    attributes: ['departure', 'destination', 'price'],
+                    attributes: ["departure", "destination", "price"],
                 },
                 {
                     association: "driverProfile", // ou ton alias exact si défini
-                    attributes: ['id', 'fullName', 'phoneNumber'],
+                    attributes: ["id", "fullName", "phoneNumber"],
                 },
             ],
         });

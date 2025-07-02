@@ -16,7 +16,7 @@ class Broker extends EventEmitter {
         this.config = { ...brokerConfig };
         this.channel = null;
         this.connection = null;
-        this.consumers = new Map(); 
+        this.consumers = new Map();
         logger.info("Broker initialized (RabbitMQ integration)");
     }
 
@@ -73,21 +73,9 @@ class Broker extends EventEmitter {
         options = { persistent: true }
     ) {
         if (!this.channel) {
-            
-            
             await this.connect();
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+
             if (!this.channel) {
-                
                 const err = new Error(
                     "Broker not connected after attempting to connect. Cannot publish message."
                 );
@@ -129,7 +117,7 @@ class Broker extends EventEmitter {
         } catch (error) {
             logger.error("Failed to publish message:", error);
             this.emit("error", error);
-            
+
             throw error;
         }
     }
@@ -141,10 +129,8 @@ class Broker extends EventEmitter {
         messageOptions = { persistent: true }
     ) {
         if (!this.channel) {
-            
             await this.connect();
             if (!this.channel) {
-                
                 const err = new Error(
                     "Broker not connected after attempting to connect. Cannot send to queue."
                 );
@@ -154,7 +140,7 @@ class Broker extends EventEmitter {
             }
         }
         try {
-            await this.assertQueue(queueName, queueOptions); 
+            await this.assertQueue(queueName, queueOptions);
             const content = Buffer.from(JSON.stringify(msg));
             this.channel.sendToQueue(queueName, content, messageOptions);
             logger.info(`Message sent to queue '${queueName}'.`);
@@ -188,7 +174,7 @@ class Broker extends EventEmitter {
             }
         }
         try {
-            await this.assertQueue(queueName, queueOptions); 
+            await this.assertQueue(queueName, queueOptions);
 
             const { consumerTag } = await this.channel.consume(
                 queueName,
@@ -350,9 +336,9 @@ class Broker extends EventEmitter {
         }
         this.consumers.clear();
 
-        await closeConnection(); 
+        await closeConnection();
         this.channel = null;
-        this.connection = null; 
+        this.connection = null;
         this.removeAllListeners();
         logger.info("Broker destroyed.");
     }
@@ -366,9 +352,7 @@ class Broker extends EventEmitter {
     }
 }
 
-
 let brokerInstance = null;
-
 
 export default {
     getInstance: (config) => {

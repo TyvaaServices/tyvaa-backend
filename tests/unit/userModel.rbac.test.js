@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals"; 
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 const mockPermission = (name) => ({ name, otherPermissionData: "..." });
 const mockRole = (name, permissions = []) => ({
     name,
-    getPermissions: jest.fn().mockResolvedValue(permissions), 
+    getPermissions: jest.fn().mockResolvedValue(permissions),
     otherRoleData: "...",
 });
 
@@ -56,7 +56,7 @@ describe("User Model RBAC Methods", () => {
             const testUser = {
                 getRoles: jest.fn().mockResolvedValue([mockRole("ADMIN")]),
             };
-            Object.setPrototypeOf(testUser, UserPrototype); 
+            Object.setPrototypeOf(testUser, UserPrototype);
 
             const result = await testUser.hasRole("ADMIN");
             expect(result).toBe(true);
@@ -89,7 +89,7 @@ describe("User Model RBAC Methods", () => {
             const perm3 = mockPermission("perm3");
 
             const role1 = mockRole("RoleA", [perm1, perm2]);
-            const role2 = mockRole("RoleB", [perm2, perm3]); 
+            const role2 = mockRole("RoleB", [perm2, perm3]);
 
             const testUser = {
                 getRoles: jest.fn().mockResolvedValue([role1, role2]),

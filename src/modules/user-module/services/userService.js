@@ -263,7 +263,10 @@ export const userService = {
             userInfo.email &&
             (await User.findOne({ where: { email: userInfo.email } }))
         ) {
-            throw new ConflictError(undefined, "User with this email already exists.");
+            throw new ConflictError(
+                undefined,
+                "User with this email already exists."
+            );
         }
 
         // Ensure isBlocked is set to false by default
@@ -953,10 +956,16 @@ export const userService = {
         const user = await this.findUserByPhoneOrEmail(contactDetails);
 
         if (!user) {
-            throw new NotFoundError(undefined, "User not found with these credentials.");
+            throw new NotFoundError(
+                undefined,
+                "User not found with these credentials."
+            );
         }
         if (!user.isActive || user.isBlocked) {
-            throw new AuthenticationError(undefined, "Account is inactive or blocked.");
+            throw new AuthenticationError(
+                undefined,
+                "Account is inactive or blocked."
+            );
         }
         await this.verifyOtp(identifier, otp, "login"); // identifier for verifyOtp should match what was used for generateAndSendOtp
         user.lastLogin = new Date();

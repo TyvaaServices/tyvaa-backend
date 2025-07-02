@@ -8,62 +8,41 @@ import {
 } from "@jest/globals";
 import Fastify from "fastify";
 
-
-
-
 const mockBrokerInstance = {
     connect: jest.fn().mockResolvedValue(undefined),
     subscribe: jest.fn().mockReturnValue({
-        
-        catch: jest.fn().mockResolvedValue(undefined), 
+        catch: jest.fn().mockResolvedValue(undefined),
     }),
     acknowledge: jest.fn(),
     nack: jest.fn(),
-    
 };
 const mockBrokerManager = {
     getInstance: jest.fn(() => mockBrokerInstance),
-    
 };
 jest.unstable_mockModule("#broker/broker.js", () => ({
-    __esModule: true, 
+    __esModule: true,
     default: mockBrokerManager,
 }));
 
-
 const mockGetNotificationTemplate = jest.fn();
 
-
-
-
-
-
-
 jest.unstable_mockModule(
-    "../../../src/modules/notification-module/templates.js", 
+    "../../../src/modules/notification-module/templates.js",
     () => ({
         __esModule: true,
         getNotificationTemplate: mockGetNotificationTemplate,
     })
 );
 
-
 const mockSendFCM = jest.fn();
 jest.unstable_mockModule(
-    "../../../src/modules/notification-module/routes/notificationRouter.js", 
+    "../../../src/modules/notification-module/routes/notificationRouter.js",
     () => ({
         __esModule: true,
-        sendFCM: mockSendFCM, 
-        default: jest.fn(async (fastify, _opts) => {
-            
-            
-            
-            
-            
-        }),
+        sendFCM: mockSendFCM,
+        default: jest.fn(async (fastify, _opts) => {}),
     })
 );
-
 
 const mockFirebaseInitializeApp = jest.fn();
 const mockFirebaseCert = jest.fn();
@@ -72,20 +51,16 @@ jest.unstable_mockModule("firebase-admin/app", () => ({
     cert: mockFirebaseCert,
 }));
 
-
-
 let notificationModuleServer;
 
 describe("Notification Module Server", () => {
     let fastify;
 
     beforeEach(async () => {
-        
         jest.clearAllMocks();
 
-        
         fastify = Fastify();
-        
+
         fastify.log = {
             info: jest.fn(),
             error: jest.fn(),
@@ -93,14 +68,12 @@ describe("Notification Module Server", () => {
             debug: jest.fn(),
         };
 
-        
         notificationModuleServer = (
             await import("../../../src/modules/notification-module/server.js")
         ).default;
 
-        
         await fastify.register(notificationModuleServer);
-        await fastify.ready(); 
+        await fastify.ready();
     });
 
     afterEach(async () => {
@@ -113,9 +86,9 @@ describe("Notification Module Server", () => {
         expect(mockBrokerManager.getInstance).toHaveBeenCalled();
         expect(mockBrokerInstance.connect).toHaveBeenCalled();
         expect(mockBrokerInstance.subscribe).toHaveBeenCalledWith(
-            "notification_created", 
-            expect.any(Function), 
-            { noAck: false } 
+            "notification_created",
+            expect.any(Function),
+            { noAck: false }
         );
     });
 
@@ -126,7 +99,6 @@ describe("Notification Module Server", () => {
         };
 
         beforeEach(() => {
-            
             if (mockBrokerInstance.subscribe.mock.calls.length > 0) {
                 subscribeCallback =
                     mockBrokerInstance.subscribe.mock.calls[0][1];
@@ -147,7 +119,7 @@ describe("Notification Module Server", () => {
                 title: "Welcome!",
                 body: "Hello Test User",
             });
-            mockSendFCM.mockResolvedValue(undefined); 
+            mockSendFCM.mockResolvedValue(undefined);
 
             await subscribeCallback(messagePayload, mockAmqpMessage);
 
@@ -172,7 +144,7 @@ describe("Notification Module Server", () => {
             const messagePayload = {
                 eventType: "USER_WELCOME",
                 data: { name: "Test User" },
-            }; 
+            };
 
             await subscribeCallback(messagePayload, mockAmqpMessage);
 
@@ -196,7 +168,7 @@ describe("Notification Module Server", () => {
                 eventType: "UNKNOWN_EVENT",
                 data: { language: "en" },
             };
-            mockGetNotificationTemplate.mockReturnValue(null); 
+            mockGetNotificationTemplate.mockReturnValue(null);
 
             await subscribeCallback(messagePayload, mockAmqpMessage);
 
@@ -229,7 +201,7 @@ describe("Notification Module Server", () => {
                 body: "Hello Test User",
             });
             const fcmError = new Error("FCM Failed");
-            mockSendFCM.mockRejectedValue(fcmError); 
+            mockSendFCM.mockRejectedValue(fcmError);
 
             await subscribeCallback(messagePayload, mockAmqpMessage);
 
@@ -254,7 +226,7 @@ describe("Notification Module Server", () => {
             };
             const topLevelError = new Error("Something unexpected happened");
             mockGetNotificationTemplate.mockImplementation(() => {
-                throw topLevelError; 
+                throw topLevelError;
             });
 
             await subscribeCallback(messagePayload, mockAmqpMessage);
@@ -274,16 +246,15 @@ describe("Notification Module Server", () => {
     });
 
     it("should log an error if broker connection fails", async () => {
-        jest.resetModules(); 
+        jest.resetModules();
         mockBrokerInstance.connect.mockRejectedValueOnce(
             new Error("Broker connect failed")
         );
 
-        
         notificationModuleServer = (
             await import("../../../src/modules/notification-module/server.js")
         ).default;
-        fastify = Fastify(); 
+        fastify = Fastify();
         fastify.log = {
             info: jest.fn(),
             error: jest.fn(),
@@ -293,32 +264,25 @@ describe("Notification Module Server", () => {
         await fastify.register(notificationModuleServer);
         try {
             await fastify.ready();
-        } catch (e) {
-            
-        }
+        } catch (e) {}
 
         expect(fastify.log.error).toHaveBeenCalledWith(
             "Failed to connect broker for notification module:",
             expect.any(Error)
         );
-        
-        
     });
 
     it("should log an error if broker subscription fails", async () => {
-        
         jest.resetModules();
 
-        
         const subscribeError = new Error("Subscription failed");
         const failingMockBrokerInstance = {
-            ...mockBrokerInstance, 
-            connect: jest.fn().mockResolvedValue(undefined), 
+            ...mockBrokerInstance,
+            connect: jest.fn().mockResolvedValue(undefined),
             subscribe: jest.fn().mockReturnValue({
-                
                 catch: jest.fn((errorHandler) => {
-                    errorHandler(subscribeError); 
-                    return Promise.resolve(); 
+                    errorHandler(subscribeError);
+                    return Promise.resolve();
                 }),
             }),
         };
@@ -331,7 +295,6 @@ describe("Notification Module Server", () => {
             default: failingMockBrokerManager,
         }));
 
-        
         jest.unstable_mockModule(
             "../../../src/modules/notification-module/templates.js",
             () => ({
@@ -352,7 +315,6 @@ describe("Notification Module Server", () => {
             cert: mockFirebaseCert,
         }));
 
-        
         const freshNotificationModuleServer = (
             await import("../../../src/modules/notification-module/server.js")
         ).default;
@@ -368,9 +330,7 @@ describe("Notification Module Server", () => {
         await newFastify.register(freshNotificationModuleServer);
         try {
             await newFastify.ready();
-        } catch (e) {
-            
-        }
+        } catch (e) {}
 
         expect(newFastify.log.error).toHaveBeenCalledWith(
             "Failed to subscribe to notification_created queue:",

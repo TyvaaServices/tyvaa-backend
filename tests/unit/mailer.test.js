@@ -29,7 +29,7 @@ describe("Mailer Utility", () => {
         mockLoggerWarn.mockClear();
         mockLoggerInfo.mockClear();
         jest.resetModules();
-        
+
         delete process.env.SMTP_HOST;
         delete process.env.SMTP_PORT;
         delete process.env.SMTP_USER;
@@ -118,7 +118,7 @@ describe("Mailer Utility", () => {
 
     it("should use SMTP_SECURE='false' when set, overriding port-based default", async () => {
         process.env.SMTP_HOST = "smtp.example.com";
-        process.env.SMTP_PORT = "465"; 
+        process.env.SMTP_PORT = "465";
         process.env.SMTP_USER = "user";
         process.env.SMTP_PASS = "pass";
         process.env.SMTP_SECURE = "false";
@@ -214,7 +214,7 @@ describe("Mailer Utility", () => {
 
         expect(mockCreateTransport).toHaveBeenCalledWith(
             expect.objectContaining({
-                port: 587, 
+                port: 587,
                 secure: false,
             })
         );

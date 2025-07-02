@@ -53,14 +53,13 @@ beforeAll(async () => {
 describe("userController", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        
+
         Object.keys(mockUserFacade).forEach((key) => {
             mockUserFacade[key].mockReset();
             mockUserFacade[key].mockResolvedValue(undefined);
         });
     });
-    
-    
+
     describe("getAllDriverApplications", () => {
         it("should return applications on success", async () => {
             const applications = [{ id: 1 }, { id: 2 }];
@@ -178,7 +177,7 @@ describe("userController", () => {
     describe("getUserById", () => {
         it("should return user on success", async () => {
             const user = { id: 1 };
-            mockUserFacade.getUserById.mockResolvedValueOnce(user); 
+            mockUserFacade.getUserById.mockResolvedValueOnce(user);
             const res = reply();
             await controller.getUserById({ params: { id: "1" } }, res);
             expect(res.send).toHaveBeenCalledWith({
@@ -187,7 +186,7 @@ describe("userController", () => {
             });
         });
         it("should return 404 if not found", async () => {
-            mockUserFacade.getUserById.mockResolvedValueOnce(null); 
+            mockUserFacade.getUserById.mockResolvedValueOnce(null);
             const res = reply();
             try {
                 await controller.getUserById({ params: { id: "1" } }, res);
@@ -196,7 +195,7 @@ describe("userController", () => {
             }
         });
         it("should handle errors", async () => {
-            mockUserFacade.getUserById.mockRejectedValueOnce(new Error("fail")); 
+            mockUserFacade.getUserById.mockRejectedValueOnce(new Error("fail"));
             const res = reply();
             try {
                 await controller.getUserById({ params: { id: "1" } }, res);
@@ -286,7 +285,7 @@ describe("userController", () => {
                 phoneNumber: "123",
                 email: "foo@tyvaa.live",
                 isDriver: false,
-                getRoles: jest.fn(() => []), 
+                getRoles: jest.fn(() => []),
             };
             mockUserFacade.login.mockResolvedValueOnce(user);
             const res = reply();
@@ -415,7 +414,7 @@ describe("userController", () => {
         it("should update user and return result", async () => {
             const user = { id: 1 };
             mockUserFacade.updateUser.mockResolvedValueOnce(user);
-            
+
             const part1 = { fieldname: "name", value: "foo", file: false };
             const part2 = {
                 fieldname: "profile_image",

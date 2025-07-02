@@ -7,17 +7,14 @@ import {
     beforeAll,
 } from "@jest/globals";
 
-import User from "../../src/modules/user-module/models/user.js"; 
+import User from "../../src/modules/user-module/models/user.js";
 
 jest.mock("../../src/modules/user-module/models/user.js");
 
-
 const mockRoleFindAllFn = jest.fn();
 
-
-
 let rbacPluginFp;
-let ActualRole; 
+let ActualRole;
 
 describe("RBAC Plugin", () => {
     let mockFastify;
@@ -28,22 +25,15 @@ describe("RBAC Plugin", () => {
     let roleFindAllSpy;
 
     beforeAll(async () => {
-        
         const rbacModule = await import("../../src/utils/rbacPlugin.js");
         rbacPluginFp = rbacModule.default;
 
-        
-        
         ActualRole = (await import("#config/index.js")).Role;
     });
 
     beforeEach(async () => {
-        
-
-        
-        
         if (roleFindAllSpy) {
-            roleFindAllSpy.mockRestore(); 
+            roleFindAllSpy.mockRestore();
         }
         roleFindAllSpy = jest.spyOn(ActualRole, "findAll");
 
@@ -71,7 +61,6 @@ describe("RBAC Plugin", () => {
             send: jest.fn(),
         };
 
-        
         await rbacPluginFp(mockFastify, {});
     });
 
@@ -100,7 +89,7 @@ describe("RBAC Plugin", () => {
         });
 
         it("should return 403 if user.roles is missing in JWT for permission check", async () => {
-            mockRequest.user = { id: 1 }; 
+            mockRequest.user = { id: 1 };
             await checkPermissionHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(403);
             expect(mockReply.send).toHaveBeenCalledWith({
@@ -113,7 +102,7 @@ describe("RBAC Plugin", () => {
         });
 
         it("should return 403 if user.roles is not an array in JWT for permission check", async () => {
-            mockRequest.user = { id: 1, roles: "not_an_array" }; 
+            mockRequest.user = { id: 1, roles: "not_an_array" };
             await checkPermissionHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(403);
             expect(mockReply.send).toHaveBeenCalledWith({
@@ -122,44 +111,14 @@ describe("RBAC Plugin", () => {
             });
         });
 
-        
-        
-        
-        
-        
-
-        
-        
-        
-        
-
-        
-        
-
-        
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
         it("should return 500 if User model check fails (e.g. User.findByPk is not a function)", async () => {
-            
             mockRequest.user.roles = ["some_role"];
             const originalUserFindByPk = User.findByPk;
-            User.findByPk = undefined; 
+            User.findByPk = undefined;
 
             await checkPermissionHandler(mockRequest, mockReply);
 
-            User.findByPk = originalUserFindByPk; 
+            User.findByPk = originalUserFindByPk;
 
             expect(mockReply.status).toHaveBeenCalledWith(500);
             expect(mockReply.send).toHaveBeenCalledWith({
@@ -172,7 +131,7 @@ describe("RBAC Plugin", () => {
 
         it("should return 403 if user's roles from JWT do not grant the required permission", async () => {
             mockRequest.user.roles = ["role_without_permission"];
-            roleFindAllSpy.mockResolvedValue([]); 
+            roleFindAllSpy.mockResolvedValue([]);
 
             await checkPermissionHandler(mockRequest, mockReply);
 
@@ -197,7 +156,7 @@ describe("RBAC Plugin", () => {
 
         it("should proceed if user's roles from JWT grant the required permission", async () => {
             mockRequest.user.roles = ["role_with_permission"];
-            
+
             roleFindAllSpy.mockResolvedValue([
                 {
                     name: "role_with_permission",
@@ -222,8 +181,8 @@ describe("RBAC Plugin", () => {
         });
 
         it("should return 403 if user has no roles in JWT", async () => {
-            mockRequest.user.roles = []; 
-            
+            mockRequest.user.roles = [];
+
             await checkPermissionHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(403);
             expect(mockReply.send).toHaveBeenCalledWith({
@@ -239,10 +198,6 @@ describe("RBAC Plugin", () => {
             const dbError = new Error("DB query failed");
             roleFindAllSpy.mockRejectedValue(dbError);
 
-            
-            
-            
-            
             await checkPermissionHandler(mockRequest, mockReply);
 
             expect(mockReply.status).toHaveBeenCalledWith(500);
@@ -250,7 +205,7 @@ describe("RBAC Plugin", () => {
                 message: "Internal Server Error while checking permissions.",
             });
             expect(mockRequest.log.error).toHaveBeenCalledWith(
-                { err: dbError }, 
+                { err: dbError },
                 "RBAC: Database error during permission check (Role.findAll)."
             );
         });
@@ -258,7 +213,7 @@ describe("RBAC Plugin", () => {
 
     describe("checkRole Handler", () => {
         it("should return 401 if no user on request", async () => {
-            mockRequest.user = null; 
+            mockRequest.user = null;
             await checkRoleHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(401);
             expect(mockReply.send).toHaveBeenCalledWith({
@@ -267,7 +222,7 @@ describe("RBAC Plugin", () => {
         });
 
         it("should return 403 if user.roles is missing in JWT", async () => {
-            mockRequest.user = { id: 1 }; 
+            mockRequest.user = { id: 1 };
             await checkRoleHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(403);
             expect(mockReply.send).toHaveBeenCalledWith({
@@ -279,7 +234,7 @@ describe("RBAC Plugin", () => {
         });
 
         it("should return 403 if user.roles is not an array in JWT", async () => {
-            mockRequest.user = { id: 1, roles: "not_an_array" }; 
+            mockRequest.user = { id: 1, roles: "not_an_array" };
             await checkRoleHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(403);
             expect(mockReply.send).toHaveBeenCalledWith({
@@ -288,7 +243,7 @@ describe("RBAC Plugin", () => {
         });
 
         it("should return 403 if user does not have the required role in JWT roles array", async () => {
-            mockRequest.user.roles = ["another_role"]; 
+            mockRequest.user.roles = ["another_role"];
             await checkRoleHandler(mockRequest, mockReply);
             expect(mockReply.status).toHaveBeenCalledWith(403);
             expect(mockReply.send).toHaveBeenCalledWith({
@@ -300,15 +255,10 @@ describe("RBAC Plugin", () => {
         });
 
         it("should proceed if user has the required role in JWT roles array", async () => {
-            mockRequest.user.roles = ["test_role", "another_role"]; 
+            mockRequest.user.roles = ["test_role", "another_role"];
             await checkRoleHandler(mockRequest, mockReply);
             expect(mockReply.status).not.toHaveBeenCalled();
             expect(mockReply.send).not.toHaveBeenCalled();
         });
-
-        
-        
-        
-        
     });
 });

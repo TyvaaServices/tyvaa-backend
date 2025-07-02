@@ -14,7 +14,7 @@ const mockLogger = {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    debug: jest.fn(), 
+    debug: jest.fn(),
 };
 
 jest.unstable_mockModule("../../src/config/index.js", () => ({
@@ -48,9 +48,9 @@ describe("generateRecurringRides", () => {
             seatsAvailable: 3,
         };
         mockFindAll.mockResolvedValueOnce([ride]);
-        
+
         const today = new Date();
-        today.setDate(today.getDate() - today.getDay()); 
+        today.setDate(today.getDate() - today.getDay());
         const monday = new Date(today);
         monday.setDate(today.getDate() + 1);
         jest.spyOn(global, "Date").mockImplementation(() => monday);
@@ -89,8 +89,8 @@ describe("generateRecurringRides", () => {
             id: 4,
             isRecurring: true,
             status: "active",
-            recurrence: ["Tuesday"], 
-            time: undefined, 
+            recurrence: ["Tuesday"],
+            time: undefined,
             seatsAvailable: 5,
         };
         mockFindAll.mockResolvedValueOnce([ride]);
@@ -108,8 +108,8 @@ describe("generateRecurringRides", () => {
             return new OriginalDate(...args);
         });
 
-        mockFindOne.mockResolvedValue(null); 
-        mockCreate.mockResolvedValue({}); 
+        mockFindOne.mockResolvedValue(null);
+        mockCreate.mockResolvedValue({});
 
         await generateRecurringRides();
 
@@ -138,7 +138,7 @@ describe("generateRecurringRides", () => {
             const createdDateArg = mockCreate.mock.calls[0][0].rideDate;
             expect(createdDateArg.getFullYear()).toBe(tuesday.getFullYear());
             expect(createdDateArg.getMonth()).toBe(tuesday.getMonth());
-            expect(createdDateArg.getDate()).toBe(tuesday.getDate()); 
+            expect(createdDateArg.getDate()).toBe(tuesday.getDate());
             expect(createdDateArg.getHours()).toBe(0);
             expect(createdDateArg.getMinutes()).toBe(0);
             expect(createdDateArg.getSeconds()).toBe(0);
@@ -196,8 +196,7 @@ describe("generateRecurringRides", () => {
             const date = new OriginalDate(wednesday);
             date.setDate(wednesday.getDate() + i);
             if (date.getDay() === 3) {
-                
-                expectedCreateCalls += 2; 
+                expectedCreateCalls += 2;
             }
         }
         expect(mockCreate.mock.calls.length).toBeGreaterThanOrEqual(2);
@@ -213,7 +212,7 @@ describe("generateRecurringRides", () => {
             "Recurring ride instance generation job finished successfully."
         );
 
-        global.Date = OriginalDate; 
+        global.Date = OriginalDate;
     });
 
     const RIDE_INSTANCE_GENERATION_LOOKAHEAD_DAYS = parseInt(
@@ -245,7 +244,7 @@ describe("generateRecurringRides", () => {
             return new OriginalDate(...args);
         });
 
-        mockFindOne.mockResolvedValue({ id: 100, rideId: 7 }); 
+        mockFindOne.mockResolvedValue({ id: 100, rideId: 7 });
 
         await generateRecurringRides();
 
@@ -278,7 +277,7 @@ describe("generateRecurringRides", () => {
             time: "10:00:00",
             seatsAvailable: 1,
         };
-        mockFindAll.mockResolvedValueOnce([ride]); 
+        mockFindAll.mockResolvedValueOnce([ride]);
 
         const OriginalDate = global.Date;
         const dateError = new Error("Date creation failed in loop");
@@ -303,7 +302,7 @@ describe("generateRecurringRides", () => {
     });
 
     it("logs info and exits if no active recurring ride models are found", async () => {
-        mockFindAll.mockResolvedValueOnce([]); 
+        mockFindAll.mockResolvedValueOnce([]);
 
         await generateRecurringRides();
 

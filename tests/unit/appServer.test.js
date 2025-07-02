@@ -29,23 +29,18 @@ describe("startServer", () => {
     let originalEnv;
     let processOnSpy, processExitSpy;
 
-    
     const mockRedisFromEnv = jest.fn(() => ({
         get: jest.fn(),
         set: jest.fn(),
         del: jest.fn(),
-        
     }));
     jest.unstable_mockModule("@upstash/redis", () => ({
         Redis: { fromEnv: mockRedisFromEnv },
     }));
 
     beforeAll(() => {
-        originalEnv = { ...process.env }; 
+        originalEnv = { ...process.env };
         process.env.NODE_ENV = "test";
-        
-        
-        
 
         processOnSpy = jest
             .spyOn(process, "on")
@@ -55,10 +50,10 @@ describe("startServer", () => {
         });
     });
     afterAll(() => {
-        process.env = originalEnv; 
+        process.env = originalEnv;
         processOnSpy.mockRestore();
         processExitSpy.mockRestore();
-        jest.resetModules(); 
+        jest.resetModules();
     });
 
     it("should start and close the server without error", async () => {

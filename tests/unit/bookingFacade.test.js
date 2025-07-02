@@ -140,7 +140,7 @@ describe("Booking Facade", () => {
         it("should propagate errors from bookingService.createBooking", async () => {
             mockBookRide.mockRejectedValue(
                 new Error("Service creation failed")
-            ); 
+            );
 
             await expect(bookingFacade.createBooking({})).rejects.toThrow(
                 "Service creation failed"

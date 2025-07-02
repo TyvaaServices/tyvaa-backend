@@ -58,7 +58,6 @@ async function seed() {
         },
     ]);
 
-    
     const passagerRole = roles.find((r) => r.name === "PASSAGER");
     const chauffeurRole = roles.find((r) => r.name === "CHAUFFEUR");
     const superviseurRole = roles.find((r) => r.name === "SUPERVISEUR");
@@ -69,7 +68,6 @@ async function seed() {
     if (users[2] && superviseurRole) await users[2].addRole(superviseurRole);
     if (users[3] && adminRole) await users[3].addRole(adminRole);
 
-    
     const usersWithRoles = await Promise.all(
         users.map(async (user) => {
             const userRoles = await user.getRoles();
@@ -77,7 +75,6 @@ async function seed() {
         })
     );
 
-    
     const passengerProfiles = await Promise.all(
         usersWithRoles.map(({ user, roles }) =>
             roles.includes("PASSAGER")
@@ -106,11 +103,9 @@ async function seed() {
         { actionType: "logout", codeAction: "O" },
     ]);
 
-    
     const validDriverProfiles = driverProfiles.filter(Boolean);
     const validPassengerProfiles = passengerProfiles.filter(Boolean);
 
-    
     const rideModels = await RideModel.bulkCreate(
         [
             {
@@ -140,7 +135,6 @@ async function seed() {
         ].filter((ride) => ride.driverId)
     );
 
-    
     const rideInstances = await RideInstance.bulkCreate(
         [
             {
@@ -160,29 +154,6 @@ async function seed() {
         ].filter((instance) => instance.rideId)
     );
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-
-    
-
-    
     await Promise.all(
         validPassengerProfiles.map((profile) =>
             DriverApplication.create({
@@ -195,7 +166,6 @@ async function seed() {
         )
     );
 
-    
     await AuditAction.bulkCreate([
         { actionType: "create", codeAction: "CREATE" },
         { actionType: "update", codeAction: "UPDATE" },
@@ -209,10 +179,8 @@ async function seed() {
 
 seed()
     .then(() => {
-        
         process.exit(0);
     })
     .catch((_error) => {
-        
         process.exit(1);
     });

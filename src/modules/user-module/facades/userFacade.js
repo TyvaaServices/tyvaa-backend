@@ -78,7 +78,10 @@ export const userFacade = {
         logger.debug("Requesting login OTP from facade:", contactDetails);
         const user = await userService.findUserByPhoneOrEmail(contactDetails);
         if (!user) {
-            throw new NotFoundError(undefined, "User not registered with these details.");
+            throw new NotFoundError(
+                undefined,
+                "User not registered with these details."
+            );
         }
         const otp = await userService.generateAndSendOtp(
             contactDetails.phoneNumber || contactDetails.email,
