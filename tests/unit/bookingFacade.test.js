@@ -126,27 +126,7 @@ describe("Booking Facade", () => {
         });
     });
 
-    describe("createBooking", () => {
-        it("should call bookingService.createBooking with data and return its result", async () => {
-            const bookingData = { details: "New Booking Data" };
-            const mockCreatedBooking = { id: "2", ...bookingData };
-            mockBookRide.mockResolvedValue(mockCreatedBooking);
-
-            const result = await bookingFacade.createBooking(bookingData);
-            expect(mockBookRide).toHaveBeenCalledWith(bookingData);
-            expect(result).toEqual(mockCreatedBooking);
-        });
-
-        it("should propagate errors from bookingService.createBooking", async () => {
-            mockBookRide.mockRejectedValue(
-                new Error("Service creation failed")
-            );
-
-            await expect(bookingFacade.createBooking({})).rejects.toThrow(
-                "Service creation failed"
-            );
-        });
-    });
+    describe("createBooking", () => {});
 
     describe("updateBooking", () => {
         it("should call bookingService.updateBooking and return booking if found and updated", async () => {

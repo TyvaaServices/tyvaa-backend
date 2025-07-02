@@ -29,15 +29,6 @@ const bookingFacade = {
     },
 
     /**
-     * Creates a new booking.
-     * @param {Partial<BookingAttributes>} bookingData - The data for the new booking.
-     * @returns {Promise<BookingAttributes>} The created booking.
-     */
-    async createBooking(bookingData) {
-        return bookingService.bookRide(bookingData);
-    },
-
-    /**
      * Updates an existing booking.
      * @param {number} bookingId - The ID of the booking to update.
      * @param {Partial<BookingAttributes>} bookingData - The new data for the booking.
