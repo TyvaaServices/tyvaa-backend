@@ -15,6 +15,7 @@ async function rideRoutes(fastify, _opts) {
     fastify.post("/ride-instances", rideController.createRideInstance);
     fastify.put("/ride-instances/:id", rideController.updateRideInstance);
     fastify.delete("/ride-instances/:id", rideController.deleteRideInstance);
+    fastify.get("/ride-instances/available", rideController.getAvailableRides);
 }
 
 export default rideRoutes;
