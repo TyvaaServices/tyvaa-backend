@@ -222,7 +222,7 @@ describe("Admin Controller", () => {
                 name: "Tester",
                 getUsers: jest
                     .fn()
-                    .mockResolvedValue([{ id: 1, name: "User1" }]), // Role assigned to a user
+                    .mockResolvedValue([{ id: 1, name: "User1" }]), 
             };
             Role.findByPk.mockResolvedValue(mockRoleInstance);
 

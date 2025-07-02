@@ -1,9 +1,9 @@
-import User from "../src/modules/user-module/models/user.js"; // Needed for context if we assign default roles
+import User from "../src/modules/user-module/models/user.js"; 
 import Role from "../src/modules/user-module/models/role.js";
 import Permission from "../src/modules/user-module/models/permission.js";
 
 const permissionsData = [
-    // User/Passenger specific
+    
     {
         name: "reserver_trajet",
         description: "Autorise à rechercher et réserver un trajet",
@@ -29,7 +29,7 @@ const permissionsData = [
         description: "Autorise à envoyer des messages (chat, support)",
     },
 
-    // Driver specific
+    
     {
         name: "publier_trajet",
         description: "Autorise à créer et publier un trajet",
@@ -44,7 +44,7 @@ const permissionsData = [
             "Autorise un chauffeur à gérer ses propres trajets publiés",
     },
 
-    // Supervisor specific
+    
     {
         name: "valider_candidature",
         description:
@@ -61,7 +61,7 @@ const permissionsData = [
             "Autorise à consulter une vue restreinte du journal d’audit",
     },
 
-    // Admin specific
+    
     {
         name: "gerer_utilisateurs",
         description:
@@ -107,15 +107,15 @@ const rolePermissionsData = {
         "soumettre_candidature",
         "envoyer_message",
     ],
-    PASSAGER: ["reserver_trajet", "annuler_reservation"], // Will also have UTILISATEUR_BASE permissions if users can have multiple roles or by assignment
-    CHAUFFEUR: ["publier_trajet", "terminer_trajet", "gerer_mes_trajets"], // Will also have UTILISATEUR_BASE permissions
+    PASSAGER: ["reserver_trajet", "annuler_reservation"], 
+    CHAUFFEUR: ["publier_trajet", "terminer_trajet", "gerer_mes_trajets"], 
     SUPERVISEUR: [
         "valider_candidature",
         "voir_candidatures",
         "acceder_journal_audit_superviseur",
     ],
 
-    // Admin gets all permissions
+    
     ADMINISTRATEUR: [
         "reserver_trajet",
         "annuler_reservation",
@@ -140,7 +140,7 @@ const rolePermissionsData = {
 
 async function seedDatabase() {
     try {
-        // await sequelize.sync({ force: true }); // REMOVE this line to avoid wiping tables again
+        
         const createdPermissions = {};
         for (const pData of permissionsData) {
             const [permission, created] = await Permission.findOrCreate({
@@ -149,9 +149,9 @@ async function seedDatabase() {
             });
             createdPermissions[pData.name] = permission;
             if (created) {
-                // console.log(`Permission '${pData.name}' created.`);
+                
             } else {
-                // console.log(`Permission '${pData.name}' already exists.`);
+                
             }
         }
 
@@ -162,9 +162,9 @@ async function seedDatabase() {
             });
             createdRoles[rData.name] = role;
             if (created) {
-                // console.log(`Role '${rData.name}' created.`);
+                
             } else {
-                // console.log(`Role '${rData.name}' already exists.`);
+                
             }
         }
 
@@ -175,10 +175,10 @@ async function seedDatabase() {
                 const permissionInstances = permissionsToAssign
                     .map((pName) => createdPermissions[pName])
                     .filter((p) => p);
-                await role.addPermissions(permissionInstances); // `addPermissions` is a Sequelize mixin
-                // console.log(
-                //     `Assigned ${permissionsToAssign.length} permissions to role '${roleName}'.`
-                // );
+                await role.addPermissions(permissionInstances); 
+                
+                
+                
             }
         }
         const adminEmail = process.env.ADMIN_EMAIL || "admin@tyvaa.live";
@@ -195,10 +195,10 @@ async function seedDatabase() {
             }
 
             if (!adminUser && process.env.ADMIN_PASSWORD) {
-                // Only create if password is provided
-                // console.log(
-                //     `Admin user not found, creating one... (Phone: ${adminPhone})`
-                // );
+                
+                
+                
+                
                 try {
                     adminUser = await User.create({
                         phoneNumber: adminPhone,
@@ -208,42 +208,42 @@ async function seedDatabase() {
                         dateOfBirth: "1990-01-01",
                         isActive: true,
                     });
-                    // console.log(
-                    //     `Admin user created with phone ${adminPhone}. Please set password securely if not handled by model.`
-                    // );
+                    
+                    
+                    
                 } catch (_error) {
-                    // console.error(
-                    //     `Failed to create admin user with phone ${adminPhone}:`,
-                    //     _error.message
-                    // );
+                    
+                    
+                    
+                    
                 }
             }
 
             if (adminUser) {
                 await adminUser.setRoles([createdRoles.ADMINISTRATEUR]);
-                // console.log(
-                //     `Assigned ADMINISTRATEUR role to user ${adminUser.email || adminUser.phoneNumber}.`
-                // );
+                
+                
+                
             } else {
-                // console.log(
-                //     "Admin user not found and ADMIN_PASSWORD not set in .env, skipping admin role assignment."
-                // );
+                
+                
+                
             }
         }
 
-        // console.log("RBAC Seeding completed successfully.");
+        
     } catch (_error) {
-        console.error("Error seeding database for RBAC:", _error); // Add error logging
+        console.error("Error seeding database for RBAC:", _error); 
     } finally {
-        // await sequelize.close(); // Do NOT close the connection here
+        
     }
 }
 
 if (
-    import.meta.url === `file://${process.argv[1]}` &&
+    import.meta.url === `file:
     process.env.NODE_ENV !== "test"
 ) {
-    // console.log("Running RBAC Seeder...");
+    
     seedDatabase()
         .then(() => {
             console.log("Seeder finished. Exiting.");

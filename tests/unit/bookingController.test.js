@@ -1,7 +1,7 @@
-// tests/unit/bookingController.test.js
+
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
-// --- Mocking bookingFacade.js ---
+
 const mockGetAllBookings = jest.fn();
 const mockGetBookingById = jest.fn();
 const mockCreateBooking = jest.fn();

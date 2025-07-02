@@ -25,7 +25,7 @@ describe("jwt plugin", () => {
             register: mockRegister,
             decorate: mockDecorate,
             jwt: { sign: jest.fn(() => "token"), verify: jest.fn() },
-            log: { warn: jest.fn(), error: jest.fn(), info: jest.fn() }, // Added for fastify.log
+            log: { warn: jest.fn(), error: jest.fn(), info: jest.fn() }, 
         };
         mockRegister.mockClear();
         mockDecorate.mockClear();
@@ -64,7 +64,7 @@ describe("jwt plugin", () => {
             if (name === "authenticate") authFn = fn;
         });
         jwtPlugin(fastify, {}, () => {});
-        const error = new Error("JWT verification failed"); // More specific error message
+        const error = new Error("JWT verification failed"); 
         const request = {
             jwtVerify: jest.fn().mockRejectedValue(error),
             log: {
@@ -112,7 +112,7 @@ describe("jwt plugin", () => {
 
     it("warns if JWT_SECRET is not set", () => {
         const originalSecret = process.env.JWT_SECRET;
-        delete process.env.JWT_SECRET; // Temporarily unset
+        delete process.env.JWT_SECRET; 
 
         const done = jest.fn();
         jwtPlugin(fastify, {}, done);

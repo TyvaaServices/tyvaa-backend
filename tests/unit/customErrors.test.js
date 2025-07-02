@@ -124,8 +124,8 @@ describe("Custom Errors", () => {
         });
     });
 
-    // Test Error.captureStackTrace branch if possible (usually handled by Node.js env)
-    // This is implicitly covered if error.stack is defined and is a string.
+    
+    
     it("AppError should have a stack trace", () => {
         const error = new AppError("Error with stack", 500);
         expect(typeof error.stack).toBe("string");

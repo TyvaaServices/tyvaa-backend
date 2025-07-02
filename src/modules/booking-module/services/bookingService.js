@@ -3,9 +3,33 @@ import createLogger from "./../../../utils/logger.js";
 
 const logger = createLogger("booking-service");
 
+/**
+ * @file Manages booking-related operations such as creating, retrieving, and canceling bookings.
+ * @typedef {import('../models/booking.js').BookingAttributes} BookingAttributes
+ * @typedef {import('../../user-module/models/user.js').UserAttributes} UserAttributes
+ * @typedef {import('../../ride-module/models/rideInstance.js').RideInstanceAttributes} RideInstanceAttributes
+ */
+
 const bookingService = {
+    /**
+     * Retrieves all bookings.
+     * @returns {Promise<BookingAttributes[]>} A list of all bookings.
+     */
     getAllBookings: async () => Booking.findAll(),
+
+    /**
+     * Retrieves a booking by its ID.
+     * @param {number} id - The ID of the booking to retrieve.
+     * @returns {Promise<BookingAttributes|null>} The booking object or null if not found.
+     */
     getBookingById: async (id) => Booking.findByPk(id),
+
+    /**
+     * Updates a booking's details.
+     * @param {number} id - The ID of the booking to update.
+     * @param {Partial<BookingAttributes>} data - The new data for the booking.
+     * @returns {Promise<BookingAttributes|null>} The updated booking object or null if not found.
+     */
     updateBooking: async (id, data) => {
         const booking = await Booking.findByPk(id);
         if (!booking) return null;
@@ -20,6 +44,16 @@ const bookingService = {
         logger.info("Booking deleted", booking.id);
         return true;
     },
+
+    /**
+     * Creates a new booking for a ride instance.
+     * @param {object} params - The booking parameters.
+     * @param {UserAttributes} params.user - The user making the booking.
+     * @param {RideInstanceAttributes} params.rideInstance - The ride instance being booked.
+     * @param {number} params.seatsToBook - The number of seats to book.
+     * @returns {Promise<BookingAttributes>} The newly created booking.
+     * @throws {Error} If user or ride instance is not provided, or if there are not enough seats.
+     */
     bookRide: async ({ user, rideInstance, seatsToBook }) => {
         if (!user) throw new Error("User instance required");
         if (!rideInstance) throw new Error("RideInstance required");
@@ -41,6 +75,12 @@ const bookingService = {
         logger.info("Ride booked", booking.id);
         return booking;
     },
+
+    /**
+     * Cancels a booking.
+     * @param {number} bookingId - The ID of the booking to cancel.
+     * @returns {Promise<boolean|null>} True if the booking was cancelled, null if not found or already cancelled.
+     */
     cancelBooking: async (bookingId) => {
         const booking = await Booking.findByPk(bookingId, {
             include: [RideInstance],

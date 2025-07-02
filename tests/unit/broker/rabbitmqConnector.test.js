@@ -7,7 +7,7 @@ import {
     jest,
 } from "@jest/globals";
 
-// Define mocks for amqplib connection and channel behavior
+
 const mockChannel = {
     assertQueue: jest.fn().mockResolvedValue({ queue: "test-queue" }),
     sendToQueue: jest.fn(),
@@ -25,10 +25,10 @@ const mockConnection = {
     close: jest.fn().mockResolvedValue(undefined),
     createChannel: jest.fn().mockResolvedValue(mockChannel),
     close: jest.fn().mockResolvedValue(undefined),
-    on: jest.fn().mockReturnThis(), // <--- Ensure 'on' is a jest.fn()
+    on: jest.fn().mockReturnThis(), 
     connection: {}, 
 };
-// This single mock function will be manipulated by tests.
+
 const mockAmqpConnect = jest.fn();
 
 jest.unstable_mockModule("amqplib", () => ({
@@ -36,7 +36,7 @@ jest.unstable_mockModule("amqplib", () => ({
     connect: mockAmqpConnect,
 }));
 
-// Mock logger
+
 const mockLogger = {
     info: jest.fn(),
     warn: jest.fn(),
@@ -53,26 +53,26 @@ let mockProcessExit;
 let rabbitmqConnector;
 let setTimeoutSpy;
 
-// Helper function to re-import the connector, allowing mocks to be effective
-// and resetting its internal state.
+
+
 async function importConnector() {
-    // jest.resetModules() should be called before this if a truly fresh import is needed for module-level state
+    
     const connectorModule = await import("../../../src/broker/rabbitmqConnector.js");
-    // Allow resetting internal state for tests if such a method is exposed (test-only)
-    // This would be for state not reset by jest.resetModules (e.g. if it's not module-scoped let/const)
-    // However, our `connection` and `channel` are module-scoped, so resetModules is key.
+    
+    
+    
     return connectorModule;
 }
 
 
 describe("RabbitMQ Connector", () => {
     beforeEach(async () => {
-        jest.resetModules(); // This is key to get a fresh module state for rabbitmqConnector.js
-        jest.clearAllMocks(); // Clears calls and instances of mocks
+        jest.resetModules(); 
+        jest.clearAllMocks(); 
 
-        process.env.RABBITMQ_URL = "amqp://testhost";
+        process.env.RABBITMQ_URL = "amqp:
 
-        // Default successful connection behavior for amqplib mocks
+        
         mockAmqpConnect.mockResolvedValue(mockConnection);
         mockConnection.createChannel.mockResolvedValue(mockChannel);
         mockConnection.on.mockReturnThis(); 
@@ -80,11 +80,11 @@ describe("RabbitMQ Connector", () => {
         mockChannel.close.mockResolvedValue(undefined);
         mockConnection.close.mockResolvedValue(undefined);
 
-        // Setup spies here, AFTER jest.clearAllMocks() and BEFORE module import
+        
         mockProcessOn = jest.spyOn(process, "on");
-        mockProcessExit = jest.spyOn(process, "exit").mockImplementation((code) => undefined); // Keep original mockImplementation
+        mockProcessExit = jest.spyOn(process, "exit").mockImplementation((code) => undefined); 
 
-        // Import the connector for each test to ensure clean state due to jest.resetModules()
+        
         rabbitmqConnector = await import("../../../src/broker/rabbitmqConnector.js");
 
 
@@ -101,23 +101,23 @@ describe("RabbitMQ Connector", () => {
     });
 
     afterEach(async () => {
-        // It's crucial to ensure the module's internal state (connection, channel)
-        // is cleaned up. jest.resetModules() in beforeEach is the primary way.
-        // Explicitly closing connection here helps if a test established one and didn't clean up.
+        
+        
+        
         if (rabbitmqConnector && typeof rabbitmqConnector.closeConnection === 'function') {
             await rabbitmqConnector.closeConnection().catch(() => {});
         }
 
         delete process.env.RABBITMQ_URL;
         if (setTimeoutSpy) setTimeoutSpy.mockRestore();
-        // mockAmqpConnect is cleared by clearAllMocks, but explicit reset can be safer for default behavior
+        
         mockAmqpConnect.mockReset();
     });
 
     describe("Configuration and URL Handling", () => {
         it("getChannel should throw if RABBITMQ_URL is not set", async () => {
             delete process.env.RABBITMQ_URL;
-            // Re-import connector after changing env var, as it's read at runtime by the functions
+            
             const freshConnector = await importConnector();
             await expect(freshConnector.getChannel()).rejects.toThrow(
                 "RabbitMQ URL is not configured. Please set RABBITMQ_URL environment variable."
@@ -134,8 +134,8 @@ describe("RabbitMQ Connector", () => {
 
         it("connectWithRetry (via getChannel) should reject if RABBITMQ_URL is not set", async () => {
             delete process.env.RABBITMQ_URL;
-            // jest.resetModules() in beforeEach will ensure the module re-evaluates.
-            // Then importConnector will get this fresh version.
+            
+            
             const freshConnector = await importConnector();
             await expect(freshConnector.getChannel()).rejects.toThrow(
                 "RabbitMQ URL is not configured. Please set RABBITMQ_URL environment variable."
@@ -148,7 +148,7 @@ describe("RabbitMQ Connector", () => {
     describe("getChannel", () => {
         it("should connect and return a channel if not connected", async () => {
             const channel = await rabbitmqConnector.getChannel();
-            expect(mockAmqpConnect).toHaveBeenCalledWith("amqp://testhost");
+            expect(mockAmqpConnect).toHaveBeenCalledWith("amqp:
             expect(mockConnection.createChannel).toHaveBeenCalled();
             expect(channel).toBe(mockChannel);
         });
@@ -170,7 +170,7 @@ describe("RabbitMQ Connector", () => {
                 .mockRejectedValueOnce(new Error("Connection failed 2"))
                 .mockResolvedValueOnce(mockConnection); 
 
-            // rabbitmqConnector is already fresh due to beforeEach
+            
             const channel = await rabbitmqConnector.getChannel();
 
             expect(mockAmqpConnect).toHaveBeenCalledTimes(3);
@@ -190,7 +190,7 @@ describe("RabbitMQ Connector", () => {
     describe("getConnection", () => {
         it("should connect and return a connection if not connected", async () => {
             const connection = await rabbitmqConnector.getConnection();
-            expect(mockAmqpConnect).toHaveBeenCalledWith("amqp://testhost");
+            expect(mockAmqpConnect).toHaveBeenCalledWith("amqp:
             expect(connection).toBe(mockConnection);
         });
 
@@ -211,7 +211,7 @@ describe("RabbitMQ Connector", () => {
         let channelCloseHandler;
 
         beforeEach(async () => {
-            // Capture the handlers by re-assigning them from the mock's calls
+            
             mockConnection.on.mockImplementation((event, handler) => {
                 if (event === "error") connectionErrorHandler = handler;
                 if (event === "close") connectionCloseHandler = handler;
@@ -222,7 +222,7 @@ describe("RabbitMQ Connector", () => {
                 if (event === "close") channelCloseHandler = handler;
                 return mockChannel;
             });
-            // Establish connection to ensure handlers are registered by the connector
+            
             await rabbitmqConnector.getChannel(); 
         });
 
@@ -231,11 +231,11 @@ describe("RabbitMQ Connector", () => {
             if(connectionErrorHandler) connectionErrorHandler(err);
             expect(mockLogger.error).toHaveBeenCalledWith("RabbitMQ connection error:", err);
             
-            // Verify state by trying to get channel again - should attempt to reconnect
-            mockAmqpConnect.mockClear(); // Clear previous connect call
-            mockAmqpConnect.mockResolvedValue(mockConnection); // Make next connect succeed
+            
+            mockAmqpConnect.mockClear(); 
+            mockAmqpConnect.mockResolvedValue(mockConnection); 
             await rabbitmqConnector.getChannel();
-            expect(mockAmqpConnect).toHaveBeenCalledTimes(1); // Proves it tried to reconnect
+            expect(mockAmqpConnect).toHaveBeenCalledTimes(1); 
         });
 
         it("should log warning and nullify connection/channel on connection 'close' event", async () => {
@@ -252,14 +252,14 @@ describe("RabbitMQ Connector", () => {
             if(channelErrorHandler) channelErrorHandler(err);
             expect(mockLogger.error).toHaveBeenCalledWith("RabbitMQ channel error:", err);
             
-            // Verify state by trying to get channel again - should attempt to recreate channel (or full connect)
-            mockConnection.createChannel.mockClear(); // Clear previous createChannel call
-            mockConnection.createChannel.mockResolvedValue(mockChannel); // Make next createChannel succeed
+            
+            mockConnection.createChannel.mockClear(); 
+            mockConnection.createChannel.mockResolvedValue(mockChannel); 
             await rabbitmqConnector.getChannel();
-            // Depending on logic, it might recreate channel or full connection.
-            // If full connection:
-            // expect(mockAmqpConnect).toHaveBeenCalledTimes(1);
-            // If just channel:
+            
+            
+            
+            
             expect(mockConnection.createChannel).toHaveBeenCalledTimes(1);
         });
 
@@ -289,7 +289,7 @@ describe("RabbitMQ Connector", () => {
         });
 
         it("should handle closing when not connected without error", async () => {
-            // Connector is fresh from beforeEach, no connection made in this test path yet
+            
             await expect(rabbitmqConnector.closeConnection()).resolves.toBeUndefined();
             expect(mockChannel.close).not.toHaveBeenCalled();
             expect(mockConnection.close).not.toHaveBeenCalled();
@@ -319,17 +319,17 @@ describe("RabbitMQ Connector", () => {
     describe("isConnecting flag / Concurrent connections", () => {
         it("should wait for existing connection attempt if isConnecting is true", async () => {
             let firstCallResolve;
-            mockAmqpConnect.mockImplementationOnce(() => { // Only for the first actual connection attempt
+            mockAmqpConnect.mockImplementationOnce(() => { 
                 return new Promise(resolve => { firstCallResolve = () => resolve(mockConnection); });
             });
             
-            // rabbitmqConnector is fresh from beforeEach
-            const firstPromise = rabbitmqConnector.getChannel(); // This will use the mock above and pause
-            const secondPromise = rabbitmqConnector.getChannel(); // This should hit the isConnecting logic
+            
+            const firstPromise = rabbitmqConnector.getChannel(); 
+            const secondPromise = rabbitmqConnector.getChannel(); 
 
             expect(mockLogger.info).toHaveBeenCalledWith("Connection attempt already in progress, awaiting existing attempt.");
             
-            if(firstCallResolve) firstCallResolve(); // Resolve the first pending connection
+            if(firstCallResolve) firstCallResolve(); 
 
             const [channel1, channel2] = await Promise.all([firstPromise, secondPromise]);
 
@@ -339,73 +339,73 @@ describe("RabbitMQ Connector", () => {
         });
 
         it("should reject waiting connections if the primary connection attempt fails after retries", async () => {
-            // Make the first connection attempt fail consistently after all retries
+            
             mockAmqpConnect.mockRejectedValue(new Error("Persistent connection failure"));
         
-            // Start the first connection attempt
-            const firstPromise = rabbitmqConnector.getChannel().catch(e => e); // Catch expected error
+            
+            const firstPromise = rabbitmqConnector.getChannel().catch(e => e); 
         
-            // Start the second connection attempt while the first is pending retries
-            // It should wait for the first one to complete (fail in this case)
+            
+            
             const secondPromise = rabbitmqConnector.getChannel().catch(e => e);
         
-            // Wait for both promises to settle
+            
             const [result1, result2] = await Promise.all([firstPromise, secondPromise]);
         
-            // Both should be rejected with an error
+            
             expect(result1).toBeInstanceOf(Error);
-            expect(result1.message).toBe("Persistent connection failure"); // From the max retries of 1st attempt
+            expect(result1.message).toBe("Persistent connection failure"); 
             
             expect(result2).toBeInstanceOf(Error);
-            // This is the key: the second attempt should reject because the first one failed and didn't set up a connection
-            expect(result2.message).toBe("Connection attempt finished but failed."); // This covers line 43
             
-            // The first getChannel() makes MAX_RETRIES (10) calls to amqp.connect because it persistently fails.
-            // The second getChannel() call initially waits due to `isConnecting` being true.
-            // Once the first attempt fully fails (after 10 tries) and `isConnecting` becomes false,
-            // the `checkConnection` for the second attempt will find no valid connection/channel
-            // and reject without making new calls to `amqp.connect`.
+            expect(result2.message).toBe("Connection attempt finished but failed."); 
+            
+            
+            
+            
+            
+            
             expect(mockAmqpConnect).toHaveBeenCalledTimes(10); 
             expect(mockLogger.info).toHaveBeenCalledWith("Connection attempt already in progress, awaiting existing attempt.");
         });
     });
 
     describe("Signal Handlers", () => {
-        // Note: process.on is called at module load time.
-        // jest.resetModules() in beforeEach ensures the module is reloaded,
-        // so process.on will be called again for each test in this describe block (if not scoped).
-        // The spies mockProcessOn and mockProcessExit are active.
+        
+        
+        
+        
 
         it("should register SIGINT and SIGTERM handlers upon module load", () => {
-            // The import in beforeEach (which calls jest.resetModules() and then imports)
-            // should cause the module-level process.on calls to occur.
-        // The spy mockProcessOn (now set up in beforeEach) should capture these.
+            
+            
+        
             expect(mockProcessOn).toHaveBeenCalledWith("SIGINT", expect.any(Function));
             expect(mockProcessOn).toHaveBeenCalledWith("SIGTERM", expect.any(Function));
         });
         
         async function testSignalHandler(signalName) {
-            // The module is imported in beforeEach, so handlers should be registered.
-            // Find the handler function from the spy's calls.
+            
+            
             const call = mockProcessOn.mock.calls.find(c => c[0] === signalName);
             expect(call).toBeDefined(); 
             const handler = call[1]; 
 
-            // Establish an active connection so closeConnection has effects to test
+            
             mockAmqpConnect.mockResolvedValue(mockConnection); 
             mockConnection.createChannel.mockResolvedValue(mockChannel);
-            await rabbitmqConnector.getChannel(); // Establish a connection
+            await rabbitmqConnector.getChannel(); 
 
-            // Clear mocks after setup and before handler invocation for precise assertions
+            
             mockConnection.close.mockClear();
             mockChannel.close.mockClear();
             mockProcessExit.mockClear();
-            mockLogger.info.mockClear(); // Clear for specific log check related to signal handling
+            mockLogger.info.mockClear(); 
 
             await handler(); 
 
             expect(mockLogger.info).toHaveBeenCalledWith(`${signalName} received, closing RabbitMQ connection...`);
-            // Check the effects of closeConnection being called
+            
             expect(mockConnection.close).toHaveBeenCalledTimes(1); 
             expect(mockChannel.close).toHaveBeenCalledTimes(1);   
             expect(mockProcessExit).toHaveBeenCalledWith(0);

@@ -53,14 +53,14 @@ beforeAll(async () => {
 describe("userController", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        // Reset all userFacade mocks to default resolved values
+        
         Object.keys(mockUserFacade).forEach((key) => {
             mockUserFacade[key].mockReset();
             mockUserFacade[key].mockResolvedValue(undefined);
         });
     });
-    // Add tests for each controller method here
-    // Example for getAllDriverApplications:
+    
+    
     describe("getAllDriverApplications", () => {
         it("should return applications on success", async () => {
             const applications = [{ id: 1 }, { id: 2 }];
@@ -178,7 +178,7 @@ describe("userController", () => {
     describe("getUserById", () => {
         it("should return user on success", async () => {
             const user = { id: 1 };
-            mockUserFacade.getUserById.mockResolvedValueOnce(user); // Ensure mock returns user
+            mockUserFacade.getUserById.mockResolvedValueOnce(user); 
             const res = reply();
             await controller.getUserById({ params: { id: "1" } }, res);
             expect(res.send).toHaveBeenCalledWith({
@@ -187,7 +187,7 @@ describe("userController", () => {
             });
         });
         it("should return 404 if not found", async () => {
-            mockUserFacade.getUserById.mockResolvedValueOnce(null); // Ensure mock returns null
+            mockUserFacade.getUserById.mockResolvedValueOnce(null); 
             const res = reply();
             try {
                 await controller.getUserById({ params: { id: "1" } }, res);
@@ -196,7 +196,7 @@ describe("userController", () => {
             }
         });
         it("should handle errors", async () => {
-            mockUserFacade.getUserById.mockRejectedValueOnce(new Error("fail")); // Ensure mock throws error
+            mockUserFacade.getUserById.mockRejectedValueOnce(new Error("fail")); 
             const res = reply();
             try {
                 await controller.getUserById({ params: { id: "1" } }, res);
@@ -286,7 +286,7 @@ describe("userController", () => {
                 phoneNumber: "123",
                 email: "foo@tyvaa.live",
                 isDriver: false,
-                getRoles: jest.fn(() => []), // Mock getRoles method
+                getRoles: jest.fn(() => []), 
             };
             mockUserFacade.login.mockResolvedValueOnce(user);
             const res = reply();
@@ -415,7 +415,7 @@ describe("userController", () => {
         it("should update user and return result", async () => {
             const user = { id: 1 };
             mockUserFacade.updateUser.mockResolvedValueOnce(user);
-            // Simulate multipart parts
+            
             const part1 = { fieldname: "name", value: "foo", file: false };
             const part2 = {
                 fieldname: "profile_image",

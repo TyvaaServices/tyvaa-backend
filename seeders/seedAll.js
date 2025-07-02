@@ -58,7 +58,7 @@ async function seed() {
         },
     ]);
 
-    // Assign explicit roles to users
+    
     const passagerRole = roles.find((r) => r.name === "PASSAGER");
     const chauffeurRole = roles.find((r) => r.name === "CHAUFFEUR");
     const superviseurRole = roles.find((r) => r.name === "SUPERVISEUR");
@@ -69,7 +69,7 @@ async function seed() {
     if (users[2] && superviseurRole) await users[2].addRole(superviseurRole);
     if (users[3] && adminRole) await users[3].addRole(adminRole);
 
-    // Fetch users with their roles for profile creation
+    
     const usersWithRoles = await Promise.all(
         users.map(async (user) => {
             const userRoles = await user.getRoles();
@@ -77,7 +77,7 @@ async function seed() {
         })
     );
 
-    // Create profiles based on roles
+    
     const passengerProfiles = await Promise.all(
         usersWithRoles.map(({ user, roles }) =>
             roles.includes("PASSAGER")
@@ -106,11 +106,11 @@ async function seed() {
         { actionType: "logout", codeAction: "O" },
     ]);
 
-    // Filter out nulls for valid profiles
+    
     const validDriverProfiles = driverProfiles.filter(Boolean);
     const validPassengerProfiles = passengerProfiles.filter(Boolean);
 
-    // Use only valid driver profiles for ride creation
+    
     const rideModels = await RideModel.bulkCreate(
         [
             {
@@ -140,7 +140,7 @@ async function seed() {
         ].filter((ride) => ride.driverId)
     );
 
-    // Use only valid passenger profiles for booking creation
+    
     const rideInstances = await RideInstance.bulkCreate(
         [
             {
@@ -160,29 +160,29 @@ async function seed() {
         ].filter((instance) => instance.rideId)
     );
 
-    // const bookings = await Booking.bulkCreate(
-    //     [
-    //         {
-    //             userId: validPassengerProfiles[1]?.id,
-    //             rideInstanceId: rideInstances[0]?.id,
-    //             seatsBooked: 1,
-    //             status: "booked",
-    //         },
-    //     ].filter((booking) => booking.userId && booking.rideInstanceId)
-    // );
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
-    // await Payment.bulkCreate([
-    //   {
-    //     bookingId: bookings[0].id,
-    //     phone: users[1].phoneNumber,
-    //     amount: 20.0,
-    //     status: 'completed',
-    //   },
-    // ]);
+    
+    
+    
+    
+    
+    
+    
+    
 
-    // Seed AuditAction types
+    
 
-    // Only create DriverApplications for users with a PassengerProfile
+    
     await Promise.all(
         validPassengerProfiles.map((profile) =>
             DriverApplication.create({
@@ -195,7 +195,7 @@ async function seed() {
         )
     );
 
-    // Seed audit actions
+    
     await AuditAction.bulkCreate([
         { actionType: "create", codeAction: "CREATE" },
         { actionType: "update", codeAction: "UPDATE" },
@@ -209,10 +209,10 @@ async function seed() {
 
 seed()
     .then(() => {
-        // console.log("Seeding successful!");
+        
         process.exit(0);
     })
     .catch((_error) => {
-        // console.error("Seeding failed:", _error);
+        
         process.exit(1);
     });

@@ -50,6 +50,5 @@ export {
     AuditLog,
     PassengerProfile,
     DriverProfile,
-    Role, // Export Role
-    // Permission, // If needed later
+    Role,
 };

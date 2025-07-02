@@ -22,33 +22,33 @@ const mockBrokerChannel = {
 const mockBrokerConnection = {
     on: jest.fn(),
     close: jest.fn().mockResolvedValue(undefined),
-    connection: {}, // Ensure this object exists for the check in rabbitmqConnector
+    connection: {}, 
 };
 const mockGetChannel = jest.fn().mockResolvedValue(mockBrokerChannel);
 const mockGetConnection = jest.fn().mockResolvedValue(mockBrokerConnection);
 const mockCloseConnection = jest.fn().mockResolvedValue(undefined);
 
-// Corrected path to use the alias defined in jsconfig.json
+
 jest.unstable_mockModule("#broker/rabbitmqConnector.js", () => ({
     getChannel: mockGetChannel,
     getConnection: mockGetConnection,
     closeConnection: mockCloseConnection,
 }));
 
-// Mock logger
+
 const mockLogger = {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    debug: jest.fn(), // Added debug for completeness if used
+    debug: jest.fn(), 
 };
 jest.unstable_mockModule("#utils/logger.js", () => ({
     default: jest.fn(() => mockLogger),
 }));
 
-// Mock amqplib to prevent real RabbitMQ connections
-// This mock might be less critical if #broker/rabbitmqConnector.js is fully mocked,
-// but good to have for direct BrokerClass instantiation if that's ever done without full connector mock.
+
+
+
 jest.unstable_mockModule("amqplib", () => ({
     connect: jest.fn().mockResolvedValue({
         createChannel: jest.fn().mockResolvedValue({
@@ -70,17 +70,17 @@ jest.unstable_mockModule("amqplib", () => ({
     }),
 }));
 
-// Dynamically import the module to be tested
+
 let BrokerModule;
-let broker; // This will be the primary instance from getInstance()
-let BrokerClass; // To allow direct instantiation for some tests if needed
+let broker; 
+let BrokerClass; 
 
 describe("Broker (RabbitMQ)", () => {
     beforeEach(async () => {
-        jest.resetModules(); // Resets module cache
-        jest.clearAllMocks(); // Clears all mock function calls and instances
+        jest.resetModules(); 
+        jest.clearAllMocks(); 
 
-        // Ensure rabbitmqConnector mocks are reset to default behaviors
+        
         mockGetChannel.mockResolvedValue(mockBrokerChannel);
         mockGetConnection.mockResolvedValue(mockBrokerConnection);
         mockCloseConnection.mockResolvedValue(undefined);
@@ -99,12 +99,12 @@ describe("Broker (RabbitMQ)", () => {
 
 
         BrokerModule = await import("#broker/broker.js");
-        // Correctly access BrokerClass from the default export's property
+        
         BrokerClass = BrokerModule.default.BrokerClass; 
 
-        // jest.resetModules() in the main beforeEach ensures brokerInstance inside the module is initially null.
-        // The first call to getInstance() will create the singleton.
-        broker = BrokerModule.default.getInstance({ testConfig: true }); // This is now the singleton for this test file run.
+        
+        
+        broker = BrokerModule.default.getInstance({ testConfig: true }); 
 
         jest.spyOn(broker, "emit"); 
     });
@@ -116,15 +116,15 @@ describe("Broker (RabbitMQ)", () => {
          if (broker && broker.emit && broker.emit.mockRestore) {
             broker.emit.mockRestore();
         }
-        // No need to manually reset BrokerModule.default.brokerInstance here, 
-        // jest.resetModules() in the main beforeEach handles it for the next test file.
+        
+        
     });
 
     describe("Constructor and Singleton", () => {
-        // For these tests, we instantiate BrokerClass directly, not via getInstance,
-        // to separate testing of constructor logic from singleton logic.
+        
+        
         it("BrokerClass should initialize with default config if none provided", () => {
-            const newBroker = new BrokerClass(); // Direct instantiation
+            const newBroker = new BrokerClass(); 
             expect(newBroker.config).toEqual({});
             expect(newBroker.channel).toBeNull();
             expect(newBroker.connection).toBeNull();
@@ -133,31 +133,31 @@ describe("Broker (RabbitMQ)", () => {
 
         it("BrokerClass should use provided config", () => {
             const config = { customSetting: "value" };
-            const newBroker = new BrokerClass(config); // Direct instantiation
+            const newBroker = new BrokerClass(config); 
             expect(newBroker.config).toEqual(config);
         });
 
-        // Tests for getInstance behavior (singleton)
-        // These rely on the `broker` instance created in the outer beforeEach,
-        // which is the result of the first getInstance call after module reset.
+        
+        
+        
         it("getInstance should return the same instance (already created in beforeEach)", () => {
-            const instance1 = broker; // This is the instance from beforeEach
-            const instance2 = BrokerModule.default.getInstance({ new: "config" }); // Config is ignored
+            const instance1 = broker; 
+            const instance2 = BrokerModule.default.getInstance({ new: "config" }); 
             expect(instance1).toBe(instance2);
-            // It should have the config used in beforeEach
+            
             expect(instance1.config).toEqual({ testConfig: true }); 
         });
 
         it("getInstance (called first time in a fresh module context) should create a new instance with config", async () => {
-            // This test needs a truly fresh module context to test initial creation.
-            jest.resetModules(); // Reset modules specifically for this test
+            
+            jest.resetModules(); 
             const FreshBrokerModule = await import("#broker/broker.js");
             const config = { specific: "setting" };
             const instance = FreshBrokerModule.default.getInstance(config);
             
             expect(instance).toBeInstanceOf(FreshBrokerModule.default.BrokerClass);
             expect(instance.config).toEqual(config);
-            // Clean up this instance if it's not cleaned by global afterEach logic
+            
             if (instance && typeof instance.destroy === 'function') {
                 await instance.destroy();
             }
@@ -178,32 +178,32 @@ describe("Broker (RabbitMQ)", () => {
         });
 
         it("should emit 'error' and nullify channel when connection emits 'error'", async () => {
-            // Add a temporary error listener to the broker for this test to catch the emitted error
-            // and prevent Jest from flagging it as an unhandled rejection/error.
+            
+            
             const tempErrorListener = jest.fn();
             broker.on('error', tempErrorListener);
 
-            await broker.connect(); // Establish connection and setup listeners
+            await broker.connect(); 
 
             const errorHandler = mockBrokerConnection.on.mock.calls.find(call => call[0] === 'error')[1];
             const testError = new Error("RabbitMQ connection died");
             
-            errorHandler(testError); // Simulate connection emitting an error
+            errorHandler(testError); 
 
             expect(broker.emit).toHaveBeenCalledWith("error", testError);
-            expect(tempErrorListener).toHaveBeenCalledWith(testError); // Verify our listener caught it
+            expect(tempErrorListener).toHaveBeenCalledWith(testError); 
             expect(broker.getChannelInstance()).toBeNull();
             expect(mockLogger.error).toHaveBeenCalledWith("Broker: RabbitMQ connection error:", "RabbitMQ connection died");
 
-            broker.removeListener('error', tempErrorListener); // Clean up
+            broker.removeListener('error', tempErrorListener); 
         });
 
         it("should emit 'close' and nullify channel when connection emits 'close'", async () => {
-            await broker.connect(); // Establish connection and setup listeners
+            await broker.connect(); 
 
-            // Find the close handler passed to connection.on('close', handler)
+            
             const closeHandler = mockBrokerConnection.on.mock.calls.find(call => call[0] === 'close')[1];
-            closeHandler(); // Simulate connection emitting a close event
+            closeHandler(); 
 
             expect(broker.emit).toHaveBeenCalledWith("close");
             expect(broker.getChannelInstance()).toBeNull();
@@ -221,7 +221,7 @@ describe("Broker (RabbitMQ)", () => {
 
          it("should emit error if connect fails (getConnection rejects)", async () => {
             mockGetConnection.mockRejectedValueOnce(new Error("Connection failed to get actual connection"));
-            // mockGetChannel might still resolve, but getConnection fails
+            
             await expect(broker.connect()).rejects.toThrow("Connection failed to get actual connection");
             expect(broker.emit).toHaveBeenCalledWith("error", expect.any(Error));
         });
@@ -230,7 +230,7 @@ describe("Broker (RabbitMQ)", () => {
 
     describe("assertQueue", () => {
         it("should call channel.assertQueue", async () => {
-            await broker.connect(); // Ensure channel is set
+            await broker.connect(); 
             await broker.assertQueue("test-queue", { durable: false });
             expect(mockBrokerChannel.assertQueue).toHaveBeenCalledWith(
                 "test-queue",
@@ -239,9 +239,9 @@ describe("Broker (RabbitMQ)", () => {
         });
 
         it("should attempt to connect if channel not available", async () => {
-            // broker.channel is null initially
+            
             await broker.assertQueue("test-queue");
-            expect(mockGetChannel).toHaveBeenCalled(); // connect was called
+            expect(mockGetChannel).toHaveBeenCalled(); 
             expect(mockBrokerChannel.assertQueue).toHaveBeenCalledWith(
                 "test-queue",
                 { durable: true }
@@ -249,22 +249,22 @@ describe("Broker (RabbitMQ)", () => {
         });
 
         it("should emit error and rethrow if assertQueue fails", async () => {
-            // broker.channel is null initially, so assertQueue will call connect()
+            
             const queueError = new Error("Failed to assert");
-            // Ensure the channel's assertQueue method (which will be called after internal connect) fails
+            
             mockBrokerChannel.assertQueue.mockRejectedValueOnce(queueError); 
             
             await expect(broker.assertQueue("fail-queue")).rejects.toThrow("Failed to assert"); 
             expect(broker.emit).toHaveBeenCalledWith("error", queueError); 
             
-            // Reset mock for subsequent tests if it's stateful, though mockRejectedValueOnce is usually self-contained.
-            // mockBrokerChannel.assertQueue.mockResolvedValue(undefined); // Or whatever its default success is
+            
+            
         });
     });
 
     describe("Publishing", () => {
         beforeEach(async () => {
-            await broker.connect(); // Ensure channel is available
+            await broker.connect(); 
         });
 
         it("sendToQueue should assert queue and send message", async () => {
@@ -309,8 +309,8 @@ describe("Broker (RabbitMQ)", () => {
             const message = { data: "direct" };
             await broker.publish(null, queueName, message);
             expect(mockBrokerChannel.publish).toHaveBeenCalledWith(
-                "", // Default exchange
-                queueName, // Routing key is queue name
+                "", 
+                queueName, 
                 Buffer.from(JSON.stringify(message)),
                 { persistent: true }
             );
@@ -320,26 +320,26 @@ describe("Broker (RabbitMQ)", () => {
             await broker.destroy();
             broker.channel = null;
 
-            // Configure rabbitmqConnector.getChannel (mockGetChannel) to fail for this specific test scenario
+            
             mockGetChannel.mockRejectedValueOnce(
                 new Error("Simulated underlying connection failure")
             );
 
-            // sendToQueue will call this.connect(), which will fail due to mockGetChannel rejecting.
-            // The error from this.connect() (which is "Simulated underlying connection failure") will propagate.
+            
+            
             await expect(broker.sendToQueue("q", {})).rejects.toThrow(
                 "Simulated underlying connection failure"
             );
-            // Ensure mockGetChannel is reset for subsequent tests if needed, though beforeEach should handle it.
-            mockGetChannel.mockResolvedValue(mockBrokerChannel); // Reset to default behavior
+            
+            mockGetChannel.mockResolvedValue(mockBrokerChannel); 
         });
 
         it("publish should throw if connect resolves but channel is still null (highly defensive)", async () => {
-            // This test needs the broker to be in a state where channel is not set before calling publish
-            const freshBroker = new BrokerClass(); // Use a fresh instance, not the one from global beforeEach
+            
+            const freshBroker = new BrokerClass(); 
             jest.spyOn(freshBroker, "emit");
             
-            mockGetChannel.mockResolvedValueOnce(null); // Simulate getChannel resolving to null
+            mockGetChannel.mockResolvedValueOnce(null); 
 
             await expect(freshBroker.publish("exch", "rk", {})).rejects.toThrow(
                 "Broker not connected after attempting to connect. Cannot publish message."
@@ -347,8 +347,8 @@ describe("Broker (RabbitMQ)", () => {
             expect(freshBroker.emit).toHaveBeenCalledWith("error", expect.any(Error));
             
             if (freshBroker.emit.mockRestore) freshBroker.emit.mockRestore();
-            await freshBroker.destroy(); // Clean up this specific instance
-             // Reset mock for other tests that might use the global broker instance
+            await freshBroker.destroy(); 
+             
             mockGetChannel.mockResolvedValue(mockBrokerChannel);
         });
         
@@ -394,7 +394,7 @@ describe("Broker (RabbitMQ)", () => {
                 consumerTag,
             });
 
-            // Simulate a message
+            
             const consumeCallback = mockBrokerChannel.consume.mock.calls[0][1];
             const mockMsg = {
                 content: Buffer.from(JSON.stringify({ data: "hello" })),
@@ -425,7 +425,7 @@ describe("Broker (RabbitMQ)", () => {
 
         it("unsubscribe should cancel consumer", async () => {
             const consumerTag = "mock-consumer-tag";
-            broker.consumers.set(consumerTag, "some-queue"); // Manually add for test
+            broker.consumers.set(consumerTag, "some-queue"); 
 
             await broker.unsubscribe(consumerTag);
             expect(mockBrokerChannel.cancel).toHaveBeenCalledWith(consumerTag);
@@ -518,18 +518,18 @@ describe("Broker (RabbitMQ)", () => {
 
     describe("Destroy", () => {
         it("should close connection and clear listeners", async () => {
-            await broker.connect(); // ensure connection exists
-            // Simulate an active consumer
+            await broker.connect(); 
+            
             const consumerTag = "test-destroy-consumer";
             broker.consumers.set(consumerTag, "destroy-queue");
-            mockBrokerChannel.cancel.mockClear(); // Clear any previous cancel calls
+            mockBrokerChannel.cancel.mockClear(); 
 
             await broker.destroy();
 
-            expect(mockBrokerChannel.cancel).toHaveBeenCalledWith(consumerTag); // Check if unsubscribe was called for active consumers
+            expect(mockBrokerChannel.cancel).toHaveBeenCalledWith(consumerTag); 
             expect(mockCloseConnection).toHaveBeenCalled();
             expect(broker.getChannelInstance()).toBeNull();
-            expect(broker.listenerCount("connected")).toBe(0); // Example of checking listeners
+            expect(broker.listenerCount("connected")).toBe(0); 
         });
     });
 });

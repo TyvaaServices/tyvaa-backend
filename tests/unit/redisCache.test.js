@@ -11,10 +11,10 @@ jest.unstable_mockModule("@upstash/redis", () => ({
     Redis: { fromEnv: mockFromEnv },
 }));
 
-// Mock the logger
+
 const mockLoggerError = jest.fn();
 const mockLoggerWarn = jest.fn();
-const mockLoggerInfo = jest.fn(); // Although info might not be checked as much here
+const mockLoggerInfo = jest.fn(); 
 jest.unstable_mockModule("../../src/utils/logger.js", () => ({
     __esModule: true,
     default: jest.fn(() => ({
@@ -28,14 +28,14 @@ let RedisCacheService, redisCacheInstanceDefaultExport;
 
 describe("RedisCacheService", () => {
     beforeEach(async () => {
-        jest.clearAllMocks(); // Clear all mocks: redis, logger etc.
+        jest.clearAllMocks(); 
 
         jest.resetModules();
 
         mockRedis.get.mockReset();
         mockRedis.set.mockReset();
         mockRedis.del.mockReset();
-        mockFromEnv.mockReset().mockReturnValue(mockRedis); // Ensure it returns the mockRedis by default
+        mockFromEnv.mockReset().mockReturnValue(mockRedis); 
 
         jest.unstable_mockModule("@upstash/redis", () => ({
             Redis: { fromEnv: mockFromEnv },
@@ -54,8 +54,8 @@ describe("RedisCacheService", () => {
         }));
 
         const mod = await import("../../src/utils/redisCache.js");
-        RedisCacheService = mod.RedisCache; // The class
-        redisCacheInstanceDefaultExport = mod.default; // The singleton instance created on module load
+        RedisCacheService = mod.RedisCache; 
+        redisCacheInstanceDefaultExport = mod.default; 
     });
 
     it("enforces singleton through direct instantiation attempt after getInstance", () => {
@@ -70,12 +70,12 @@ describe("RedisCacheService", () => {
         const instance1 = RedisCacheService.getInstance();
         const instance2 = RedisCacheService.getInstance();
         expect(instance1).toBe(instance2);
-        expect(mockFromEnv).toHaveBeenCalledTimes(1); // fromEnv should only be called once for the singleton
+        expect(mockFromEnv).toHaveBeenCalledTimes(1); 
     });
 
     describe("Constructor Logic", () => {
         it("should log an error and have a null redisClient if Redis.fromEnv throws", async () => {
-            jest.resetModules(); // Ensure clean slate for this specific module loading test
+            jest.resetModules(); 
             const fromEnvError = new Error("Failed to init from env");
 
             jest.unstable_mockModule("@upstash/redis", () => ({
@@ -111,7 +111,7 @@ describe("RedisCacheService", () => {
             expect(await freshInstance.del("key")).toBe(0);
             expect(
                 localMockLoggerError.mock.calls.length
-            ).toBeGreaterThanOrEqual(1); // At least the constructor error
+            ).toBeGreaterThanOrEqual(1); 
         });
     });
 

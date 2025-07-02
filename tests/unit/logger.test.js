@@ -75,7 +75,7 @@ describe("createLogger", () => {
     }
 
     it("should create logs directory if it does not exist", async () => {
-        mockFsExistsSync.mockReturnValue(false); // Simulate directory does not exist
+        mockFsExistsSync.mockReturnValue(false); 
         const createLogger = await setupMocksAndImportLogger();
         createLogger("any-service");
         const expectedLogDir = path.resolve(__dirname, "..", "..", "logs");
@@ -86,7 +86,7 @@ describe("createLogger", () => {
     });
 
     it("should not attempt to create logs directory if it exists", async () => {
-        mockFsExistsSync.mockReturnValue(true); // Simulate directory exists
+        mockFsExistsSync.mockReturnValue(true); 
         const createLogger = await setupMocksAndImportLogger();
         createLogger("any-service");
         expect(mockFsMkdirSync).not.toHaveBeenCalled();
@@ -95,7 +95,7 @@ describe("createLogger", () => {
     it("should configure pino with file destination in production", async () => {
         process.env.NODE_ENV = "production";
         process.env.LOG_LEVEL = "info";
-        mockFsExistsSync.mockReturnValue(true); // Assume logs dir exists
+        mockFsExistsSync.mockReturnValue(true); 
 
         const createLogger = await setupMocksAndImportLogger();
         const logger = createLogger("prod-service");
