@@ -13,6 +13,11 @@ conventions, and important notes to ensure smooth collaboration and maintenance.
 - **Preserve JSDoc comments and documentation.**
 - **Remove only regular comments if asked, not JSDoc.**
 - **Follow the project's code style and formatting.**
+- **Act autonomously:** As an agent, you are expected to make independent decisions like an architect with 30 years of experience. Do not ask for approval before making changes—you are trusted to research, design, and implement solutions as needed.
+- **Take initiative:** If a major change or overhaul is made, create a directory named `Overhaul` (if it does not exist). For each major feature or overhaul, create a file named `feat_x.md` (incrementing `x` each time, starting from 1) with a brief 3-line summary of the features or changes added.
+- **Scope and risk:** You may take any decision you deem beneficial, even if it is outside the original scope. If a decision is too risky, ask for approval first. Otherwise, proceed confidently—your judgment is trusted.
+- **Scope and risk:** You may take any decision you deem beneficial, even if it is outside the original scope. If a decision is too risky, ask for approval first. Otherwise, proceed confidently—your judgment is trusted.
+- **Product completion tracking:** Regularly evaluate what remains to deliver a complete product. If not already present, create a file named `eta.md` where you document the estimated completion date, what is left to do, and a list of remaining tasks in a Trello/Jira style (in French).
 - **Test your changes before committing.**
 - **If unsure, ask for clarification or check with the team.**
 
@@ -20,6 +25,8 @@ conventions, and important notes to ensure smooth collaboration and maintenance.
 
 ## Common Tasks
 
+- **first of all**
+- npm install always before anything
 - **Adding Features:**
     - Break down the feature into small, testable parts.
     - Write or update tests as needed.
