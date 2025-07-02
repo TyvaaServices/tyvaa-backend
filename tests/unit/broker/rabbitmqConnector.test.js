@@ -59,7 +59,8 @@ async function importConnector() {
 
 describe("RabbitMQ Connector", () => {
     beforeEach(async () => {
-        jest.resetModules();jest.clearAllMocks();
+        jest.resetModules();
+        jest.clearAllMocks();
 
         process.env.RABBITMQ_URL = "amqp://testhost";
 
@@ -69,11 +70,11 @@ describe("RabbitMQ Connector", () => {
         mockChannel.on.mockReturnThis();
         mockChannel.close.mockResolvedValue(undefined);
         mockConnection.close.mockResolvedValue(undefined);
-mockProcessOn = jest.spyOn(process, "on");
+        mockProcessOn = jest.spyOn(process, "on");
         mockProcessExit = jest
             .spyOn(process, "exit")
             .mockImplementation((code) => undefined);
-            rabbitmqConnector = await import(
+        rabbitmqConnector = await import(
             "../../../src/broker/rabbitmqConnector.js"
         );
 
@@ -90,7 +91,7 @@ mockProcessOn = jest.spyOn(process, "on");
     });
 
     afterEach(async () => {
-       if (
+        if (
             rabbitmqConnector &&
             typeof rabbitmqConnector.closeConnection === "function"
         ) {
@@ -220,7 +221,8 @@ mockProcessOn = jest.spyOn(process, "on");
             );
 
             mockAmqpConnect.mockClear();
-            mockAmqpConnect.mockResolvedValue(mockConnection);await rabbitmqConnector.getChannel();
+            mockAmqpConnect.mockResolvedValue(mockConnection);
+            await rabbitmqConnector.getChannel();
             expect(mockAmqpConnect).toHaveBeenCalledTimes(1);
         });
 
@@ -243,7 +245,9 @@ mockProcessOn = jest.spyOn(process, "on");
                 err
             );
 
-            mockConnection.createChannel.mockClear();mockConnection.createChannel.mockResolvedValue(mockChannel);await rabbitmqConnector.getChannel();
+            mockConnection.createChannel.mockClear();
+            mockConnection.createChannel.mockResolvedValue(mockChannel);
+            await rabbitmqConnector.getChannel();
             expect(mockConnection.createChannel).toHaveBeenCalledTimes(1);
         });
 
@@ -321,11 +325,14 @@ mockProcessOn = jest.spyOn(process, "on");
                 });
             });
 
-            const firstPromise = rabbitmqConnector.getChannel();const secondPromise = rabbitmqConnector.getChannel();expect(mockLogger.info).toHaveBeenCalledWith(
+            const firstPromise = rabbitmqConnector.getChannel();
+            const secondPromise = rabbitmqConnector.getChannel();
+            expect(mockLogger.info).toHaveBeenCalledWith(
                 "Connection attempt already in progress, awaiting existing attempt."
             );
 
-            if (firstCallResolve) firstCallResolve();const [channel1, channel2] = await Promise.all([
+            if (firstCallResolve) firstCallResolve();
+            const [channel1, channel2] = await Promise.all([
                 firstPromise,
                 secondPromise,
             ]);
@@ -340,7 +347,7 @@ mockProcessOn = jest.spyOn(process, "on");
                 new Error("Persistent connection failure")
             );
 
-            const firstPromise = rabbitmqConnector.getChannel().catch((e) => e); 
+            const firstPromise = rabbitmqConnector.getChannel().catch((e) => e);
             const secondPromise = rabbitmqConnector
                 .getChannel()
                 .catch((e) => e);
@@ -356,7 +363,8 @@ mockProcessOn = jest.spyOn(process, "on");
             expect(result2).toBeInstanceOf(Error);
             expect(result2.message).toBe(
                 "Connection attempt finished but failed."
-            ); expect(mockAmqpConnect).toHaveBeenCalledTimes(10);
+            );
+            expect(mockAmqpConnect).toHaveBeenCalledTimes(10);
             expect(mockLogger.info).toHaveBeenCalledWith(
                 "Connection attempt already in progress, awaiting existing attempt."
             );
