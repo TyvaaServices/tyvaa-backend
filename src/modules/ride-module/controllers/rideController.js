@@ -55,6 +55,11 @@ const rideController = {
             return reply.code(404).send({ error: "RideInstance not found" });
         return reply.send({ message: "RideInstance deleted" });
     },
+    //ajout d'une methode qui retournent que la liste des rides que le passager peut reserver pour ne pas surcharger le front
+    getAvailableRides: async (req, reply) => {
+        const rides = await rideFacade.getAvailableRides();
+        return reply.send(rides);
+    },
 
     acceptRide: async (req, reply) => {
         const accepted = await rideFacade.acceptRide(req.params.id);
