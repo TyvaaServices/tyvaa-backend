@@ -15,6 +15,7 @@ const rideFacade = {
     acceptRide: async (id) => rideService.acceptRide(id),
     rejectRide: async (id) => rideService.rejectRide(id),
     completeRide: async (id) => rideService.completeRide(id),
+    getAvailableRides: async () => rideService.getAvailableRideInstances(),
 };
 
 export default rideFacade;
