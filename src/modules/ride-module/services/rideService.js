@@ -80,6 +80,27 @@ const rideService = {
         logger.info("Ride completed", ride.id);
         return true;
     },
+    //service pour récupérer les rides disponibles pour les passagers
+    getAvailableRideInstances: async () => {
+        const now = new Date();
+        return await RideInstance.findAll({
+            where: {
+                status: "active",
+                departureTime: { [Op.gt]: now },
+                availableSeats: { [Op.gt]: 0 },
+            },
+            include: [
+                {
+                    model: RideModel,
+                    attributes: ['departure', 'destination', 'price'],
+                },
+                {
+                    association: "driverProfile", // ou ton alias exact si défini
+                    attributes: ['id', 'fullName', 'phoneNumber'],
+                },
+            ],
+        });
+    },
 };
 
 export default rideService;
