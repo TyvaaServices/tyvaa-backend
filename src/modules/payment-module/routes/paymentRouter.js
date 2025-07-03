@@ -1,8 +1,7 @@
-// import paymentController from "../controllers/paymentController.js";
+import paymentController from "../controllers/paymentController.js";
 
 async function paymentRoutes(_fastify, _opts) {
-    // fastify.post("/pay", paymentController.createPayment);
-    // fastify.get("/", paymentController.getAllPayment);
+    _fastify.post("/notify", paymentController.notify);
 }
 
 export default paymentRoutes;
