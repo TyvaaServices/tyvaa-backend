@@ -9,6 +9,7 @@ Pour atteindre une version 1.0 complète et prête pour le lancement, les princi
 ## Liste des tâches restantes (style Trello/Jira)
 
 ### Phase 1: Finalisation du noyau et Préparation Production (1-2 mois)
+
 - [ ] **Revue et Durcissement Production:**
     - [ ] Confirmer la stratégie de synchronisation de la base de données pour la production (éviter `force: true`).
     - [ ] Optimiser les configurations de sécurité (CSP, headers de sécurité additionnels si besoin).
@@ -19,6 +20,7 @@ Pour atteindre une version 1.0 complète et prête pour le lancement, les princi
     - [ ] Effectuer des tests de charge et de performance.
 
 ### Phase 2: Fonctionnalités Clés pour le Marché (1-2 semaine)
+
 - [ ] **Intégration Paiements Locaux:**
     - [ ] Identifier et intégrer les passerelles de paiement populaires au Sénégal (e.g., Orange Money, Wave).
     - [ ] Tester de bout en bout les flux de paiement pour les passagers et les chauffeurs.
@@ -26,6 +28,7 @@ Pour atteindre une version 1.0 complète et prête pour le lancement, les princi
     - [ ] Étendre les capacités du chatbot pour une meilleure assistance utilisateur (FAQ, support de base).
 
 ### Phase 3: Analyse et Support (1-2 semaine)
+
 - [ ] **Documentation:**
     - [ ] Finaliser la documentation utilisateur et la documentation technique interne.
 

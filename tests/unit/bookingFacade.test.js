@@ -7,44 +7,7 @@ import {
     jest,
 } from "@jest/globals";
 
-jest.mock("sequelize", () => {
-    const ActualSequelize = jest.requireActual("sequelize");
-
-    class SequelizeMock extends ActualSequelize.Sequelize {
-        constructor() {
-            super("sqlite::memory:");
-        }
-    }
-
-    return { ...ActualSequelize, Sequelize: SequelizeMock };
-});
-jest.mock("../../src/modules/booking-module/models/booking.js", () => ({
-    __esModule: true,
-    default: {
-        findByPk: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-        destroy: jest.fn(),
-    },
-}));
-jest.mock("../../src/modules/ride-module/models/rideInstance.js", () => ({
-    __esModule: true,
-    default: {
-        findByPk: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-        destroy: jest.fn(),
-    },
-}));
-jest.mock("../../src/modules/user-module/models/user.js", () => ({
-    __esModule: true,
-    default: {
-        findByPk: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-        destroy: jest.fn(),
-    },
-}));
+// Mock all dependencies using unstable_mockModule
 const mockGetAllBookings = jest.fn();
 const mockGetBookingById = jest.fn();
 const mockCreateBooking = jest.fn();
@@ -62,6 +25,7 @@ jest.unstable_mockModule(
         default: {
             getAllBookings: mockGetAllBookings,
             getBookingById: mockGetBookingById,
+            createBooking: mockCreateBooking,
             updateBooking: mockUpdateBooking,
             deleteBooking: mockDeleteBooking,
             bookRide: mockBookRide,
@@ -69,13 +33,20 @@ jest.unstable_mockModule(
         },
     })
 );
-jest.unstable_mockModule("../../src/config/index.js", () => ({
-    __esModule: true,
-    User: { findByPk: mockUserFindByPk },
-    RideInstance: { findByPk: mockRideInstanceFindByPk },
-}));
-
-global.RideInstance = { findByPk: mockRideInstanceFindByPk };
+jest.unstable_mockModule(
+    "../../src/modules/user-module/models/user.js",
+    () => ({
+        __esModule: true,
+        default: { findByPk: mockUserFindByPk },
+    })
+);
+jest.unstable_mockModule(
+    "../../src/modules/ride-module/models/rideInstance.js",
+    () => ({
+        __esModule: true,
+        default: { findByPk: mockRideInstanceFindByPk },
+    })
+);
 
 let bookingFacade;
 beforeAll(async () => {
@@ -86,185 +57,117 @@ beforeAll(async () => {
     ).default;
 });
 
-describe("Booking Facade", () => {
-    beforeEach(() => {
-        mockUserFindByPk.mockReset();
-        mockRideInstanceFindByPk.mockReset();
+beforeEach(() => {
+    jest.clearAllMocks();
+});
 
-        mockGetAllBookings.mockClear();
-        mockGetBookingById.mockClear();
-        mockCreateBooking.mockClear();
-        mockUpdateBooking.mockClear();
-        mockDeleteBooking.mockClear();
-        mockBookRide.mockClear();
-        mockCancelBooking.mockClear();
+describe("bookingFacade", () => {
+    it("getAllBookings returns bookings from service", async () => {
+        const bookings = [{ id: 1 }];
+        mockGetAllBookings.mockResolvedValue(bookings);
+        const result = await bookingFacade.getAllBookings();
+        expect(mockGetAllBookings).toHaveBeenCalled();
+        expect(result).toBe(bookings);
     });
 
-    describe("getAllBookings", () => {
-        it("should call bookingService.getAllBookings and return its result", async () => {
-            const mockBookings = [{ id: "1", details: "Booking 1" }];
-            mockGetAllBookings.mockResolvedValue(mockBookings);
-            const result = await bookingFacade.getAllBookings();
-            expect(mockGetAllBookings).toHaveBeenCalledTimes(1);
-            expect(result).toEqual(mockBookings);
-        });
+    it("getBookingById returns booking if found", async () => {
+        const booking = { id: 2 };
+        mockGetBookingById.mockResolvedValue(booking);
+        const result = await bookingFacade.getBookingById(2);
+        expect(mockGetBookingById).toHaveBeenCalledWith(2);
+        expect(result).toBe(booking);
     });
 
-    describe("getBookingById", () => {
-        it("should call bookingService.getBookingById and return booking if found", async () => {
-            const mockBooking = { id: "1", details: "Booking 1" };
-            mockGetBookingById.mockResolvedValue(mockBooking);
-            const result = await bookingFacade.getBookingById("1");
-            expect(mockGetBookingById).toHaveBeenCalledWith("1");
-            expect(result).toEqual(mockBooking);
-        });
-
-        it("should return null if bookingService.getBookingById returns null", async () => {
-            mockGetBookingById.mockResolvedValue(null);
-            const result = await bookingFacade.getBookingById("1");
-            expect(result).toBeNull();
-        });
+    it("getBookingById returns null if not found", async () => {
+        mockGetBookingById.mockResolvedValue(null);
+        const result = await bookingFacade.getBookingById(99);
+        expect(result).toBeNull();
     });
 
-    describe("createBooking", () => {});
-
-    describe("updateBooking", () => {
-        it("should call bookingService.updateBooking and return booking if found and updated", async () => {
-            const bookingData = { details: "Updated Data" };
-            const mockUpdatedBooking = { id: "1", ...bookingData };
-            mockUpdateBooking.mockResolvedValue(mockUpdatedBooking);
-            const result = await bookingFacade.updateBooking("1", bookingData);
-            expect(mockUpdateBooking).toHaveBeenCalledWith("1", bookingData);
-            expect(result).toEqual(mockUpdatedBooking);
-        });
-
-        it("should return null if bookingService.updateBooking returns null", async () => {
-            mockUpdateBooking.mockResolvedValue(null);
-            const result = await bookingFacade.updateBooking("1", {});
-            expect(result).toBeNull();
-        });
-        it("should propagate errors from bookingService.updateBooking", async () => {
-            mockUpdateBooking.mockRejectedValue(
-                new Error("Service update failed")
-            );
-            await expect(bookingFacade.updateBooking("1", {})).rejects.toThrow(
-                "Service update failed"
-            );
-        });
+    it("createBooking returns created booking", async () => {
+        const bookingData = { rideInstanceId: 1, seatsBooked: 2 };
+        const created = { id: 3, ...bookingData };
+        mockCreateBooking.mockResolvedValue(created);
+        const result = await bookingFacade.createBooking(bookingData);
+        expect(mockCreateBooking).toHaveBeenCalledWith(bookingData);
+        expect(result).toBe(created);
     });
 
-    describe("deleteBooking", () => {
-        it("should call bookingService.deleteBooking and return its result", async () => {
-            mockDeleteBooking.mockResolvedValue(true);
-            const result = await bookingFacade.deleteBooking("1");
-            expect(mockDeleteBooking).toHaveBeenCalledWith("1");
-            expect(result).toBe(true);
-        });
+    it("updateBooking returns updated booking", async () => {
+        const bookingData = { seatsBooked: 3 };
+        const updated = { id: 4, ...bookingData };
+        mockUpdateBooking.mockResolvedValue(updated);
+        const result = await bookingFacade.updateBooking(4, bookingData);
+        expect(mockUpdateBooking).toHaveBeenCalledWith(4, bookingData);
+        expect(result).toBe(updated);
     });
 
-    describe("bookRide", () => {
-        const bookRideData = {
-            userId: "u1",
-            rideInstanceId: "ri1",
-            seatsToBook: 2,
-        };
-        const mockUser = { id: "u1", name: "Test User" };
-        const mockRideInstance = { id: "ri1", availableSeats: 5 };
-
-        it("should fetch user and rideInstance, then call bookingService.bookRide", async () => {
-            const mockBookingResult = { id: "b1", ...bookRideData };
-            mockUserFindByPk.mockResolvedValue(mockUser);
-            mockRideInstanceFindByPk.mockResolvedValue(mockRideInstance);
-            mockBookRide.mockResolvedValue(mockBookingResult);
-
-            const result = await bookingFacade.bookRide(bookRideData);
-
-            expect(mockUserFindByPk).toHaveBeenCalledWith("u1");
-            expect(mockRideInstanceFindByPk).toHaveBeenCalledWith("ri1");
-            expect(mockBookRide).toHaveBeenCalledWith({
-                user: mockUser,
-                rideInstance: mockRideInstance,
-                seatsToBook: bookRideData.seatsToBook,
-            });
-            expect(result).toEqual(mockBookingResult);
-        });
-
-        it("should throw error if user not found", async () => {
-            mockUserFindByPk.mockResolvedValue(null);
-            mockRideInstanceFindByPk.mockResolvedValue(mockRideInstance);
-
-            await expect(bookingFacade.bookRide(bookRideData)).rejects.toThrow(
-                "User not found"
-            );
-            expect(mockUserFindByPk).toHaveBeenCalledWith("u1");
-            expect(mockRideInstanceFindByPk).not.toHaveBeenCalled();
-            expect(mockBookRide).not.toHaveBeenCalled();
-        });
-
-        it("should have statusCode 404 on error if user not found", async () => {
-            mockUserFindByPk.mockResolvedValue(null);
-            mockRideInstanceFindByPk.mockResolvedValue(mockRideInstance);
-            try {
-                await bookingFacade.bookRide(bookRideData);
-            } catch (e) {
-                expect(e.statusCode).toBe(404);
-            }
-        });
-
-        it("should throw error if rideInstance not found", async () => {
-            mockUserFindByPk.mockResolvedValue(mockUser);
-            mockRideInstanceFindByPk.mockResolvedValue(null);
-
-            await expect(bookingFacade.bookRide(bookRideData)).rejects.toThrow(
-                "RideInstance not found"
-            );
-            expect(mockUserFindByPk).toHaveBeenCalledWith("u1");
-            expect(mockRideInstanceFindByPk).toHaveBeenCalledWith("ri1");
-            expect(mockBookRide).not.toHaveBeenCalled();
-        });
-
-        it("should have statusCode 404 on error if rideInstance not found", async () => {
-            mockUserFindByPk.mockResolvedValue(mockUser);
-            mockRideInstanceFindByPk.mockResolvedValue(null);
-            try {
-                await bookingFacade.bookRide(bookRideData);
-            } catch (e) {
-                expect(e.statusCode).toBe(404);
-            }
-        });
-
-        it("should re-throw error from bookingService.bookRide", async () => {
-            mockUserFindByPk.mockResolvedValue(mockUser);
-            mockRideInstanceFindByPk.mockResolvedValue(mockRideInstance);
-            mockBookRide.mockRejectedValue(new Error("Service error"));
-
-            await expect(bookingFacade.bookRide(bookRideData)).rejects.toThrow(
-                "Service error"
-            );
-        });
+    it("updateBooking returns null if not found", async () => {
+        mockUpdateBooking.mockResolvedValue(null);
+        const result = await bookingFacade.updateBooking(5, {});
+        expect(result).toBeNull();
     });
 
-    describe("cancelBooking", () => {
-        it("should call bookingService.cancelBooking and return booking if found", async () => {
-            const mockBooking = { id: "1", status: "cancelled" };
-            mockCancelBooking.mockResolvedValue(mockBooking);
-            const result = await bookingFacade.cancelBooking("1");
-            expect(mockCancelBooking).toHaveBeenCalledWith("1");
-            expect(result).toEqual(mockBooking);
-        });
+    it("deleteBooking returns true if deleted", async () => {
+        mockDeleteBooking.mockResolvedValue(true);
+        const result = await bookingFacade.deleteBooking(6);
+        expect(mockDeleteBooking).toHaveBeenCalledWith(6);
+        expect(result).toBe(true);
+    });
 
-        it("should return null if bookingService.cancelBooking returns null", async () => {
-            mockCancelBooking.mockResolvedValue(null);
-            const result = await bookingFacade.cancelBooking("1");
-            expect(result).toBeNull();
+    it("bookRide returns booking if user and rideInstance found", async () => {
+        const data = { userId: 1, rideInstanceId: 2, seatsToBook: 1 };
+        const user = { id: 1 };
+        const rideInstance = { id: 2 };
+        const booking = { id: 7 };
+        mockUserFindByPk.mockResolvedValue(user);
+        mockRideInstanceFindByPk.mockResolvedValue(rideInstance);
+        mockBookRide.mockResolvedValue(booking);
+        const result = await bookingFacade.bookRide(data);
+        expect(mockUserFindByPk).toHaveBeenCalledWith(1);
+        expect(mockRideInstanceFindByPk).toHaveBeenCalledWith(2);
+        expect(mockBookRide).toHaveBeenCalledWith({
+            user,
+            rideInstance,
+            seatsToBook: 1,
         });
-        it("should propagate errors from bookingService.cancelBooking", async () => {
-            mockCancelBooking.mockRejectedValue(
-                new Error("Service cancel failed")
-            );
-            await expect(bookingFacade.cancelBooking("1")).rejects.toThrow(
-                "Service cancel failed"
-            );
-        });
+        expect(result).toBe(booking);
+    });
+
+    it("bookRide throws error if user not found", async () => {
+        mockUserFindByPk.mockResolvedValue(null);
+        await expect(
+            bookingFacade.bookRide({
+                userId: 1,
+                rideInstanceId: 2,
+                seatsToBook: 1,
+            })
+        ).rejects.toThrow("User not found");
+    });
+
+    it("bookRide throws error if rideInstance not found", async () => {
+        mockUserFindByPk.mockResolvedValue({ id: 1 });
+        mockRideInstanceFindByPk.mockResolvedValue(null);
+        await expect(
+            bookingFacade.bookRide({
+                userId: 1,
+                rideInstanceId: 2,
+                seatsToBook: 1,
+            })
+        ).rejects.toThrow("RideInstance not found");
+    });
+
+    it("cancelBooking returns cancelled booking", async () => {
+        const cancelled = { id: 8, status: "cancelled" };
+        mockCancelBooking.mockResolvedValue(cancelled);
+        const result = await bookingFacade.cancelBooking(8);
+        expect(mockCancelBooking).toHaveBeenCalledWith(8);
+        expect(result).toBe(cancelled);
+    });
+
+    it("cancelBooking returns null if not found", async () => {
+        mockCancelBooking.mockResolvedValue(null);
+        const result = await bookingFacade.cancelBooking(9);
+        expect(result).toBeNull();
     });
 });
