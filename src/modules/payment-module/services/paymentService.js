@@ -1,5 +1,3 @@
-const Payment = await import("../models/payment.js").then((m) => m.default);
-
 const paymentService = {
     /**
      * Update the status of a payment transaction.
@@ -8,6 +6,9 @@ const paymentService = {
      */
     updateTransactionStatus: async (paymentData) => {
         try {
+            const Payment = await import("../models/payment.js").then(
+                (m) => m.default
+            );
             const payment = await Payment.findOne({
                 where: { transaction_id: paymentData.transaction_id },
             });
@@ -41,6 +42,9 @@ const paymentService = {
     },
     createPayment: async (paymentData) => {
         try {
+            const Payment = await import("../models/payment.js").then(
+                (m) => m.default
+            );
             const payment = await Payment.create(paymentData);
             return payment;
         } catch (error) {
