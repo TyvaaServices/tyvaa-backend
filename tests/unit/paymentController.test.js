@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 const mockUpdateTransactionStatus = jest.fn();
 const mockLoggerError = jest.fn();
+const mockLoggerWarn = jest.fn();
+const mockLoggerInfo = jest.fn();
 
 jest.unstable_mockModule(
     "../../src/modules/payment-module/services/paymentService.js",
@@ -10,9 +12,9 @@ jest.unstable_mockModule(
         default: { updateTransactionStatus: mockUpdateTransactionStatus },
     })
 );
-jest.unstable_mockModule("../../src/utils/logger.js", () => ({
+jest.unstable_mockModule("#utils/logger.js", () => ({
     __esModule: true,
-    default: () => ({ error: mockLoggerError }),
+    default: () => ({ error: mockLoggerError, warn: mockLoggerWarn, info: mockLoggerInfo }),
 }));
 
 const validPayload = {
@@ -21,7 +23,7 @@ const validPayload = {
     amount: 100,
     currency: "USD",
     payment_method: "card",
-    metadata: "{}", // must be a string
+    metadata: "{}",
     operator_id: "op1",
     description: "test payment",
     payment_date: new Date().toISOString(),
@@ -47,6 +49,8 @@ describe("paymentController.notify", () => {
         };
         mockUpdateTransactionStatus.mockReset();
         mockLoggerError.mockReset();
+        mockLoggerWarn.mockReset();
+        mockLoggerInfo.mockReset();
     });
 
     it("returns 400 for invalid payload", async () => {

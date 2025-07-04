@@ -1,6 +1,5 @@
 import { getMessaging } from "firebase-admin/messaging";
 import createLogger from "./../../../utils/logger.js";
-import { getNotificationTemplate } from "../templates.js";
 
 const logger = createLogger("notification-router");
 
@@ -32,7 +31,7 @@ export async function sendFCM(token, title, body, data) {
         const response = await getMessaging().send(message);
         logger.info("Notification sent:", response);
     } catch (err) {
-        console.error("Raw FCM error:", err);
+        logger.error("Raw FCM error:", err);
         logger.error("Error sending FCM notification:", {
             error: err && (err.stack || err.message || err),
             errorString: JSON.stringify(err, Object.getOwnPropertyNames(err)),
@@ -44,7 +43,7 @@ export async function sendFCM(token, title, body, data) {
     }
 }
 
-async function router(fastify, _options) {
+async function router(fastify) {
     fastify.post("/send-notification", async (request, reply) => {
         const { token, eventType, data } = request.body;
         if (!token || !eventType || !data) {
@@ -66,13 +65,4 @@ async function router(fastify, _options) {
     });
 }
 
-// Example new payload:
-// {
-//   "token": "device_fcm_token_here",
-//   "eventType": "RIDER_ACCEPT_RIDE",
-//   "data": {
-//     "riderName": "John Doe",
-//     "rideDetails": "Details about the ride"
-//   }
-// }
 export default router;

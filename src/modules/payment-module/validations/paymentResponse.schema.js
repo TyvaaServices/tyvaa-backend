@@ -5,7 +5,7 @@ export const paymentResponseSchema = z.object({
     amount: z.number(),
     currency: z.string(),
     status: z
-        .enum(["ACCEPTED", "FAILED", "PENDING", "CANCELLED"])
+        .enum(["ACCEPTED", "FAILED", "PENDING", "CANCELLED", "SUCCESS"])
         .or(z.string()),
     payment_method: z.string(),
     description: z.string(),

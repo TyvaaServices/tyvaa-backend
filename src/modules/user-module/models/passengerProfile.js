@@ -2,13 +2,17 @@ import { DataTypes } from "sequelize";
 import sequelize from "#config/db.js";
 
 /**
- * Sequelize model for PassengerProfile.
- * Represents a passenger's profile in the system.
- *
- * @typedef {Object} PassengerProfile
+ * @file Defines the PassengerProfile model for passenger-specific data.
+ * @typedef {Object} PassengerProfileAttributes
  * @property {number} id - The unique identifier for the passenger profile.
- * @property {number} passengerNote - The passenger's note/rating.
- * @property {number} userId - The user ID associated with this profile.
+ * @property {number} passengerNote - The passenger's average rating/note from drivers.
+ * @property {number} userId - The user ID associated with this profile. Foreign key to users.
+ */
+
+/**
+ * Sequelize model for PassengerProfile.
+ * Represents a passenger's profile with ride history and rating information.
+ * @type {import("sequelize").ModelCtor<import("sequelize").Model<PassengerProfileAttributes, any> & PassengerProfileAttributes>}
  */
 
 const PassengerProfile = sequelize.define("PassengerProfile", {

@@ -80,7 +80,6 @@ const rideService = {
         logger.info("Ride completed", ride.id);
         return true;
     },
-    //service pour récupérer les rides disponibles pour les passagers
     getAvailableRideInstances: async () => {
         const now = new Date();
         return await RideInstance.findAll({

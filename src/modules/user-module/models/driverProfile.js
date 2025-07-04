@@ -2,14 +2,18 @@ import { DataTypes } from "sequelize";
 import sequelize from "#config/db.js";
 
 /**
- * Sequelize model for DriverProfile (ProfilChauffeur).
- * Represents a driver's profile in the system.
- *
- * @typedef {Object} DriverProfile
+ * @file Defines the DriverProfile model for driver-specific data.
+ * @typedef {Object} DriverProfileAttributes
  * @property {number} id - The unique identifier for the driver profile.
- * @property {number} driverNote - The driver's note/rating.
- * @property {string} statusProfile - The status of the driver profile (Active or Suspended).
- * @property {number} userId - The user ID associated with this profile.
+ * @property {number} driverNote - The driver's average rating/note from passengers.
+ * @property {("Active"|"Suspended")} statusProfile - The current status of the driver profile.
+ * @property {number} userId - The user ID associated with this profile. Foreign key to users.
+ */
+
+/**
+ * Sequelize model for DriverProfile.
+ * Represents a driver's profile with ride history, rating, and status information.
+ * @type {import("sequelize").ModelCtor<import("sequelize").Model<DriverProfileAttributes, any> & DriverProfileAttributes>}
  */
 
 const DriverProfile = sequelize.define("ProfilChauffeur", {

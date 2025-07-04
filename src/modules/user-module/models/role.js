@@ -1,14 +1,19 @@
 import { DataTypes } from "sequelize";
 import sequelize from "#config/db.js";
-import Permission from "./permission.js"; // Import Permission model
+import Permission from "./permission.js";
+
+/**
+ * @file Defines the Role model for role-based access control.
+ * @typedef {Object} RoleAttributes
+ * @property {number} id - The unique identifier for the role.
+ * @property {string} name - The name of the role (e.g., 'PASSAGER', 'CHAUFFEUR', 'ADMINISTRATEUR').
+ * @property {string} [description] - A detailed description of the role's purpose.
+ */
 
 /**
  * Sequelize model for Role.
- * Represents a user role in the system (e.g., PASSAGER, CHAUFFEUR, ADMINISTRATEUR).
- *
- * @typedef {Object} Role
- * @property {number} id - The unique identifier for the role.
- * @property {string} name - The name of the role.
+ * Represents a user role in the RBAC system with associated permissions.
+ * @type {import("sequelize").ModelCtor<import("sequelize").Model<RoleAttributes, any> & RoleAttributes>}
  */
 
 const Role = sequelize.define(
@@ -30,7 +35,6 @@ const Role = sequelize.define(
     }
 );
 
-// Define Many-to-Many relationship between Role and Permission
 /**
  * Sets up a many-to-many association between Role and Permission models.
  * This creates a join table `RolePermissions`.

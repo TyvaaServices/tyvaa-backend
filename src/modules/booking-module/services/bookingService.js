@@ -1,4 +1,7 @@
 import { Booking } from "./../../../config/index.js";
+import RideInstance from "../../ride-module/models/rideInstance.js";
+import RideModel from "../../ride-module/models/rideModel.js";
+import paymentService from "../../payment-module/services/paymentService.js";
 import createLogger from "./../../../utils/logger.js";
 
 const logger = createLogger("booking-service");
@@ -46,34 +49,63 @@ const bookingService = {
     },
 
     /**
-     * Creates a new booking for a ride instance.
+     * Creates a new booking for a ride instance with integrated payment creation.
      * @param {object} params - The booking parameters.
      * @param {UserAttributes} params.user - The user making the booking.
      * @param {RideInstanceAttributes} params.rideInstance - The ride instance being booked.
      * @param {number} params.seatsToBook - The number of seats to book.
-     * @returns {Promise<BookingAttributes>} The newly created booking.
+     * @returns {Promise<BookingAttributes & {payment: PaymentAttributes}>} The newly created booking with payment.
      * @throws {Error} If user or ride instance is not provided, or if there are not enough seats.
      */
     bookRide: async ({ user, rideInstance, seatsToBook }) => {
         if (!user) throw new Error("User instance required");
         if (!rideInstance) throw new Error("RideInstance required");
+
         const availableSeats =
             rideInstance.seatsAvailable - rideInstance.seatsBooked;
         if (seatsToBook > availableSeats)
             throw new Error("Not enough seats available");
+
         const existing = await Booking.findOne({
             where: { rideInstanceId: rideInstance.id, userId: user.id },
         });
         if (existing) throw new Error("Already booked");
+
+        const rideModel = await RideModel.findByPk(rideInstance.rideId);
+        if (!rideModel) throw new Error("Ride template not found");
+
+        const totalAmount = rideModel.price * seatsToBook;
+
         const booking = await Booking.create({
             seatsBooked: seatsToBook,
             status: "booked",
         });
+
         await booking.setUser(user);
         await booking.setRideInstance(rideInstance);
+
+        const payment = await paymentService.createPayment({
+            bookingId: booking.id,
+            amount: totalAmount,
+            currency: "XOF",
+            phone: user.phone,
+            paymentMethod: "cinetpay",
+        });
+        rideInstance.setPayment(payment);
+
         await rideInstance.increment("seatsBooked", { by: seatsToBook });
-        logger.info("Ride booked", booking.id);
-        return booking;
+
+        logger.info("Ride booked with payment", {
+            bookingId: booking.id,
+            transactionId: payment.transactionId,
+            amount: totalAmount,
+        });
+
+        const bookingWithPayment = booking.toJSON();
+        bookingWithPayment.payment = payment.toJSON();
+        bookingWithPayment.rideInstance = rideInstance.toJSON();
+
+        return bookingWithPayment;
     },
 
     /**

@@ -2,13 +2,17 @@ import { DataTypes } from "sequelize";
 import sequelize from "#config/db.js";
 
 /**
- * Sequelize model for Permission.
- * Represents a permission in the system (e.g., 'reserver_trajet', 'publier_trajet').
- *
- * @typedef {Object} Permission
+ * @file Defines the Permission model for role-based access control.
+ * @typedef {Object} PermissionAttributes
  * @property {number} id - The unique identifier for the permission.
- * @property {string} name - The name of the permission.
- * @property {string} [description] - The description of the permission.
+ * @property {string} name - The name of the permission (e.g., 'reserver_trajet', 'publier_trajet').
+ * @property {string} [description] - A detailed description of what this permission allows.
+ */
+
+/**
+ * Sequelize model for Permission.
+ * Represents a permission in the RBAC system for controlling user access to features.
+ * @type {import("sequelize").ModelCtor<import("sequelize").Model<PermissionAttributes, any> & PermissionAttributes>}
  */
 
 const Permission = sequelize.define(

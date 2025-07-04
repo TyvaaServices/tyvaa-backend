@@ -1,6 +1,20 @@
 import sequelize from "./../../../config/db.js";
 import { DataTypes } from "sequelize";
 
+/**
+ * @file Defines the AuditAction model for categorizing audit log actions.
+ * @typedef {Object} AuditActionAttributes
+ * @property {number} id - The unique identifier for the audit action.
+ * @property {("create"|"update"|"delete"|"login"|"logout"|"access")} actionType - The type of action performed.
+ * @property {string} description - A description of the action type.
+ */
+
+/**
+ * Sequelize model for AuditAction.
+ * Represents different types of actions that can be logged in the audit system.
+ * @type {import("sequelize").ModelCtor<import("sequelize").Model<AuditActionAttributes, any> & AuditActionAttributes>}
+ */
+
 const AuditAction = sequelize.define(
     "AuditAction",
     {

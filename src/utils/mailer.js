@@ -39,8 +39,7 @@ try {
             secureConnection = false;
             smtpPort = parseInt(smtpPortEnv || "587", 10); // Default to 587 for non-secure
         } else {
-            // SMTP_SECURE not explicitly set, infer from port
-            smtpPort = parseInt(smtpPortEnv || "465", 10); // Assume secure by default if not specified
+            smtpPort = parseInt(smtpPortEnv || "465", 10);
             secureConnection = smtpPort === 465;
         }
 
