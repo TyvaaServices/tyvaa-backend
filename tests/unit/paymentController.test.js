@@ -14,7 +14,11 @@ jest.unstable_mockModule(
 );
 jest.unstable_mockModule("#utils/logger.js", () => ({
     __esModule: true,
-    default: () => ({ error: mockLoggerError, warn: mockLoggerWarn, info: mockLoggerInfo }),
+    default: () => ({
+        error: mockLoggerError,
+        warn: mockLoggerWarn,
+        info: mockLoggerInfo,
+    }),
 }));
 
 const validPayload = {

@@ -11,15 +11,6 @@ const bookingController = {
             return reply.code(404).send({ error: "Booking not found" });
         return reply.send(booking);
     },
-    createBooking: async (req, reply) => {
-        try {
-            const booking = await bookingFacade.createBooking(req.body);
-            return reply.code(201).send(booking);
-        } catch (err) {
-            const statusCode = err.statusCode || 400;
-            return reply.code(statusCode).send({ error: err.message });
-        }
-    },
     updateBooking: async (req, reply) => {
         try {
             const booking = await bookingFacade.updateBooking(

@@ -84,41 +84,6 @@ describe("Booking Controller (with Facade)", () => {
         });
     });
 
-    describe("createBooking", () => {
-        it("should call facade.createBooking and return 201 with booking", async () => {
-            const newBookingData = { name: "New Booking" };
-            const createdBooking = { id: 1, ...newBookingData };
-            mockRequest.body = newBookingData;
-            mockCreateBooking.mockResolvedValue(createdBooking);
-            await bookingController.createBooking(mockRequest, mockReply);
-            expect(mockCreateBooking).toHaveBeenCalledWith(newBookingData);
-            expect(mockReply.code).toHaveBeenCalledWith(201);
-            expect(mockReply.send).toHaveBeenCalledWith(createdBooking);
-        });
-
-        it("should return 400 if facade.createBooking throws error without statusCode", async () => {
-            mockRequest.body = { name: "New Booking" };
-            mockCreateBooking.mockRejectedValue(new Error("Facade error"));
-            await bookingController.createBooking(mockRequest, mockReply);
-            expect(mockReply.code).toHaveBeenCalledWith(400);
-            expect(mockReply.send).toHaveBeenCalledWith({
-                error: "Facade error",
-            });
-        });
-
-        it("should return specific statusCode if facade.createBooking throws error with statusCode", async () => {
-            mockRequest.body = { name: "New Booking" };
-            const facadeError = new Error("Specific facade error");
-            facadeError.statusCode = 409;
-            mockCreateBooking.mockRejectedValue(facadeError);
-            await bookingController.createBooking(mockRequest, mockReply);
-            expect(mockReply.code).toHaveBeenCalledWith(409);
-            expect(mockReply.send).toHaveBeenCalledWith({
-                error: "Specific facade error",
-            });
-        });
-    });
-
     describe("updateBooking", () => {
         it("should call facade.updateBooking and return booking", async () => {
             const bookingUpdateData = { name: "Updated Booking" };

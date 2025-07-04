@@ -69,6 +69,15 @@ class RedisCacheService {
         return RedisCacheService.instance;
     }
 
+    // Static proxies for convenience
+    static async lpush(key, value) {
+        return await RedisCacheService.getInstance().lpush(key, value);
+    }
+
+    static async rpop(key) {
+        return await RedisCacheService.getInstance().rpop(key);
+    }
+
     /**
      * Retrieves a value from the cache by key.
      * The value is expected to be JSON-stringified and will be parsed.
@@ -166,8 +175,6 @@ class RedisCacheService {
 
         if (SequelizeModel && typeof SequelizeModel.build === "function") {
             try {
-                // Reconstructs a model instance from plain data.
-                // { isNewRecord: false } tells Sequelize this represents an existing record.
                 return SequelizeModel.build(jsonData, { isNewRecord: false });
             } catch (modelBuildError) {
                 logger.error(
@@ -178,10 +185,59 @@ class RedisCacheService {
                     },
                     `Error building Sequelize model instance from cached data for key: ${key}`
                 );
-                return null; // Or return jsonData if partial success is acceptable
+                return null;
             }
         }
         return jsonData;
+    }
+
+    /**
+     * Pushes a value to the left of a Redis list (queue).
+     * @param {string} key - The Redis list key.
+     * @param {string} value - The value to push (should be a string).
+     * @returns {Promise<number|null>} The new length of the list, or null on error.
+     */
+    async lpush(key, value) {
+        if (!this.redisClient) {
+            logger.error(
+                `Redis client not available. Cannot LPUSH key: ${key}`
+            );
+            return null;
+        }
+        try {
+            const result = await this.redisClient.lpush(key, value);
+            logger.info(`Redis LPUSH key: ${key} | value: ${value}`);
+            return result;
+        } catch (error) {
+            logger.error(
+                { error, key },
+                `Error LPUSH to Redis for key: ${key}`
+            );
+            return null;
+        }
+    }
+
+    /**
+     * Pops a value from the right of a Redis list (queue).
+     * @param {string} key - The Redis list key.
+     * @returns {Promise<string|null>} The value popped, or null if list is empty or error.
+     */
+    async rpop(key) {
+        if (!this.redisClient) {
+            logger.error(`Redis client not available. Cannot RPOP key: ${key}`);
+            return null;
+        }
+        try {
+            const result = await this.redisClient.rpop(key);
+            logger.info(`Redis RPOP key: ${key} | value: ${result}`);
+            return result;
+        } catch (error) {
+            logger.error(
+                { error, key },
+                `Error RPOP from Redis for key: ${key}`
+            );
+            return null;
+        }
     }
 }
 

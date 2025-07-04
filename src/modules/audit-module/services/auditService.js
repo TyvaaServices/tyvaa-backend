@@ -2,6 +2,7 @@ import { validateAuditLog } from "./../validations/auditValidation.js";
 import AuditAction from "./../models/actionType.js";
 import RedisCache from "#utils/redisCache.js";
 import createLogger from "#utils/logger.js";
+import { AuditLog } from "#config/index.js";
 
 const logger = createLogger("auditService");
 const ACTION_CACHE_TTL = 86400;
@@ -24,7 +25,7 @@ async function getActionTypeId(action) {
 
 export const auditService = {
     /**
-     * Enqueue log entry
+     * Enqueue log entry in Redis (to be bulk inserted later)
      */
     log: async ({ entityId, entityType, description, action, ipAddress }) => {
         try {
@@ -38,27 +39,53 @@ export const auditService = {
                 );
             }
 
-            await getActionTypeId(action);
-            validateAuditLog({
+            const actionTypeId = await getActionTypeId(action);
+            const auditActionData = validateAuditLog({
                 entityId: parsedEntityId,
                 entityType,
                 description,
                 actionTypeId,
                 ipAddress,
             });
-
-            logger.info("Successfully enqueued audit log.", {
+            await RedisCache.lpush(
+                "audit:pending",
+                JSON.stringify(auditActionData)
+            );
+            logger.info("Queued audit log in Redis.", {
                 action,
                 entityType,
             });
+            return auditActionData;
         } catch (e) {
-            logger.error(`Failed to log audit entry: ${e.message}`, {
+            logger.error(`Failed to queue audit entry: ${e.message}`, {
                 error: e,
                 entityId,
                 entityType,
                 action,
                 ipAddress,
             });
+        }
+    },
+
+    /**
+     * Bulk insert all pending audit logs from Redis to DB
+     */
+    bulkInsertFromRedis: async () => {
+        try {
+            let logs = [];
+            while (true) {
+                const log = await RedisCache.rpop("audit:pending");
+                if (!log) break;
+                logs.push(JSON.parse(log));
+            }
+            if (logs.length > 0) {
+                await AuditLog.bulkCreate(logs);
+                logger.info(
+                    `Bulk inserted ${logs.length} audit logs from Redis.`
+                );
+            }
+        } catch (e) {
+            logger.error(`Failed to bulk insert audit logs: ${e.message}`);
         }
     },
 
@@ -83,3 +110,18 @@ export const auditService = {
         });
     },
 };
+
+setInterval(
+    () => {
+        auditService.bulkInsertFromRedis().then((r) => {
+            if (r) {
+                logger.info(
+                    `Bulk insert completed at ${new Date().toISOString()}`
+                );
+            } else {
+                logger.warn("No pending audit logs to insert.");
+            }
+        });
+    },
+    5 * 60 * 1000
+);

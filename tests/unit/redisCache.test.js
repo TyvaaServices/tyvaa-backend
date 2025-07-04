@@ -229,6 +229,90 @@ describe("RedisCacheService", () => {
         });
     });
 
+    describe("lpush", () => {
+        it("should call redisClient.lpush and log info", async () => {
+            redisCacheInstanceDefaultExport.redisClient = {
+                lpush: jest.fn().mockResolvedValue(2),
+            };
+            const result = await redisCacheInstanceDefaultExport.lpush(
+                "listKey",
+                "val"
+            );
+            expect(
+                redisCacheInstanceDefaultExport.redisClient.lpush
+            ).toHaveBeenCalledWith("listKey", "val");
+            expect(result).toBe(2);
+            expect(mockLoggerInfo).toHaveBeenCalledWith(
+                "Redis LPUSH key: listKey | value: val"
+            );
+        });
+        it("should log error and return null if redisClient is not available", async () => {
+            redisCacheInstanceDefaultExport.redisClient = null;
+            const result = await redisCacheInstanceDefaultExport.lpush(
+                "listKey",
+                "val"
+            );
+            expect(result).toBeNull();
+            expect(mockLoggerError).toHaveBeenCalledWith(
+                "Redis client not available. Cannot LPUSH key: listKey"
+            );
+        });
+        it("should log error and return null if lpush throws", async () => {
+            const error = new Error("lpush fail");
+            redisCacheInstanceDefaultExport.redisClient = {
+                lpush: jest.fn().mockRejectedValue(error),
+            };
+            const result = await redisCacheInstanceDefaultExport.lpush(
+                "listKey",
+                "val"
+            );
+            expect(result).toBeNull();
+            expect(mockLoggerError).toHaveBeenCalledWith(
+                { error, key: "listKey" },
+                "Error LPUSH to Redis for key: listKey"
+            );
+        });
+    });
+
+    describe("rpop", () => {
+        it("should call redisClient.rpop and log info", async () => {
+            redisCacheInstanceDefaultExport.redisClient = {
+                rpop: jest.fn().mockResolvedValue("val"),
+            };
+            const result =
+                await redisCacheInstanceDefaultExport.rpop("listKey");
+            expect(
+                redisCacheInstanceDefaultExport.redisClient.rpop
+            ).toHaveBeenCalledWith("listKey");
+            expect(result).toBe("val");
+            expect(mockLoggerInfo).toHaveBeenCalledWith(
+                "Redis RPOP key: listKey | value: val"
+            );
+        });
+        it("should log error and return null if redisClient is not available", async () => {
+            redisCacheInstanceDefaultExport.redisClient = null;
+            const result =
+                await redisCacheInstanceDefaultExport.rpop("listKey");
+            expect(result).toBeNull();
+            expect(mockLoggerError).toHaveBeenCalledWith(
+                "Redis client not available. Cannot RPOP key: listKey"
+            );
+        });
+        it("should log error and return null if rpop throws", async () => {
+            const error = new Error("rpop fail");
+            redisCacheInstanceDefaultExport.redisClient = {
+                rpop: jest.fn().mockRejectedValue(error),
+            };
+            const result =
+                await redisCacheInstanceDefaultExport.rpop("listKey");
+            expect(result).toBeNull();
+            expect(mockLoggerError).toHaveBeenCalledWith(
+                { error, key: "listKey" },
+                "Error RPOP from Redis for key: listKey"
+            );
+        });
+    });
+
     afterAll(async () => {
         jest.clearAllMocks();
     });
