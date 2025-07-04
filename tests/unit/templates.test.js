@@ -10,7 +10,7 @@ import {
     RIDER_ACCEPT_RIDE,
     RIDER_CANCEL_RIDE,
     WELCOME_MESSAGE,
-} from "./templates.js";
+} from "../../src/modules/notification-module/templates.js";
 import { describe, expect, it } from "@jest/globals";
 
 describe("Notification Templates", () => {

@@ -78,8 +78,6 @@ export default async function (fastify, _opts) {
 
             reply.code(200).send({ reply: output.response });
         } catch (error) {
-            // console.error("Error in chatbot route:", error);
-
             if (error.name === "ZodError") {
                 reply.code(400).send({
                     error: "Validation Error",
