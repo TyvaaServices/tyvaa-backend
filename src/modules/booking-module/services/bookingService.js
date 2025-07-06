@@ -1,6 +1,4 @@
-import { Booking } from "./../../../config/index.js";
-import RideInstance from "../../ride-module/models/rideInstance.js";
-import RideModel from "../../ride-module/models/rideModel.js";
+import { Booking, RideInstance, RideModel } from "./../../../config/index.js";
 import paymentService from "../../payment-module/services/paymentService.js";
 import createLogger from "./../../../utils/logger.js";
 
@@ -8,9 +6,9 @@ const logger = createLogger("booking-service");
 
 /**
  * @file Manages booking-related operations such as creating, retrieving, and canceling bookings.
- * @typedef {import('../models/booking.js').BookingAttributes} BookingAttributes
- * @typedef {import('../../user-module/models/user.js').UserAttributes} UserAttributes
- * @typedef {import('../../ride-module/models/rideInstance.js').RideInstanceAttributes} RideInstanceAttributes
+ * @typedef {import("../models/booking.js").BookingAttributes} BookingAttributes
+ * @typedef {import("../../user-module/models/user.js").UserAttributes} UserAttributes
+ * @typedef {import("../../ride-module/models/rideInstance.js").RideInstanceAttributes} RideInstanceAttributes
  */
 
 const bookingService = {
@@ -91,7 +89,7 @@ const bookingService = {
             phone: user.phone,
             paymentMethod: "cinetpay",
         });
-        rideInstance.setPayment(payment);
+        booking.setPayment(payment);
 
         await rideInstance.increment("seatsBooked", { by: seatsToBook });
 

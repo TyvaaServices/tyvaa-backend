@@ -15,6 +15,7 @@ export default {
         "src/modules/**/facades/**",
         "!src/modules/**/uploads/**",
         "!src/modules/**/config/**",
+        "!src/utils/pdfGen.js",
         "!src/modules/**/validations/**",
         "!src/modules/**/routes/**",
         "!src/modules/**/services/**",

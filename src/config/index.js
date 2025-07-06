@@ -8,8 +8,7 @@ import AuditAction from "./../modules/audit-module/models/actionType.js";
 import PassengerProfile from "./../modules/user-module/models/passengerProfile.js";
 import DriverProfile from "./../modules/user-module/models/driverProfile.js";
 import DriverApplication from "./../modules/user-module/models/driverApplication.js";
-import Role from "./../modules/user-module/models/role.js"; // Import Role
-// import Permission from "./../modules/user-module/models/permission.js"; // If needed later
+import Role from "./../modules/user-module/models/role.js";
 
 RideModel.hasMany(RideInstance, { foreignKey: "rideId" });
 RideInstance.belongsTo(RideModel, { foreignKey: "rideId" });
@@ -33,7 +32,6 @@ Booking.hasOne(Payment, { foreignKey: "bookingId" });
 
 User.hasMany(AuditLog, { foreignKey: "userId" });
 
-// User associations
 User.hasOne(PassengerProfile, { as: "passengerProfile", foreignKey: "userId" });
 PassengerProfile.belongsTo(User, { as: "user", foreignKey: "userId" });
 User.hasOne(DriverProfile, { as: "driverProfile", foreignKey: "userId" });
