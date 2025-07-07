@@ -1,5 +1,12 @@
-import { RideInstance, RideModel } from "./../../../config/index.js";
+import { Op } from "sequelize";
+import {
+    DriverProfile,
+    RideInstance,
+    RideModel,
+} from "./../../../config/index.js";
+import Landmarks from "./../models/landmarks.js";
 import createLogger from "./../../../utils/logger.js";
+import RedisCacheService from "../../../utils/redisCache.js";
 
 const logger = createLogger("ride-service");
 
@@ -99,6 +106,81 @@ const rideService = {
                 },
             ],
         });
+    },
+    searchRideInstanceByDepartureAndDestination: async (
+        departure,
+        destination,
+        date
+    ) => {
+        const cacheKey = `ride_search:${departure}:${destination}:${date || "any"}`;
+        const cache = RedisCacheService;
+        let cachedResult = null;
+        try {
+            cachedResult = await cache.get(cacheKey);
+        } catch (err) {
+            logger.warn("Redis cache get failed", err);
+        }
+        if (cachedResult) {
+            logger.info(
+                "Cache hit for searchRideInstanceByDepartureAndDestination"
+            );
+            return cachedResult;
+        }
+        const whereClause = {
+            status: "scheduled",
+        };
+        if (date) {
+            whereClause.rideDate = {
+                [Op.gte]: new Date(date),
+                [Op.lt]: new Date(
+                    new Date(date).setDate(new Date(date).getDate() + 1)
+                ),
+            };
+        }
+        const result = await RideInstance.findAll({
+            where: whereClause,
+            include: [
+                {
+                    model: RideModel,
+                    where: {
+                        departure,
+                        destination,
+                    },
+                    include: [
+                        {
+                            model: DriverProfile,
+                        },
+                    ],
+                },
+            ],
+        });
+        try {
+            await cache.set(cacheKey, result, 600); // 600 seconds = 10 minutes
+        } catch (err) {
+            logger.warn("Redis cache set failed", err);
+        }
+        return result;
+    },
+    getAllLandmarks: async () => {
+        const cacheKey = "all_landmarks";
+        const cache = RedisCacheService;
+        let cachedLandmarks = null;
+        try {
+            cachedLandmarks = await cache.get(cacheKey);
+        } catch (err) {
+            logger.warn("Redis cache get failed", err);
+        }
+        if (cachedLandmarks) {
+            logger.info("Cache hit for all landmarks");
+            return cachedLandmarks;
+        }
+        const landmarks = await Landmarks.findAll();
+        try {
+            await cache.set(cacheKey, landmarks, 600); // 10 minutes
+        } catch (err) {
+            logger.warn("Redis cache set failed", err);
+        }
+        return landmarks;
     },
 };
 

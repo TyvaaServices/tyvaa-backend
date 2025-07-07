@@ -16,6 +16,17 @@ const rideFacade = {
     rejectRide: async (id) => rideService.rejectRide(id),
     completeRide: async (id) => rideService.completeRide(id),
     getAvailableRides: async () => rideService.getAvailableRideInstances(),
+    searchRideInstanceByDepartureAndDestination: async (
+        departure,
+        destination,
+        date
+    ) =>
+        rideService.searchRideInstanceByDepartureAndDestination(
+            departure,
+            destination,
+            date
+        ),
+    getAllLandmarks: async () => rideService.getAllLandmarks(),
 };
 
 export default rideFacade;

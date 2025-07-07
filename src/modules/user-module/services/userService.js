@@ -22,6 +22,8 @@ import sanitize from "sanitize-filename";
 import sequelize from "#config/db.js";
 import Role from "./../models/role.js";
 import broker from "#broker/broker.js";
+import sendOtpEmail from "./../utils/sendOtp.js";
+import transporter from "#utils/mailer.js";
 
 const pumpAsync = promisify(pump);
 
@@ -139,7 +141,6 @@ export const userService = {
      */
     generateAndSendOtp: async (identifier, context) => {
         let normalizedIdentifier = identifier;
-        // Normalize phone number only if it looks like a phone number and not an email
         if (
             !identifier.includes("@") &&
             /^\d+$/.test(identifier.replace("+", ""))
@@ -151,13 +152,12 @@ export const userService = {
             (context === "login" ? OTP_PREFIX_LOGIN : OTP_PREFIX_REGISTER) +
             normalizedIdentifier;
         try {
+            if (identifier.endsWith("@tyvaa.live")) {
+                await sendOtpEmail(identifier, otp, transporter, logger);
+            }
             await RedisCache.set(redisKey, otp, OTP_TTL_SECONDS);
             logger.info(
                 `Generated and stored OTP for ${normalizedIdentifier} (context: ${context}). OTP: ${otp}`
-            );
-            // Log to console for debugging
-            console.log(
-                `OTP for ${normalizedIdentifier} (${context}): ${otp} saved to Redis with key: ${redisKey}`
             );
             // TODO: Implement actual sending of OTP via SMS/Email service here.
             return otp;
@@ -548,7 +548,7 @@ export const userService = {
      * Creates a new DriverApplication record.
      * @async
      * @param {number|string} userId - The ID of the user submitting the application.
-     * @param {AsyncIterable<import('@fastify/multipart').MultipartPart>} partsStream - The multipart stream from Fastify containing form data and files.
+     * @param {AsyncIterable<import("@fastify/multipart").MultipartPart>} partsStream - The multipart stream from Fastify containing form data and files.
      * @returns {Promise<DriverApplication>} The created DriverApplication instance.
      * @throws {NotFoundError} If the user's passenger profile is not found.
      * @throws {ConflictError} If the user already has a pending application.
@@ -1081,7 +1081,7 @@ export const userService = {
      * @async
      * @param {UserInstance} user - The Sequelize User instance to assign roles to.
      * @param {string[]} [extraRoleNames=[]] - An array of additional role names (e.g., 'PASSENGER', 'CHAUFFEUR', 'ADMINISTRATEUR').
-     * @param {import('sequelize').Transaction} transaction - The Sequelize transaction object.
+     * @param {import("sequelize").Transaction} transaction - The Sequelize transaction object.
      * @returns {Promise<void>}
      * @throws {AppError} If the essential 'UTILISATEUR_BASE' role is not found in the database.
      * @memberof userService

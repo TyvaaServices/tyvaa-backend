@@ -57,6 +57,7 @@
         "pino": "^9.7.0",
         "pino-pretty": "^13.0.0",
         "pump": "^3.0.3",
+        "puppeteer": "^24.11.2",
         "sanitize-filename": "^1.6.3",
         "sequelize": "^6.37.7",
         "sqlite3": "^5.1.7",
