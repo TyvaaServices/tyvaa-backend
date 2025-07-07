@@ -20,6 +20,7 @@ async function rideRoutes(fastify, _opts) {
         "/rides/search",
         rideController.searchRideInstanceByDepartureAndDestination
     );
+    fastify.get("rides/landmarks", rideController.getAllLandmarks);
 }
 
 export default rideRoutes;

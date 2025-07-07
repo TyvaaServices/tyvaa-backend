@@ -26,6 +26,7 @@ const rideFacade = {
             destination,
             date
         ),
+    getAllLandmarks: async () => rideService.getAllLandmarks(),
 };
 
 export default rideFacade;

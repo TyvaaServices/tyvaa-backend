@@ -4,6 +4,7 @@ import {
     RideInstance,
     RideModel,
 } from "./../../../config/index.js";
+import Landmarks from "./../models/landmarks.js";
 import createLogger from "./../../../utils/logger.js";
 import RedisCacheService from "../../../utils/redisCache.js";
 
@@ -125,8 +126,6 @@ const rideService = {
             );
             return cachedResult;
         }
-        // Use 'scheduled' instead of 'active' for status
-        // Filter by departure/destination in RideModel, not RideInstance
         const whereClause = {
             status: "scheduled",
         };
@@ -161,6 +160,27 @@ const rideService = {
             logger.warn("Redis cache set failed", err);
         }
         return result;
+    },
+    getAllLandmarks: async () => {
+        const cacheKey = "all_landmarks";
+        const cache = RedisCacheService;
+        let cachedLandmarks = null;
+        try {
+            cachedLandmarks = await cache.get(cacheKey);
+        } catch (err) {
+            logger.warn("Redis cache get failed", err);
+        }
+        if (cachedLandmarks) {
+            logger.info("Cache hit for all landmarks");
+            return cachedLandmarks;
+        }
+        const landmarks = await Landmarks.findAll();
+        try {
+            await cache.set(cacheKey, landmarks, 600); // 10 minutes
+        } catch (err) {
+            logger.warn("Redis cache set failed", err);
+        }
+        return landmarks;
     },
 };
 

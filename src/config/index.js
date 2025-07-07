@@ -9,6 +9,7 @@ import PassengerProfile from "./../modules/user-module/models/passengerProfile.j
 import DriverProfile from "./../modules/user-module/models/driverProfile.js";
 import DriverApplication from "./../modules/user-module/models/driverApplication.js";
 import Role from "./../modules/user-module/models/role.js";
+import Landmarks from "./../modules/ride-module/models/landmarks.js";
 
 RideModel.hasMany(RideInstance, { foreignKey: "rideId" });
 RideInstance.belongsTo(RideModel, { foreignKey: "rideId" });
@@ -49,4 +50,5 @@ export {
     PassengerProfile,
     DriverProfile,
     Role,
+    Landmarks,
 };

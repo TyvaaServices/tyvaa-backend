@@ -182,7 +182,6 @@ const rideController = {
      * @returns {Promise<void>} Sends the list of matching ride instances.
      */
     searchRideInstanceByDepartureAndDestination: async (req, reply) => {
-        // Accept both 'destination' and 'arrival' as query params for compatibility
         const { departure, destination, date } = req.query;
         if (!departure) {
             return reply.code(400).send({
@@ -196,6 +195,10 @@ const rideController = {
                 date
             );
         return reply.send(rides);
+    },
+    getAllLandmarks: async (req, reply) => {
+        const landmarks = await rideFacade.getAllLandmarks();
+        return reply.send(landmarks);
     },
 };
 
