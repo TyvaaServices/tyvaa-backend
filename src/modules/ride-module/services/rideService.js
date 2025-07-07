@@ -1,5 +1,11 @@
-import { RideInstance, RideModel } from "./../../../config/index.js";
+import { Op } from "sequelize";
+import {
+    DriverProfile,
+    RideInstance,
+    RideModel,
+} from "./../../../config/index.js";
 import createLogger from "./../../../utils/logger.js";
+import RedisCacheService from "../../../utils/redisCache.js";
 
 const logger = createLogger("ride-service");
 
@@ -99,6 +105,62 @@ const rideService = {
                 },
             ],
         });
+    },
+    searchRideInstanceByDepartureAndDestination: async (
+        departure,
+        destination,
+        date
+    ) => {
+        const cacheKey = `ride_search:${departure}:${destination}:${date || "any"}`;
+        const cache = RedisCacheService;
+        let cachedResult = null;
+        try {
+            cachedResult = await cache.get(cacheKey);
+        } catch (err) {
+            logger.warn("Redis cache get failed", err);
+        }
+        if (cachedResult) {
+            logger.info(
+                "Cache hit for searchRideInstanceByDepartureAndDestination"
+            );
+            return cachedResult;
+        }
+        // Use 'scheduled' instead of 'active' for status
+        // Filter by departure/destination in RideModel, not RideInstance
+        const whereClause = {
+            status: "scheduled",
+        };
+        if (date) {
+            whereClause.rideDate = {
+                [Op.gte]: new Date(date),
+                [Op.lt]: new Date(
+                    new Date(date).setDate(new Date(date).getDate() + 1)
+                ),
+            };
+        }
+        const result = await RideInstance.findAll({
+            where: whereClause,
+            include: [
+                {
+                    model: RideModel,
+                    where: {
+                        departure,
+                        destination,
+                    },
+                    include: [
+                        {
+                            model: DriverProfile,
+                        },
+                    ],
+                },
+            ],
+        });
+        try {
+            await cache.set(cacheKey, result, 600); // 600 seconds = 10 minutes
+        } catch (err) {
+            logger.warn("Redis cache set failed", err);
+        }
+        return result;
     },
 };
 

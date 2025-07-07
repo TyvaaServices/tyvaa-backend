@@ -16,6 +16,10 @@ async function rideRoutes(fastify, _opts) {
     fastify.put("/ride-instances/:id", rideController.updateRideInstance);
     fastify.delete("/ride-instances/:id", rideController.deleteRideInstance);
     fastify.get("/ride-instances/available", rideController.getAvailableRides);
+    fastify.get(
+        "/rides/search",
+        rideController.searchRideInstanceByDepartureAndDestination
+    );
 }
 
 export default rideRoutes;

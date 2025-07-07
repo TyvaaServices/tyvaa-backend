@@ -174,6 +174,29 @@ const rideController = {
             return reply.code(404).send({ error: "Ride not found" });
         return reply.send({ message: "Ride completed" });
     },
+
+    /**
+     * Searches ride instances by departure, destination, and optional date.
+     * @param {import("fastify").FastifyRequest} req - The Fastify request object.
+     * @param {import("fastify").FastifyReply} reply - The Fastify reply object.
+     * @returns {Promise<void>} Sends the list of matching ride instances.
+     */
+    searchRideInstanceByDepartureAndDestination: async (req, reply) => {
+        // Accept both 'destination' and 'arrival' as query params for compatibility
+        const { departure, destination, date } = req.query;
+        if (!departure) {
+            return reply.code(400).send({
+                error: "departure and destination/arrival are required",
+            });
+        }
+        const rides =
+            await rideFacade.searchRideInstanceByDepartureAndDestination(
+                departure,
+                destination,
+                date
+            );
+        return reply.send(rides);
+    },
 };
 
 export default rideController;
