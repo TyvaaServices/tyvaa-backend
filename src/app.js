@@ -23,6 +23,8 @@ const rbacPlugin = (await import("./utils/rbacPlugin.js")).default;
 const errorHandlerPlugin = (await import("./utils/errorHandler.js")).default;
 const swagger = (await import("@fastify/swagger")).default;
 const swaggerUi = (await import("@fastify/swagger-ui")).default;
+const idempotencyPlugin = (await import("./utils/idempotencyPlugin.js"))
+    .default;
 
 export async function buildApp() {
     const fastify = Fastify({ logger: true });
@@ -55,6 +57,7 @@ export async function buildApp() {
         keyGenerator: (req, _res) => req.headers["x-forwarded-for"] || req.ip,
     });
     fastify.register(errorHandlerPlugin);
+    fastify.register(idempotencyPlugin);
     return fastify;
 }
 
