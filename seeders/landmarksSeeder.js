@@ -1,4 +1,3 @@
-// filepath: /home/cheikh/WebstormProjects/backend-tyvaa/seeders/landmarksSeeder.js
 import Landmarks from "../src/modules/ride-module/models/landmarks.js";
 
 export async function seedLandmarks() {
@@ -646,7 +645,7 @@ export async function seedLandmarks() {
             description: "Unité 20",
         },
     ];
-    await Landmarks.bulkCreate(landmarks);
+    // await Landmarks.bulkCreate(landmarks);
     console.log("Seeded 200+ Dakar quartiers in landmarks");
 }
 

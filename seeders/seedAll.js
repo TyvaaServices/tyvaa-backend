@@ -1,6 +1,9 @@
 import sequelize from "#config/db.js";
+import { seedLandmarks } from "./landmarksSeeder.js";
 import Role from "../src/modules/user-module/models/role.js";
+import dotenv from "dotenv";
 
+dotenv.config();
 import {
     AuditAction,
     DriverApplication,
@@ -10,55 +13,63 @@ import {
     RideModel,
     User,
 } from "#config/index.js";
-import landmarkSeeder from "./landmarksSeeder.js";
 
 async function seed() {
     await sequelize.sync({ force: true, logging: false });
-    await landmarkSeeder();
+    await seedLandmarks();
     const { seedDatabase } = await import("./rbacSeeder.js");
-    await seedDatabase();
+    // await seedDatabase();
     const roles = await Role.findAll();
 
-    const users = await User.bulkCreate([
-        {
-            phoneNumber: "+12345678901",
-            fullName: "Ouly Diallo",
-            fcmToken: "token1",
-            driverLicense: "DL12345",
-            profileImage: "ouly.jpg",
-            sexe: "female",
-            dateOfBirth: new Date("2004-01-08"),
-            email: "ouly@cheikh.com",
-            isActive: true,
-        },
-        {
-            phoneNumber: "+12345678902",
-            fullName: "Cheikh Traore",
-            fcmToken: "token2",
-            driverLicense: "DL54321",
-            profileImage: "cheikh.jpg",
-            sexe: "male",
-            dateOfBirth: new Date("2001-10-02"),
-            email: "cheikh@ouly.com",
-            isActive: true,
-        },
-        {
-            email: "cheikh.traore@tyvaa.live",
-            fullName: "Cheikh Traore",
-            sexe: "male",
-            dateOfBirth: "20001-10-02",
-            isActive: true,
-            phoneNumber: "+12345678903",
-        },
-        {
-            email: "houleymatou.diallo@tyvaa.live",
-            fullName: "Houleymatou Diallo",
-            sexe: "female",
-            dateOfBirth: "2005-01-08",
-            isActive: true,
-            phoneNumber: "+12345678904",
-        },
-    ]);
+    let users = [];
+    try {
+        users = await User.bulkCreate([
+            {
+                phoneNumber: "+12345678901",
+                fullName: "Ouly Diallo",
+                fcmToken: "token1",
+                driverLicense: "DL12345",
+                profileImage: "ouly.jpg",
+                sexe: "female",
+                dateOfBirth: new Date("2004-01-08"),
+                email: "ouly@cheikh.com",
+                isActive: true,
+            },
+            {
+                phoneNumber: "+12345678902",
+                fullName: "Cheikh Traore",
+                fcmToken: "token2",
+                driverLicense: "DL54321",
+                profileImage: "cheikh.jpg",
+                sexe: "male",
+                dateOfBirth: new Date("2001-10-02"),
+                email: "cheikh@ouly.com",
+                isActive: true,
+            },
+            {
+                email: "cheikh.traore@tyvaa.live",
+                fullName: "Cheikh Traore",
+                sexe: "male",
+                dateOfBirth: "2001-10-02",
+                isActive: true,
+                phoneNumber: "+12345678903",
+            },
+            {
+                email: "houleymatou.diallo@tyvaa.live",
+                fullName: "Houleymatou Diallo",
+                sexe: "female",
+                dateOfBirth: "2005-01-08",
+                isActive: true,
+                phoneNumber: "+12345678904",
+            },
+        ]);
+        console.log("Users created:", users.length);
+    } catch (err) {
+        console.error("Error creating users:", err);
+    }
+    // Check if users exist in DB
+    const userCount = await User.count();
+    console.log("User count in DB after bulkCreate:", userCount);
 
     const passagerRole = roles.find((r) => r.name === "PASSAGER");
     const chauffeurRole = roles.find((r) => r.name === "CHAUFFEUR");
@@ -68,8 +79,13 @@ async function seed() {
     if (users[0] && passagerRole) await users[0].addRole(passagerRole);
     if (users[1] && chauffeurRole) await users[1].addRole(chauffeurRole);
     if (users[2] && superviseurRole) await users[2].addRole(superviseurRole);
-    if (users[3] && adminRole) await users[3].addRole(adminRole);
-
+    if (users[3] && adminRole) {
+        // Check if user already has this role before assigning
+        const hasRole = await users[3].hasRole(adminRole);
+        if (!hasRole) {
+            await users[3].addRole(adminRole);
+        }
+    }
     const usersWithRoles = await Promise.all(
         users.map(async (user) => {
             const userRoles = await user.getRoles();

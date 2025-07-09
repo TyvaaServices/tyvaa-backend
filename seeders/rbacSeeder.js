@@ -158,18 +158,47 @@ async function seedDatabase() {
             }
         }
 
+        // Assign permissions to roles using association methods (no direct join table manipulation)
         for (const roleName in rolePermissionsData) {
             const role = createdRoles[roleName];
             const permissionsToAssign = rolePermissionsData[roleName];
+
             if (role && permissionsToAssign) {
                 const permissionInstances = permissionsToAssign
                     .map((pName) => createdPermissions[pName])
                     .filter((p) => p);
-                await role.addPermissions(permissionInstances);
+
+                // Get existing permissions for this role
+                const existingPermissions = await role.getPermissions();
+                const existingPermissionIds = existingPermissions.map(
+                    (p) => p.id
+                );
+
+                // Filter out permissions that are already assigned
+                const newPermissions = permissionInstances.filter(
+                    (p) => !existingPermissionIds.includes(p.id)
+                );
+
+                // Only add new permissions, suppress unique constraint errors
+                for (const perm of newPermissions) {
+                    try {
+                        await role.addPermission(perm);
+                    } catch (err) {
+                        // Ignore unique constraint errors
+                        if (
+                            err.name !== "SequelizeUniqueConstraintError" &&
+                            !(err.parent && err.parent.code === "23505")
+                        ) {
+                            throw err;
+                        }
+                    }
+                }
             }
         }
-        const adminEmail = process.env.ADMIN_EMAIL || "admin@tyvaa.live";
+
         const adminPhone = process.env.ADMIN_PHONE || "+10000000000";
+        const adminEmail =
+            process.env.ADMIN_EMAIL || "houleymatou.diallo@tyvaa.live";
 
         if (createdRoles.ADMINISTRATEUR) {
             let adminUser = await User.findOne({
@@ -195,7 +224,13 @@ async function seedDatabase() {
             }
 
             if (adminUser) {
-                await adminUser.setRoles([createdRoles.ADMINISTRATEUR]);
+                // Check if admin already has the role before assigning
+                const hasRole = await adminUser.hasRole(
+                    createdRoles.ADMINISTRATEUR
+                );
+                if (!hasRole) {
+                    await adminUser.addRole(createdRoles.ADMINISTRATEUR);
+                }
             } else {
             }
         }
