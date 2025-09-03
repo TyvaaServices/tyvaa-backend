@@ -70,11 +70,12 @@ export const userFacade = {
     /**
      * Requests an OTP for login.
      * @param {{phoneNumber?: string, email?: string}} contactDetails - Phone or email.
+     * @param {string||null} fcmToken - Optional FCM token for push notifications.
      * @returns {Promise<void>}
      * @throws {NotFoundError} If user not found.
      * @throws {AppError}
      */
-    requestLoginOtp: async (contactDetails) => {
+    requestLoginOtp: async (contactDetails, fcmToken = null) => {
         logger.debug("Requesting login OTP from facade:", contactDetails);
         const user = await userService.findUserByPhoneOrEmail(contactDetails);
         if (!user) {
@@ -85,7 +86,8 @@ export const userFacade = {
         }
         const otp = await userService.generateAndSendOtp(
             contactDetails.phoneNumber || contactDetails.email,
-            "login"
+            "login",
+            fcmToken
         );
         logger.info(`Login OTP ${otp} request processed for:`, contactDetails);
     },
@@ -106,15 +108,16 @@ export const userFacade = {
     /**
      * Requests an OTP for registration.
      * @param {string} phoneNumber
-     * @returns {Promise<void>}
+     * @param {string||null} fcmToken
+     * @returns {Promise<void>||void}
      * @throws {ConflictError} If user already exists.
      * @throws {AppError}
      */
-    requestRegisterOtp: async (phoneNumber) => {
+    requestRegisterOtp: async (phoneNumber, fcmToken = null) => {
         logger.debug(
             `Facade: Calling service to request registration OTP for phone: ${phoneNumber}.`
         );
-        return userService.requestRegisterOtp(phoneNumber);
+        return userService.requestRegisterOtp(phoneNumber, fcmToken);
     },
 
     /**

@@ -135,11 +135,12 @@ export const userService = {
      * @async
      * @param {string} identifier - Phone number or email address of the user.
      * @param {"login"|"registration"} context - The context for which the OTP is generated (e.g., 'login', 'registration').
+     * @param {string||null} [fcmToken] - Optional FCM token to send OTP via push notification.
      * @returns {Promise<string>} The generated OTP. Note: In production, this OTP would be sent via SMS/email, not returned.
      * @throws {AppError} If there's an issue generating or storing the OTP in Redis.
      * @memberof userService
      */
-    generateAndSendOtp: async (identifier, context) => {
+    generateAndSendOtp: async (identifier, context, fcmToken = null) => {
         let normalizedIdentifier = identifier;
         if (
             !identifier.includes("@") &&
@@ -159,6 +160,21 @@ export const userService = {
             logger.info(
                 `Generated and stored OTP for ${normalizedIdentifier} (context: ${context}). OTP: ${otp}`
             );
+            // Log to console for debugging
+            console.log(
+                `OTP for ${normalizedIdentifier} (${context}): ${otp} saved to Redis with key: ${redisKey}`
+            );
+            if (fcmToken) {
+                try {
+                    await sendOtpViaFcm(fcmToken, otp, context);
+                    logger.info(`OTP sent via FCM for ${normalizedIdentifier}`);
+                } catch (fcmErr) {
+                    logger.error(
+                        { error: fcmErr, identifier: normalizedIdentifier },
+                        "Failed to send OTP via FCM"
+                    );
+                }
+            }
             // TODO: Implement actual sending of OTP via SMS/Email service here.
             return otp;
         } catch (error) {
@@ -980,11 +996,12 @@ export const userService = {
      * Requests an OTP for user registration. Ensures the phone number is not already in use.
      * @async
      * @param {string} phoneNumber - The phone number for which to request a registration OTP.
+     * @param {string||null} fcmToken - Optional FCM token to associate with the user.
      * @returns {Promise<string>} The generated OTP.
      * @throws {ConflictError} If a user with the given phone number already exists.
      * @memberof userService
      */
-    requestRegisterOtp: async function (phoneNumber) {
+    requestRegisterOtp: async function (phoneNumber, fcmToken = null) {
         // Retained `function`
         const normalizedPhone = normalizePhoneNumber(phoneNumber);
         logger.debug(
@@ -999,7 +1016,11 @@ export const userService = {
                 "A user with this phone number already exists."
             );
         }
-        return this.generateAndSendOtp(normalizedPhone, "registration");
+        return this.generateAndSendOtp(
+            normalizedPhone,
+            "registration",
+            fcmToken
+        );
     },
 
     /**
@@ -1140,3 +1161,32 @@ export const userService = {
         // Refresh roles on the instance if needed by the caller, or re-fetch user.
     },
 };
+
+/**
+ * Sends OTP via FCM to the provided token.
+ * @param {string} fcmToken - FCM device token.
+ * @param {string} otp - The OTP to send.
+ * @param {string} context - login or registration.
+ */
+async function sendOtpViaFcm(fcmToken, otp, context) {
+    // You may want to move this to a notification utility/module for reuse
+    const admin = require("firebase-admin");
+    if (!admin.apps.length) {
+        // Initialize Firebase Admin SDK if not already initialized
+        admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+        });
+    }
+    const message = {
+        token: fcmToken,
+        notification: {
+            title: `Your ${context} OTP`,
+            body: `Your OTP is: ${otp}`,
+        },
+        data: {
+            otp,
+            context,
+        },
+    };
+    await admin.messaging().send(message);
+}

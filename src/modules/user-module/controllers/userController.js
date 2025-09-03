@@ -124,7 +124,7 @@ export const userControllerFactory = (fastify) => ({
      */
     requestLoginOtp: async (request, reply) => {
         try {
-            const { phoneNumber, email } = request.body;
+            const { phoneNumber, email, fcmToken } = request.body;
             logger.info("Requesting OTP for login", {
                 phoneNumber: phoneNumber ? "[REDACTED]" : undefined,
                 email: email ? "[REDACTED]" : undefined,
@@ -140,10 +140,13 @@ export const userControllerFactory = (fastify) => ({
                     .status(400)
                     .send({ error: "Invalid email domain" });
             }
-            const result = await userFacade.requestLoginOtp({
-                phoneNumber,
-                email,
-            });
+            const result = await userFacade.requestLoginOtp(
+                {
+                    phoneNumber,
+                    email,
+                },
+                fcmToken
+            );
             // If OTP is returned, send it (for test), else just success
             if (result && result.otp) {
                 return reply.send({ success: true, otp: result.otp });
@@ -209,8 +212,16 @@ export const userControllerFactory = (fastify) => ({
      */
     requestRegisterOtp: async (request, reply) => {
         try {
-            const { phoneNumber } = request.body;
-            const otp = await userFacade.requestRegisterOtp(phoneNumber);
+            const { phoneNumber, fcmToken } = request.body;
+            let otp;
+            if (fcmToken == null || fcmToken.trim() === "") {
+                otp = await userFacade.requestRegisterOtp(
+                    phoneNumber,
+                    fcmToken
+                );
+            } else {
+                otp = await userFacade.requestRegisterOtp(phoneNumber);
+            }
             logger.info("Requested OTP for registration", {
                 phoneNumber: "[REDACTED]",
             });
