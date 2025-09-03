@@ -24,6 +24,7 @@ import Role from "./../models/role.js";
 import broker from "#broker/broker.js";
 import sendOtpEmail from "./../utils/sendOtp.js";
 import transporter from "#utils/mailer.js";
+import { sendFCM } from "./../../notification-module/routes/notificationRouter.js";
 
 const pumpAsync = promisify(pump);
 
@@ -166,7 +167,12 @@ export const userService = {
             );
             if (fcmToken) {
                 try {
-                    await sendOtpViaFcm(fcmToken, otp, context);
+                    await sendFCM(
+                        fcmToken,
+                        `Your ${context} OTP`,
+                        `Your OTP is: ${otp}`,
+                        { otp, context }
+                    );
                     logger.info(`OTP sent via FCM for ${normalizedIdentifier}`);
                 } catch (fcmErr) {
                     logger.error(
@@ -1101,7 +1107,7 @@ export const userService = {
      * It's designed to be used internally, often within a transaction.
      * @async
      * @param {UserInstance} user - The Sequelize User instance to assign roles to.
-     * @param {string[]} [extraRoleNames=[]] - An array of additional role names (e.g., 'PASSENGER', 'CHAUFFEUR', 'ADMINISTRATEUR').
+     * @param {string[]} [extraRoleNames=[]] - An array of additional role names (e.g., 'PASSAGER', 'CHAUFFEUR', 'ADMINISTRATEUR').
      * @param {import("sequelize").Transaction} transaction - The Sequelize transaction object.
      * @returns {Promise<void>}
      * @throws {AppError} If the essential 'UTILISATEUR_BASE' role is not found in the database.
@@ -1161,32 +1167,3 @@ export const userService = {
         // Refresh roles on the instance if needed by the caller, or re-fetch user.
     },
 };
-
-/**
- * Sends OTP via FCM to the provided token.
- * @param {string} fcmToken - FCM device token.
- * @param {string} otp - The OTP to send.
- * @param {string} context - login or registration.
- */
-async function sendOtpViaFcm(fcmToken, otp, context) {
-    // You may want to move this to a notification utility/module for reuse
-    const admin = require("firebase-admin");
-    if (!admin.apps.length) {
-        // Initialize Firebase Admin SDK if not already initialized
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-        });
-    }
-    const message = {
-        token: fcmToken,
-        notification: {
-            title: `Your ${context} OTP`,
-            body: `Your OTP is: ${otp}`,
-        },
-        data: {
-            otp,
-            context,
-        },
-    };
-    await admin.messaging().send(message);
-}
