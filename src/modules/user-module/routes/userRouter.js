@@ -61,7 +61,7 @@ async function userRoutes(fastify, _opts) {
     const adminCtrl = await import("../controllers/adminController.js");
 
     fastify.post(
-        "/admin/roles",
+        "/users/roles",
         {
             preValidation: [
                 fastify.authenticate,
@@ -71,7 +71,7 @@ async function userRoutes(fastify, _opts) {
         adminCtrl.createRole
     );
     fastify.get(
-        "/admin/roles",
+        "/users/roles",
         {
             preValidation: [
                 fastify.authenticate,
@@ -81,7 +81,7 @@ async function userRoutes(fastify, _opts) {
         adminCtrl.getAllRoles
     );
     fastify.get(
-        "/admin/roles/:roleId",
+        "/users/roles/:roleId",
         {
             preValidation: [
                 fastify.authenticate,
@@ -91,7 +91,7 @@ async function userRoutes(fastify, _opts) {
         adminCtrl.getRoleById
     );
     fastify.delete(
-        "/admin/roles/:roleId",
+        "/users/roles/:roleId",
         {
             preValidation: [
                 fastify.authenticate,
@@ -102,7 +102,7 @@ async function userRoutes(fastify, _opts) {
     );
 
     fastify.post(
-        "/admin/permissions",
+        "/users/permissions",
         {
             preValidation: [
                 fastify.authenticate,
@@ -112,7 +112,7 @@ async function userRoutes(fastify, _opts) {
         adminCtrl.createPermission
     );
     fastify.get(
-        "/admin/permissions",
+        "/users/permissions",
         {
             preValidation: [
                 fastify.authenticate,
@@ -122,9 +122,8 @@ async function userRoutes(fastify, _opts) {
         adminCtrl.getAllPermissions
     );
 
-    // Role-Permission Assignment
     fastify.post(
-        "/admin/roles/:roleId/permissions/:permissionId",
+        "/users/roles/:roleId/permissions/:permissionId",
         {
             preValidation: [
                 fastify.authenticate,
@@ -134,7 +133,7 @@ async function userRoutes(fastify, _opts) {
         adminCtrl.assignPermissionToRole
     );
     fastify.delete(
-        "/admin/roles/:roleId/permissions/:permissionId",
+        "/roles/:roleId/permissions/:permissionId",
         {
             preValidation: [
                 fastify.authenticate,
@@ -145,7 +144,7 @@ async function userRoutes(fastify, _opts) {
     );
 
     fastify.get(
-        "/admin/users/:userId/roles",
+        "/users/:userId/roles",
         {
             preValidation: [
                 fastify.authenticate,
@@ -155,7 +154,7 @@ async function userRoutes(fastify, _opts) {
         adminCtrl.getUserRoles
     );
     fastify.post(
-        "/admin/users/:userId/roles/:roleId",
+        "/users/:userId/roles/:roleId",
         {
             preValidation: [
                 fastify.authenticate,
