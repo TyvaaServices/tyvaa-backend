@@ -1,9 +1,8 @@
-import RedisCacheService from "./redisCache.js";
+import redis from "./redisCache.js";
 
 export default async function idempotencyPlugin(fastify, opts) {
-    const redis = RedisCacheService.getInstance();
     fastify.addHook("onRequest", async (request, reply) => {
-        if (!["POST", "PUT", "PATCH"].includes(request.method)) return;
+        if (!["POST"].includes(request.method)) return;
         const key = request.headers["idempotency-key"];
         if (!key) return;
         const cached = await redis.get(`idempotency:${key}`);
@@ -16,7 +15,7 @@ export default async function idempotencyPlugin(fastify, opts) {
     });
 
     fastify.addHook("onSend", async (request, reply, payload) => {
-        if (!["POST", "PUT", "PATCH"].includes(request.method)) return payload;
+        if (!["POST"].includes(request.method)) return payload;
         const key = request.headers["idempotency-key"];
         if (!key) return payload;
         const redisKey = `idempotency:${key}`;
