@@ -84,6 +84,7 @@ jobs:
     needs: [ dockerize ]
     runs-on: ubuntu-latest
     env:
+      TF_IN_AUTOMATION: 1
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       KOYEB_TOKEN: ${{ secrets.KOYEB_TOKEN }}
     steps:
