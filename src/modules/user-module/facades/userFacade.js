@@ -90,6 +90,9 @@ export const userFacade = {
             fcmToken
         );
         logger.info(`Login OTP ${otp} request processed for:`, contactDetails);
+        
+        // Return the OTP for testing purposes (in production, this wouldn't be returned)
+        return { otp };
     },
 
     /**

@@ -102,7 +102,16 @@ export const userService = {
             phoneNumber,
             email,
         });
-        const whereClause = email ? { email } : { phoneNumber };
+        
+        // Normalize phone number if provided
+        let normalizedPhone = phoneNumber;
+        if (phoneNumber && !phoneNumber.includes("@")) {
+            normalizedPhone = normalizePhoneNumber(phoneNumber);
+        }
+        
+        const whereClause = email
+            ? { email }
+            : { phoneNumber: normalizedPhone };
         const user = await User.findOne({
             where: whereClause,
             include: [
@@ -117,16 +126,25 @@ export const userService = {
                 { model: DriverProfile, as: "driverProfile" },
             ],
         });
-        const roles = await user.getRoles();
-        if (roles.length > 0) {
-            user.roles = roles.map((role) => role.name);
+        
+        if (user) {
+            const roles = await user.getRoles();
+            if (roles.length > 0) {
+                user.roles = roles.map((role) => role.name);
+            } else {
+                user.roles = [];
+            }
+            logger.debug("Service: User found", {
+                userId: user.id,
+                roles: user.roles,
+            });
         } else {
-            user.roles = [];
+            logger.debug("Service: No user found with provided credentials", {
+                searchedPhone: normalizedPhone,
+                searchedEmail: email,
+            });
         }
-        logger.debug("Service: User found", {
-            userId: user?.id,
-            roles: user?.roles,
-        });
+        
         return user;
     },
 
@@ -308,7 +326,7 @@ export const userService = {
             await PassengerProfile.create({ userId: user.id }, { transaction });
             logger.info(`Created PassengerProfile for User ID: ${user.id}`);
 
-            const roles = ["PASSENGER"];
+            const roles = ["PASSAGER"];
             if (profileType === "driver") roles.push("CHAUFFEUR");
             await userService.assignBaseAndExtraRoles(user, roles, transaction);
             await transaction.commit();
