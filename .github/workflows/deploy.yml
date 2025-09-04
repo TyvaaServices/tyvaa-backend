@@ -131,8 +131,8 @@ jobs:
       - name: Run DB Seeders
         working-directory: ./
         run: |
-          node src/seeders/rbacSeeder.js
-          node src/seeders/seedAll.js
+          node seeders/rbacSeeder.js
+          node seeders/seedAll.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NODE_ENV: production
