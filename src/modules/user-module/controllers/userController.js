@@ -257,8 +257,19 @@ export const userControllerFactory = (fastify) => ({
                 );
                 return reply.status(500).send({ error: err.message });
             }
-            const token = fastify.signToken({ id: user.id });
-            return reply.status(201).send({ user, token });
+            
+            // Generate token using the created user's ID and roles
+            const tokens = await generateAuthTokens(
+                createdUser,
+                fastify,
+                createdUser.email
+            );
+
+            return reply.status(201).send({
+                user: createdUser,
+                token: tokens.token,
+                refreshToken: tokens.refreshToken,
+            });
         } catch (err) {
             console.log(
                 `Error creating user: ${err.message}` // Log the error for debugging

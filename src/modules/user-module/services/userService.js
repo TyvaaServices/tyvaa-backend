@@ -334,12 +334,13 @@ export const userService = {
                 `User and profile(s) created successfully for User ID: ${user.id}`
             );
 
-            if (profileType === "passenger" || profileType === "driver") {
-                // Using sendToQueue for direct message to the notification_created queue
-                // Corrected eventType to USER_WELCOME
-                // Standard message options; removed delay and maxRetries as they are not standard AMQP props here
-                broker
-                    .sendToQueue(
+            // Send notification after transaction commit (failures here shouldn't affect user creation)
+            try {
+                if (profileType === "passenger" || profileType === "driver") {
+                    // Using sendToQueue for direct message to the notification_created queue
+                    // Corrected eventType to USER_WELCOME
+                    // Standard message options; removed delay and maxRetries as they are not standard AMQP props here
+                    await broker.sendToQueue(
                         "notification_created", // Queue name
                         {
                             // Message payload
@@ -353,19 +354,23 @@ export const userService = {
                             },
                         },
                         { persistent: true, priority: 5 } // Message options
-                    )
-                    .catch((err) => {
-                        logger.error(
-                            { error: err, userId: user.id },
-                            "Failed to send welcome notification to broker"
-                        );
-                        // Decide if this failure should affect user creation outcome - currently it does not.
-                    });
+                    );
+                }
+            } catch (notificationError) {
+                logger.error(
+                    { error: notificationError, userId: user.id },
+                    "Failed to send welcome notification to broker"
+                );
+                // Notification failure doesn't affect user creation outcome
             }
+            
             return user;
         } catch (error) {
-            await transaction.rollback();
-            console.log(
+            // Only rollback if transaction hasn't been committed yet
+            if (!transaction.finished) {
+                await transaction.rollback();
+            }
+            logger.error(
                 {
                     errorMessage: error.message,
                     errorStack: error.stack,
@@ -486,7 +491,6 @@ export const userService = {
                 { error, userData, roleToAssign },
                 "Failed to create special user with roles."
             );
-            console.error(error);
             if (error instanceof ConflictError || error instanceof AppError)
                 throw error;
             throw new AppError(
