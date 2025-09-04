@@ -239,10 +239,33 @@ export const userControllerFactory = (fastify) => ({
      */
     createUser: async (request, reply) => {
         try {
-            const { user, otp, isAdmin } = request.body;
+            // Extract OTP and user data from request body
+            const { otp, isAdmin, ...userData } = request.body;
+            
+            // Debug logging to see what's being received
+            logger.debug("Controller: Received request body:", {
+                fullBody: request.body,
+                bodyType: typeof request.body,
+                bodyIsNull: request.body === null,
+                bodyIsUndefined: request.body === undefined,
+                bodyKeys: request.body ? Object.keys(request.body) : "NO_BODY",
+                otp: otp ? "[REDACTED]" : undefined,
+                isAdmin,
+                userData,
+                userDataKeys: Object.keys(userData || {}),
+                hasPhoneNumber: userData?.phoneNumber !== undefined,
+                hasEmail: userData?.email !== undefined,
+                phoneNumberValue: userData?.phoneNumber,
+                emailValue: userData?.email,
+            });
+            
             let createdUser;
             try {
-                createdUser = await userFacade.createUser(user, otp, isAdmin);
+                createdUser = await userFacade.createUser(
+                    userData,
+                    otp,
+                    isAdmin
+                );
             } catch (err) {
                 if (err.message === "User already exists") {
                     return reply
@@ -252,8 +275,9 @@ export const userControllerFactory = (fastify) => ({
                 if (err.message === "Invalid OTP") {
                     return reply.status(400).send({ error: "Invalid OTP" });
                 }
-                console.error(
-                    `Error creating user: ${err}` // Log the error for debugging
+                logger.error(
+                    `Error creating user: ${err.message}`, // Log the error message for debugging
+                    { error: err.message, stack: err.stack }
                 );
                 return reply.status(500).send({ error: err.message });
             }
@@ -271,7 +295,7 @@ export const userControllerFactory = (fastify) => ({
                 refreshToken: tokens.refreshToken,
             });
         } catch (err) {
-            console.log(
+            logger.error(
                 `Error creating user: ${err.message}` // Log the error for debugging
             );
             return reply.status(500).send({ error: err.message });

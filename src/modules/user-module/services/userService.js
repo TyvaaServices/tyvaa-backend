@@ -160,6 +160,13 @@ export const userService = {
      * @memberof userService
      */
     generateAndSendOtp: async (identifier, context, fcmToken = null) => {
+        if (!identifier) {
+            throw new AppError(
+                "Identifier (phone number or email) is required for OTP generation.",
+                400
+            );
+        }
+        
         let normalizedIdentifier = identifier;
         if (
             !identifier.includes("@") &&
@@ -179,8 +186,8 @@ export const userService = {
             logger.info(
                 `Generated and stored OTP for ${normalizedIdentifier} (context: ${context}). OTP: ${otp}`
             );
-            // Log to console for debugging
-            console.log(
+            // Log OTP for debugging
+            logger.debug(
                 `OTP for ${normalizedIdentifier} (${context}): ${otp} saved to Redis with key: ${redisKey}`
             );
             if (fcmToken) {
@@ -221,6 +228,13 @@ export const userService = {
      * @memberof userService
      */
     verifyOtp: async (identifier, otp, context) => {
+        if (!identifier) {
+            throw new AppError(
+                "Identifier (phone number or email) is required for OTP verification.",
+                400
+            );
+        }
+        
         let normalizedIdentifier = identifier;
         if (
             !identifier.includes("@") &&
@@ -467,6 +481,11 @@ export const userService = {
         try {
             // Ensure no profiles are created for these users
             const { ...restUserData } = userData; // Explicitly remove profileType if ever passed
+            
+            // Handle empty email string by converting to null
+            if (restUserData.email === "") {
+                restUserData.email = null;
+            }
 
             const user = await User.create(
                 { ...restUserData, isActive: true }, // isActive true by default for special users, or adjust as needed
@@ -527,11 +546,13 @@ export const userService = {
 
         const allowedFields = ["fullName", "email", "sexe", "dateOfBirth"]; // Add other fields as necessary
         for (const key in fieldsToUpdate) {
-            if (
-                allowedFields.includes(key) &&
-                userInstance[key] !== undefined
-            ) {
-                userInstance[key] = fieldsToUpdate[key];
+            if (allowedFields.includes(key)) {
+                // Handle empty email string by converting to null
+                if (key === "email" && fieldsToUpdate[key] === "") {
+                    userInstance[key] = null;
+                } else {
+                    userInstance[key] = fieldsToUpdate[key];
+                }
             }
         }
 
@@ -1012,6 +1033,14 @@ export const userService = {
     loginUser: async function (identifier, otp) {
         // Retained `function` for `this` context if it was intentional, though not used here.
         logger.debug(`Service: Processing login for identifier: ${identifier}`);
+        
+        if (!identifier) {
+            throw new AppError(
+                "Identifier (phone number or email) is required for login.",
+                400
+            );
+        }
+        
         const contactDetails = identifier.includes("@")
             ? { email: identifier }
             : { phoneNumber: normalizePhoneNumber(identifier) }; // Normalize phone for lookup

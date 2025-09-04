@@ -1,6 +1,6 @@
 import { userService } from "./../services/userService.js";
 import createLogger from "#utils/logger.js";
-import { NotFoundError } from "#utils/customErrors.js";
+import { AppError, NotFoundError } from "#utils/customErrors.js";
 
 const logger = createLogger("user-facade");
 
@@ -135,7 +135,15 @@ export const userFacade = {
      */
     createUser: async (userData, otp, isAdmin = null) => {
         logger.debug("Creating user from facade with data:", userData);
-        console.debug("dcvfgbnhkgfdfghjnkmlkfdfghjk" + userData);
+        
+        // Validate that either email or phoneNumber is provided
+        if (!userData.email && !userData.phoneNumber) {
+            throw new AppError(
+                "Either email or phone number is required for user creation.",
+                400
+            );
+        }
+        
         const identifier = userData.email || userData.phoneNumber;
         if (isAdmin !== true) {
             await userService.verifyOtp(identifier, otp, "registration");
@@ -146,12 +154,12 @@ export const userFacade = {
             userData.email.trim().endsWith("@tyvaa.live") &&
             isAdmin === true
         ) {
-            console.log("Creating admin user for email:", userData.email);
+            logger.info("Creating admin user for email:", userData.email);
             user = await userService.createUserWithRoles(userData, [
                 "ADMINISTRATEUR",
             ]);
         } else {
-            console.log("Creating regular user for:", identifier);
+            logger.info("Creating regular user for:", identifier);
             user = await userService.createUserWithProfile(userData);
         }
         logger.info(`User created successfully with ID: ${user.id}`);
