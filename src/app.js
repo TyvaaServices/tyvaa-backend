@@ -74,7 +74,7 @@ export async function startServer() {
                 }
                 if (process.env.NODE_ENV !== "test") {
                     try {
-                        await sequelize.sync({ force: true, logging: false });
+                        await sequelize.sync({ force: false, logging: false });
                         fastify.log.info("Database synchronized");
                     } catch (syncError) {
                         fastify.log.error("Database sync failed:", syncError);

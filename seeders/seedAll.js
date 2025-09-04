@@ -15,8 +15,8 @@ import {
 } from "#config/index.js";
 
 async function seed() {
-    await sequelize.sync({ force: true, logging: false });
-    await seedLandmarks();
+    await sequelize.sync({ force: false, logging: false });
+    // await seedLandmarks();
     const { seedDatabase } = await import("./rbacSeeder.js");
     // await seedDatabase();
     const roles = await Role.findAll();
