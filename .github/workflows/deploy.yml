@@ -136,3 +136,5 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NODE_ENV: production
+          ADMIN_EMAIL: houleymatou.diallo@tyvaa.live
+          ADMIN_PHONE: 782775579
