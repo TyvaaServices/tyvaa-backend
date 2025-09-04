@@ -128,3 +128,11 @@ jobs:
       - name: Terraform Apply
         working-directory: ./infra
         run: terraform apply -auto-approve -var="database_url=${{ secrets.DATABASE_URL }}" -var="docker_hub_user=${{ secrets.DOCKER_HUB_USER }}"
+      - name: Run DB Seeders
+        working-directory: ./
+        run: |
+          node src/seeders/rbacSeeder.js
+          node src/seeders/seedAll.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NODE_ENV: production
