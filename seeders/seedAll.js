@@ -12,6 +12,7 @@ import {
     RideInstance,
     RideModel,
     User,
+    Booking,
 } from "#config/index.js";
 
 async function seed() {
@@ -193,6 +194,45 @@ async function seed() {
         { actionType: "login", codeAction: "LOGIN" },
         { actionType: "logout", codeAction: "LOGOUT" },
     ]);
+
+    try {
+        // Récupérer les vrais IDs des passengerProfiles et rideInstances
+        const actualPassengerProfiles = validPassengerProfiles.filter(
+            (p) => p && p.userId
+        );
+        const actualRideInstances = rideInstances.filter((r) => r && r.id);
+
+        if (
+            actualPassengerProfiles.length > 0 &&
+            actualRideInstances.length > 0
+        ) {
+            const bookings = [];
+
+            // Créer 10 bookings avec les vrais IDs
+            for (let i = 0; i < 10; i++) {
+                const passengerProfile =
+                    actualPassengerProfiles[i % actualPassengerProfiles.length];
+                const rideInstance =
+                    actualRideInstances[i % actualRideInstances.length];
+
+                bookings.push({
+                    rideInstanceId: rideInstance.id,
+                    userId: passengerProfile.userId,
+                    seatsBooked: Math.floor(Math.random() * 3) + 1,
+                    status: i >= 8 ? "cancelled" : "booked", // Les 2 derniers seront cancelled
+                });
+            }
+
+            await Booking.bulkCreate(bookings, { ignoreDuplicates: true });
+            console.log(`${bookings.length} bookings created successfully`);
+        } else {
+            console.log(
+                "No passenger profiles or ride instances found, skipping bookings creation"
+            );
+        }
+    } catch (error) {
+        console.error("Error creating bookings:", error.message);
+    }
 }
 
 seed()
