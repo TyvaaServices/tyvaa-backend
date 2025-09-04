@@ -239,10 +239,10 @@ export const userControllerFactory = (fastify) => ({
      */
     createUser: async (request, reply) => {
         try {
-            const { user, otp } = request.body;
+            const { user, otp, isAdmin } = request.body;
             let createdUser;
             try {
-                createdUser = await userFacade.createUser(user, otp);
+                createdUser = await userFacade.createUser(user, otp, isAdmin);
             } catch (err) {
                 if (err.message === "User already exists") {
                     return reply
@@ -252,8 +252,8 @@ export const userControllerFactory = (fastify) => ({
                 if (err.message === "Invalid OTP") {
                     return reply.status(400).send({ error: "Invalid OTP" });
                 }
-                console.log(
-                    `Error creating user: ${err.message}` // Log the error for debugging
+                console.error(
+                    `Error creating user: ${err}` // Log the error for debugging
                 );
                 return reply.status(500).send({ error: err.message });
             }

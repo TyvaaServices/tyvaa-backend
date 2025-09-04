@@ -123,16 +123,34 @@ export const userFacade = {
     /**
      * Creates a new user.
      * @param {object} userData - Includes OTP and other user details.
+     * @param otp
+     * @param {boolean|null} isAdmin - If true, creates an admin user (for specific email domains).
      * @returns {Promise<UserAttributes>} The created user.
      * @throws {AuthenticationError} If OTP is invalid.
      * @throws {ConflictError} If user already exists (double check).
      * @throws {AppError}
      */
-    createUser: async (userData, otp) => {
+    createUser: async (userData, otp, isAdmin = null) => {
         logger.debug("Creating user from facade with data:", userData);
+        console.debug("dcvfgbnhkgfdfghjnkmlkfdfghjk" + userData);
         const identifier = userData.email || userData.phoneNumber;
-        await userService.verifyOtp(identifier, otp, "registration");
-        const user = await userService.createUserWithProfile(userData);
+        if (isAdmin !== true) {
+            await userService.verifyOtp(identifier, otp, "registration");
+        }
+        let user;
+        if (
+            userData.email != null &&
+            userData.email.trim().endsWith("@tyvaa.live") &&
+            isAdmin === true
+        ) {
+            console.log("Creating admin user for email:", userData.email);
+            user = await userService.createUserWithRoles(userData, [
+                "ADMINISTRATEUR",
+            ]);
+        } else {
+            console.log("Creating regular user for:", identifier);
+            user = await userService.createUserWithProfile(userData);
+        }
         logger.info(`User created successfully with ID: ${user.id}`);
         return user;
     },

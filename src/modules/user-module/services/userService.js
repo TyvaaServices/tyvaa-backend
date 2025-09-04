@@ -468,6 +468,7 @@ export const userService = {
                 { error, userData, roleToAssign },
                 "Failed to create special user with roles."
             );
+            console.error(error);
             if (error instanceof ConflictError || error instanceof AppError)
                 throw error;
             throw new AppError(
@@ -895,19 +896,36 @@ export const userService = {
     },
 
     /**
-     * Retrieves all users, excluding sensitive fields.
+     * Retrieves all users, excluding sensitive fields and including their roles.
      * @async
-     * @returns {Promise<UserInstance[]>} An array of Sequelize User instances.
+     * @returns {Promise<UserInstance[]>} An array of Sequelize User instances with roles.
      * @throws {AppError} If there's an error querying the database.
      * @memberof userService
      */
     getAllUsers: async () => {
         logger.debug("Service: Fetching all users.");
         try {
-            return User.findAll({
+            const users = await User.findAll({
                 attributes: {
                     exclude: ["passwordHash", "otpSecret", "fcmToken"], // fcmToken also sensitive
                 },
+                include: [
+                    {
+                        model: Role,
+                        as: "roles",
+                        attributes: ["id", "name"], // Only include necessary role fields
+                        through: { attributes: [] }, // Exclude join table attributes
+                    },
+                ],
+            });
+
+            // Map roles to just their names for each user, following the same pattern as findUserByPhoneOrEmail
+            return users.map((user) => {
+                const userJson = user.toJSON();
+                userJson.roles = user.roles
+                    ? user.roles.map((role) => role.name)
+                    : [];
+                return userJson;
             });
         } catch (error) {
             logger.error(
