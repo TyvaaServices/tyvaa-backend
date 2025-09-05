@@ -6,9 +6,14 @@ async function rideRoutes(fastify, _opts) {
     fastify.put("/bookings/:id", bookingController.updateBooking);
     fastify.delete("/bookings/:id", bookingController.deleteBooking);
 
-    fastify.post("/bookings/book", bookingController.bookRide);
+    fastify.post("/bookings/book", {
+        preValidation: [fastify.authenticate]
+    }, bookingController.bookRide);
     fastify.post(
         "/bookings/:bookingId/cancel",
+        {
+            preValidation: [fastify.authenticate]
+        },
         bookingController.cancelBooking
     );
 }

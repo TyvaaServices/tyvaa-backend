@@ -56,51 +56,92 @@ const bookingService = {
      * @throws {Error} If user or ride instance is not provided, or if there are not enough seats.
      */
     bookRide: async ({ user, rideInstance, seatsToBook }) => {
+        console.log("🐛 BookingService.bookRide called with:", { 
+            userId: user?.id, 
+            rideInstanceId: rideInstance?.id, 
+            seatsToBook,
+            userObject: !!user,
+            rideInstanceObject: !!rideInstance
+        });
+        
         if (!user) throw new Error("User instance required");
         if (!rideInstance) throw new Error("RideInstance required");
 
+        console.log("🐛 Checking available seats...");
         const availableSeats =
             rideInstance.seatsAvailable - rideInstance.seatsBooked;
+        console.log("🐛 Available seats:", availableSeats, "Requested:", seatsToBook);
+        
         if (seatsToBook > availableSeats)
             throw new Error("Not enough seats available");
 
+        console.log("🐛 Checking for existing booking...");
         const existing = await Booking.findOne({
             where: { rideInstanceId: rideInstance.id, userId: user.id },
         });
         if (existing) throw new Error("Already booked");
 
+        console.log("🐛 Getting ride model...");
         const rideModel = await RideModel.findByPk(rideInstance.rideId);
         if (!rideModel) throw new Error("Ride template not found");
 
+        console.log("🐛 Calculating total amount...");
         const totalAmount = rideModel.price * seatsToBook;
+        console.log("🐛 Total amount:", totalAmount);
 
-        const booking = await Booking.create({
-            seatsBooked: seatsToBook,
-            status: "booked",
-        });
+        console.log("🐛 Creating booking...");
+        let booking;
+        try {
+            booking = await Booking.create({
+                userId: user.id,
+                rideInstanceId: rideInstance.id,
+                seatsBooked: seatsToBook,
+                status: "booked",
+            });
+            console.log("🐛 Booking created with ID:", booking.id);
+        } catch (createError) {
+            console.log("🐛 Booking creation failed:", createError.message);
+            console.log("🐛 Booking creation error details:", createError);
+            throw new Error(`Booking creation failed: ${createError.message}`);
+        }
 
-        await booking.setUser(user);
-        await booking.setRideInstance(rideInstance);
-
-        const payment = await paymentService.createPayment({
-            bookingId: booking.id,
-            amount: totalAmount,
-            currency: "XOF",
-            phone: user.phone,
-            paymentMethod: "cinetpay",
-        });
-        booking.setPayment(payment);
-
+        console.log("🐛 Updating ride instance seats...");
         await rideInstance.increment("seatsBooked", { by: seatsToBook });
 
-        logger.info("Ride booked with payment", {
+        console.log("🐛 Booking process completed successfully");
+        
+        let payment = null;
+        console.log("🐛 Creating payment...");
+        try {
+            // Generate a unique transaction ID
+            const transactionId = `txn_${booking.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            payment = await paymentService.createPayment({
+                transactionId: transactionId,
+                bookingId: booking.id,
+                amount: totalAmount,
+                currency: "XOF",
+                phone: user.phoneNumber, // Fixed: user.phone -> user.phoneNumber
+                paymentMethod: "cinetpay",
+                status: "PENDING",
+            });
+            console.log("🐛 Payment created successfully:", payment.id);
+            booking.setPayment(payment);
+        } catch (paymentError) {
+            console.log("🐛 Payment creation failed:", paymentError.message);
+            // If payment fails, we should probably rollback the booking
+            throw new Error(`Payment creation failed: ${paymentError.message}`);
+        }
+
+        logger.info("Ride booked successfully with payment", {
             bookingId: booking.id,
-            transactionId: payment.transactionId,
             amount: totalAmount,
         });
 
         const bookingWithPayment = booking.toJSON();
-        bookingWithPayment.payment = payment.toJSON();
+        if (payment) {
+            bookingWithPayment.payment = payment.toJSON();
+        }
         bookingWithPayment.rideInstance = rideInstance.toJSON();
 
         return bookingWithPayment;

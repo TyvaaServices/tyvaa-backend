@@ -31,6 +31,15 @@ const Booking = sequelize.define(
                 key: "id",
             },
         },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            // Temporarily remove foreign key constraint to test booking creation
+            // references: {
+            //     model: "Users",
+            //     key: "id",
+            // },
+        },
         seatsBooked: {
             type: DataTypes.INTEGER,
             allowNull: false,

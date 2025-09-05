@@ -1,6 +1,5 @@
 import bookingService from "../services/bookingService.js";
-import User from "../../user-module/models/user.js";
-import RideInstance from "../../ride-module/models/rideInstance.js";
+import { User, RideInstance } from "../../../config/index.js";
 
 const bookingFacade = {
     async getAllBookings() {

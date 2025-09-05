@@ -15,9 +15,9 @@ RideModel.hasMany(RideInstance, { foreignKey: "rideId" });
 RideInstance.belongsTo(RideModel, { foreignKey: "rideId" });
 RideInstance.hasMany(Booking, { foreignKey: "rideInstanceId" });
 
-Booking.belongsTo(PassengerProfile, { foreignKey: "userId" });
+Booking.belongsTo(User, { foreignKey: "userId" });
 Booking.belongsTo(RideInstance, { foreignKey: "rideInstanceId" });
-PassengerProfile.hasMany(Booking, { foreignKey: "userId" });
+User.hasMany(Booking, { foreignKey: "userId" });
 
 RideModel.belongsTo(DriverProfile, { foreignKey: "driverId" });
 DriverProfile.hasMany(RideModel, { foreignKey: "driverId" });

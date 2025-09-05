@@ -1,4 +1,7 @@
 import bookingFacade from "../facades/bookingFacade.js";
+import createLogger from "#utils/logger.js";
+
+const logger = createLogger("booking-controller");
 
 const bookingController = {
     getAllBookings: async (req, reply) => {
@@ -35,14 +38,83 @@ const bookingController = {
     },
     bookRide: async (req, reply) => {
         try {
-            const { userId, rideInstanceId, seatsToBook } = req.body;
-            const booking = await bookingFacade.bookRide({
+            logger.debug("Booking request received:", {
+                body: req.body,
+                bodyType: typeof req.body,
+                bodyKeys: req.body ? Object.keys(req.body) : "NO_BODY",
+                headers: req.headers,
+                contentType: req.headers["content-type"],
+            });
+            
+            // Extract userId from JWT token
+            let userId = null;
+            try {
+                logger.debug("Attempting JWT verification...");
+                await req.jwtVerify();
+                userId = req.user.id; // Changed from req.user.userId to req.user.id
+                logger.debug("User authenticated via JWT:", { 
+                    userId, 
+                    user: req.user,
+                    userType: typeof req.user,
+                    userKeys: Object.keys(req.user || {}),
+                });
+            } catch (jwtError) {
+                logger.debug("JWT verification failed:", {
+                    error: jwtError.message,
+                    name: jwtError.name,
+                    stack: jwtError.stack,
+                });
+                // Fallback to userId from body for compatibility
+                userId = req.body?.userId;
+                logger.debug("Using userId from body:", userId);
+            }
+            
+            const { rideInstanceId, seatsToBook, seatsBooked } = req.body || {};
+
+            // Handle both seatsToBook and seatsBooked field names for compatibility
+            const seats = seatsToBook || seatsBooked;
+            
+            logger.debug("Extracted data:", {
                 userId,
                 rideInstanceId,
                 seatsToBook,
+                seatsBooked,
+                seats,
+                userIdType: typeof userId,
+                rideInstanceIdType: typeof rideInstanceId,
             });
+
+            // Validate required fields
+            if (!userId) {
+                logger.debug("Validation failed: userId missing");
+                return reply.code(400).send({ error: "userId is required" });
+            }
+            if (!rideInstanceId) {
+                logger.debug("Validation failed: rideInstanceId missing");
+                return reply.code(400).send({ error: "rideInstanceId is required" });
+            }
+            if (!seats) {
+                logger.debug("Validation failed: seats missing");
+                return reply.code(400).send({ error: "seatsToBook or seatsBooked is required" });
+            }
+
+            logger.debug("Calling bookingFacade.bookRide with:", { userId, rideInstanceId, seatsToBook: seats });
+
+            const booking = await bookingFacade.bookRide({
+                userId,
+                rideInstanceId,
+                seatsToBook: seats,
+            });
+            
+            logger.debug("Booking successful:", booking);
             return reply.code(201).send(booking);
         } catch (err) {
+            logger.error("Booking error caught:", {
+                message: err.message,
+                stack: err.stack,
+                name: err.name,
+                statusCode: err.statusCode,
+            });
             const statusCode = err.statusCode || 400;
             return reply.code(statusCode).send({ error: err.message });
         }
