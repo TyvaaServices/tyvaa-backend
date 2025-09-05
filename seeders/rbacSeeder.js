@@ -86,6 +86,10 @@ const permissionsData = [
         description:
             "Autorise à voir les statistiques globales de la plateforme",
     },
+    {
+        name: "voir_dashboard",
+        description: "Autorise à accéder au tableau de bord administrateur",
+    },
 ];
 
 const rolesData = [
@@ -130,6 +134,7 @@ const rolePermissionsData = {
         "gerer_permissions",
         "acceder_journal_audit_admin",
         "voir_statistiques_plateforme",
+        "voir_dashboard",
     ],
 };
 
