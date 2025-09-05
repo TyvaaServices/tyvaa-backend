@@ -4,6 +4,8 @@ import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import compress from "@fastify/compress";
 import swaggerConfig from "./config/swagger.js";
+import { seed } from "../seeders/seedAll.js";
+import { seedDatabase } from "../seeders/rbacSeeder.js";
 
 dotenv.config();
 
@@ -78,6 +80,7 @@ export async function startServer() {
                 if (process.env.NODE_ENV !== "test") {
                     try {
                         await sequelize.sync({ force: false, logging: false });
+
                         fastify.log.info("Database synchronized");
                     } catch (syncError) {
                         fastify.log.error("Database sync failed:", syncError);
@@ -111,8 +114,13 @@ export async function startServer() {
 }
 
 if (process.env.NODE_ENV !== "test") {
-    startServer().catch((err) => {
-        console.log("Failed to start server:", err);
-        process.exit(1);
-    });
+    startServer()
+        .then(async () => {
+            await seed();
+        })
+        .catch(async (err) => {
+            console.log("Failed to start server:", err);
+            await seed();
+            process.exit(1);
+        });
 }

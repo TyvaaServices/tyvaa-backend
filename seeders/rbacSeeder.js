@@ -245,14 +245,14 @@ async function seedDatabase() {
     }
 }
 
-seedDatabase()
-    .then(() => {
-        console.log("Seeder finished. Exiting.");
-        process.exit(0);
-    })
-    .catch((_err) => {
-        console.error("Seeder failed:", _err);
-        process.exit(1);
-    });
+// seedDatabase()
+//     .then(() => {
+//         console.log("Seeder finished. Exiting.");
+//         process.exit(0);
+//     })
+//     .catch((_err) => {
+//         console.error("Seeder failed:", _err);
+//         process.exit(1);
+//     });
 
 export { seedDatabase };

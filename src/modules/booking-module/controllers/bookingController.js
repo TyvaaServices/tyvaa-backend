@@ -51,7 +51,7 @@ const bookingController = {
             try {
                 logger.debug("Attempting JWT verification...");
                 await req.jwtVerify();
-                userId = req.user.id; // Changed from req.user.userId to req.user.id
+                userId = req.user.userId;
                 logger.debug("User authenticated via JWT:", { 
                     userId, 
                     user: req.user,
