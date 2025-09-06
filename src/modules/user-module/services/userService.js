@@ -102,13 +102,13 @@ export const userService = {
             phoneNumber,
             email,
         });
-        
+
         // Normalize phone number if provided
         let normalizedPhone = phoneNumber;
         if (phoneNumber && !phoneNumber.includes("@")) {
             normalizedPhone = normalizePhoneNumber(phoneNumber);
         }
-        
+
         const whereClause = email
             ? { email }
             : { phoneNumber: normalizedPhone };
@@ -126,7 +126,7 @@ export const userService = {
                 { model: DriverProfile, as: "driverProfile" },
             ],
         });
-        
+
         if (user) {
             const roles = await user.getRoles();
             if (roles.length > 0) {
@@ -144,7 +144,7 @@ export const userService = {
                 searchedEmail: email,
             });
         }
-        
+
         return user;
     },
 
@@ -166,7 +166,7 @@ export const userService = {
                 400
             );
         }
-        
+
         let normalizedIdentifier = identifier;
         if (
             !identifier.includes("@") &&
@@ -234,7 +234,7 @@ export const userService = {
                 400
             );
         }
-        
+
         let normalizedIdentifier = identifier;
         if (
             !identifier.includes("@") &&
@@ -377,7 +377,7 @@ export const userService = {
                 );
                 // Notification failure doesn't affect user creation outcome
             }
-            
+
             return user;
         } catch (error) {
             // Only rollback if transaction hasn't been committed yet
@@ -481,7 +481,7 @@ export const userService = {
         try {
             // Ensure no profiles are created for these users
             const { ...restUserData } = userData; // Explicitly remove profileType if ever passed
-            
+
             // Handle empty email string by converting to null
             if (restUserData.email === "") {
                 restUserData.email = null;
@@ -801,7 +801,7 @@ export const userService = {
                 include: [
                     {
                         model: PassengerProfile,
-                        as: "applicantProfile",
+                        as: "passengerProfile",
                         include: [
                             {
                                 model: User,
@@ -1033,14 +1033,14 @@ export const userService = {
     loginUser: async function (identifier, otp) {
         // Retained `function` for `this` context if it was intentional, though not used here.
         logger.debug(`Service: Processing login for identifier: ${identifier}`);
-        
+
         if (!identifier) {
             throw new AppError(
                 "Identifier (phone number or email) is required for login.",
                 400
             );
         }
-        
+
         const contactDetails = identifier.includes("@")
             ? { email: identifier }
             : { phoneNumber: normalizePhoneNumber(identifier) }; // Normalize phone for lookup
