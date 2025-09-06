@@ -4,8 +4,8 @@ import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import compress from "@fastify/compress";
 import swaggerConfig from "./config/swagger.js";
-import { seed } from "../seeders/seedAll.js";
-import { seedDatabase } from "../seeders/rbacSeeder.js";
+// import { seed } from "./../seeders/seedAll.js";
+// import { seedDatabase } from "../seeders/rbacSeeder.js";
 
 dotenv.config();
 
@@ -118,11 +118,11 @@ export async function startServer() {
 if (process.env.NODE_ENV !== "test") {
     startServer()
         .then(async () => {
-            await seed();
+            // await seed();
         })
         .catch(async (err) => {
             console.log("Failed to start server:", err);
-            await seed();
+            // await seed();
             process.exit(1);
         });
 }
