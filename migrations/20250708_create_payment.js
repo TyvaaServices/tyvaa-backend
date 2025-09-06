@@ -10,13 +10,17 @@ export async function up(queryInterface, Sequelize) {
             type: Sequelize.STRING,
             allowNull: false,
             unique: true,
-            field: "transaction_id",
+        },
+        externalTransactionId: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            unique: true,
         },
         bookingId: {
             type: Sequelize.INTEGER,
             allowNull: false,
             references: {
-                model: "bookings",
+                model: "Bookings",
                 key: "id",
             },
         },
@@ -25,41 +29,67 @@ export async function up(queryInterface, Sequelize) {
             allowNull: true,
         },
         amount: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.DECIMAL(10, 2),
             allowNull: false,
+        },
+        fee: {
+            type: Sequelize.DECIMAL(10, 2),
+            allowNull: true,
+            defaultValue: 0,
         },
         status: {
-            type: Sequelize.ENUM("PENDING", "COMPLETED", "FAILED", "CANCELLED"),
+            type: Sequelize.ENUM(
+                "pending",
+                "processing",
+                "completed",
+                "failed",
+                "cancelled"
+            ),
             allowNull: false,
-            defaultValue: "PENDING",
+            defaultValue: "pending",
         },
         currency: {
-            type: Sequelize.STRING,
+            type: Sequelize.STRING(3),
             allowNull: false,
+            defaultValue: "XOF",
         },
         paymentMethod: {
             type: Sequelize.STRING,
             allowNull: false,
         },
-        metadata: {
+        provider: {
             type: Sequelize.STRING,
+            allowNull: false,
+            defaultValue: "dexchange",
+        },
+        metadata: {
+            type: Sequelize.TEXT,
             allowNull: true,
         },
         operatorId: {
             type: Sequelize.STRING,
             allowNull: true,
         },
+        paymentUrl: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+        },
         createdAt: {
-            allowNull: false,
             type: Sequelize.DATE,
-            defaultValue: Sequelize.NOW,
+            allowNull: false,
         },
         updatedAt: {
-            allowNull: false,
             type: Sequelize.DATE,
-            defaultValue: Sequelize.NOW,
+            allowNull: false,
         },
     });
+
+    // Add indexes for better performance
+    await queryInterface.addIndex("Payments", ["bookingId"]);
+    await queryInterface.addIndex("Payments", ["status"]);
+    await queryInterface.addIndex("Payments", ["provider"]);
+    await queryInterface.addIndex("Payments", ["paymentMethod"]);
+    await queryInterface.addIndex("Payments", ["createdAt"]);
 }
 
 export async function down(queryInterface, Sequelize) {
