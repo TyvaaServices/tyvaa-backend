@@ -99,14 +99,21 @@ function buildInstanceDepartureDateTime(rideModel, date) {
             0
         );
     } else {
-        // Default to midnight if no time is specified, though this might indicate a data issue.
-        rideDateTime.setHours(0, 0, 0, 0);
-        logger.warn(
-            `RideModel ID ${rideModel.id} has no departure time specified. Defaulting to midnight for instance generation on ${date.toISOString().split("T")[0]}.`
-        );
+        // Set a reasonable default time instead of midnight (e.g., 8:00 AM)
+        rideDateTime.setHours(8, 0, 0, 0);
+        // Only log this once per ride model to avoid spam
+        if (!loggedWarnings.has(rideModel.id)) {
+            logger.warn(
+                `RideModel ID ${rideModel.id} has no departure time specified. Using default time 08:00 for recurring instances. Consider setting a specific departure time.`
+            );
+            loggedWarnings.add(rideModel.id);
+        }
     }
     return rideDateTime;
 }
+
+// Add this at the top of the file to track logged warnings
+const loggedWarnings = new Set();
 
 /**
  * Creates a RideInstance record in the database if one does not already exist
