@@ -1,0 +1,542 @@
+Services List
+Services List
+Complete list of available payment services
+
+GET
+/
+api
+/
+v1
+/
+api-services
+/
+services
+
+Try it
+​
+Payment Services
+​
+Operation Types
+​
+CASHOUT (Collection)
+Description: Allows you to receive payments from your customers
+Use cases:
+E-commerce website payments
+Bill payments
+Service payment collection
+How it works: The customer makes the payment from their mobile wallet to your DEXCHANGE account
+​
+CASHIN (Disbursement)
+Description: Allows you to send money to your customers
+Use cases:
+Refunds
+Salary payments
+Commission payouts
+How it works: You transfer funds from your DEXCHANGE account to the customer’s mobile wallet
+​
+AIRTIME (Phone Credit)
+Description: Mobile phone credit recharge service
+Benefit: 1% commission on each recharge
+Availability: All mobile operators in Senegal
+​
+Available Services by Country
+​
+Senegal (SN)
+​
+Orange Money
+Cashin: OM_SN_CASHIN - Transfer to Orange Money
+Cashout: OM_SN_CASHOUT - Receive from Orange Money
+​
+Wave
+Cashin: WAVE_SN_CASHIN - Transfer to Wave
+Cashout: WAVE_SN_CASHOUT - Receive from Wave
+​
+Free Money
+Cashin: FM_SN_CASHIN - Transfer to Free Money
+Cashout: FM_SN_CASHOUT - Receive from Free Money
+​
+Wizall Money
+Cashin: WIZALL_SN_CASHIN - Transfer to Wizall
+Cashout: WIZALL_SN_CASHOUT - Receive from Wizall
+​
+Airtime Recharge
+Orange: ORANGE_SN_AIRTIME - Orange recharge
+Free: FREE_SN_AIRTIME - Free recharge
+Expresso: EXPRESSO_SN_AIRTIME - Expresso recharge
+Promobile: PROMOBILE_SN_AIRTIME - Promobile recharge
+​
+Mali (ML)
+Orange Money: OM_ML_CASHOUT - Receive from Orange Money
+Moov Money: MOOV_ML_CASHOUT - Receive from Moov Money
+Wave: WAVE_ML_CASHOUT - Receive from Wave
+​
+Ivory Coast (CI)
+​
+Orange Money
+Cashin: OM_CI_CASHIN - Transfer to Orange Money
+Cashout: OM_CI_CASHOUT - Receive from Orange Money
+​
+Wave
+Cashin: WAVE_CI_CASHIN - Transfer to Wave
+Cashout: WAVE_CI_CASHOUT - Receive from Wave
+​
+MTN Money
+Cashin: MTN_CI_CASHIN - Transfer to MTN Money
+Cashout: MTN_CI_CASHOUT - Receive from MTN Money
+​
+Moov Money
+Cashin: MOOV_CI_CASHIN - Transfer to Moov Money
+Cashout: MOOV_CI_CASHOUT - Receive from Moov Money
+​
+Other Services
+Digi Cash: DIGICASH_CI_CASHOUT - Receive from Digi Cash
+​
+Cameroon (CM)
+Orange Money: OM_CM_CASHOUT - Receive from Orange Money
+MTN Money: MTN_CM_CASHOUT - Receive from MTN Money
+​
+Request Example
+
+Copy
+curl -X GET https://api-m.dexchange.sn/api/v1/api-services/services \
+  -H "Authorization: Bearer YOUR_API_KEY"
+​
+Response Example
+
+Copy
+{
+  "services": [
+    {
+      "serviceName": "Orange Money Cashin SN",
+      "serviceCode": "OM_SN_CASHIN",
+      "serviceType": "MOBILEMONEY",
+      "country": "SN"
+    },
+    {
+      "serviceName": "Orange Money Cashout SN",
+      "serviceCode": "OM_SN_CASHOUT",
+      "serviceType": "MOBILEMONEY",
+      "country": "SN"
+    }
+    // ... other services
+  ]
+}
+​
+Notes
+Service Availability
+Services may vary depending on your account
+Some services require specific activation
+Contact support to activate additional services
+Commissions
+Commissions vary by service type
+AIRTIME: Fixed 1% commission on each transaction
+CASHOUT/CASHIN: Pricing according to your contract
+Transaction Limits
+Minimum: 200 FCFA
+Maximum: 1,000,000 FCFA
+Custom limits available upon request
+Authorizations
+​
+Authorization
+stringheaderrequired
+Entrez votre clé API comme: Bearer <API_KEY>
+
+Response
+200 - application/json
+Liste des services récupérée avec succès
+
+​
+services
+object[]
+Show child attributes
+
+Introduction
+Initialize a Transaction
+instagram
+linkedin
+DIRECT API
+Initialize a Transaction
+Initiate a new payment transaction
+
+POST
+/
+api
+/
+v1
+/
+transaction
+/
+init
+
+Try it
+​
+Initialize a Transaction
+Initialize a new payment transaction.
+​
+Endpoint
+
+Copy
+POST /api/v1/transaction/init
+​
+Headers
+Name	Type	Required	Description
+Authorization	string	Yes	Bearer YOUR_API_KEY
+Content-Type	string	Yes	application/json
+​
+Request Body
+
+Copy
+{
+  "externalTransactionId": string,    // Your unique reference
+  "serviceCode": string,              // Service code
+  "amount": number,                   // Amount (200-1,000,000 FCFA)
+  "number": string,                   // Phone number
+  "callBackURL": string,              // Notification URL
+  "successUrl": string,               // Success redirect URL
+  "failureUrl": string               // Failure redirect URL
+}
+​
+Parameters
+Parameter	Type	Required	Description
+externalTransactionId	string	Yes	Your unique transaction identifier
+serviceCode	string	Yes	Payment service code
+amount	number	Yes	Amount in FCFA (min: 200, max: 1,000,000)
+number	string	Yes	Phone number format: ^[0-9]9$
+callBackURL	string	Yes	URL for webhook notifications
+successUrl	string	Yes	Redirect URL after success
+failureUrl	string	Yes	Redirect URL after failure
+​
+Response
+​
+Successful Response
+
+Copy
+{
+  "message": "Transaction initiated successfully",
+  "success": true,
+  "transaction": {
+    "transactionId": "TID123456789",
+    "serviceName": "Orange Money Senegal",
+    "serviceCode": "OM_SN_CASHOUT",
+    "ApiTransactionId": "OM789012345",
+    "transactionType": "CASHOUT",
+    "transactionAmount": 1000,
+    "transactionFee": 20,
+    "number": "771234567",
+    "Status": "PENDING",
+    "INITIATED_AT": "2024-03-20T10:30:00Z"
+  }
+}
+​
+Error Response
+
+Copy
+{
+  "message": ["Error description"],
+  "success": false
+}
+​
+Error Codes
+HTTP Code	Description
+400	Invalid parameters or incorrect amount
+401	Invalid API key
+403	API under maintenance
+409	External transaction ID already used
+​
+Validations
+Amount
+Minimum: 200 FCFA
+Maximum: 1,000,000 FCFA
+Phone Number
+Format: 9 digits
+Without country code
+Numeric characters only
+​
+Request Example
+
+Copy
+curl -X POST https://api-m.dexchange.sn/api/v1/transaction/init \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "externalTransactionId": "INV-001",
+    "serviceCode": "OM_SN_CASHOUT",
+    "amount": 1000,
+    "number": "771234567",
+    "callBackURL": "https://your-domain.com/callback",
+    "successUrl": "https://your-domain.com/success",
+    "failureUrl": "https://your-domain.com/failure"
+  }'
+​
+Webhook Notification
+When the transaction status changes, a webhook is sent to the URL specified in callBackURL:
+
+Copy
+{
+  "id": "TID123456789",
+  "externalTransactionId": "INV-001",
+  "transactionType": "CASHOUT",
+  "AMOUNT": 1000,
+  "FEE": 20,
+  "PHONE_NUMBER": "771234567",
+  "STATUS": "SUCCESS",
+  "CUSTOM_DATA": "{}",
+  "COMPLETED_AT": "2024-03-20T10:35:00Z",
+  "BALANCE": 50000,
+  "PREVIOUS_BALANCE": 51020,
+  "CURRENT_BALANCE": 50000
+}
+Authorizations
+​
+Authorization
+stringheaderrequired
+Entrez votre clé API comme: Bearer <API_KEY>
+
+Body
+application/json
+Détails de la transaction
+
+​
+externalTransactionId
+stringrequired
+Votre identifiant unique de transaction
+
+​
+serviceCode
+stringrequired
+Code du service de paiement
+
+​
+amount
+numberrequired
+Montant en FCFA (min: 200, max: 1,000,000)
+
+Required range: 200 <= x <= 1000000
+​
+number
+stringrequired
+Numéro de téléphone
+
+​
+callBackURL
+string<uri>required
+URL pour les notifications webhook
+
+​
+successUrl
+string<uri>required
+URL de redirection après succès
+
+​
+failureUrl
+string<uri>required
+URL de redirection après échec
+
+Response
+201
+
+201
+application/json
+Transaction initiée avec succès
+
+​
+message
+stringrequired
+​
+transaction
+objectrequired
+DIRECT API
+Transaction Status
+Get the status of a transaction
+
+GET
+/
+api
+/
+v1
+/
+transaction
+/
+{transactionId}
+
+Try it
+​
+Transaction Status
+Retrieve the details and status of a specific transaction.
+​
+Endpoint
+
+Copy
+GET /api/v1/transaction/{transactionId}
+​
+Headers
+Name	Type	Required	Description
+Authorization	string	Yes	Bearer YOUR_API_KEY
+​
+URL Parameters
+Parameter	Type	Description
+transactionId	string	Unique transaction identifier
+​
+Response
+​
+Successful Response (200)
+
+Copy
+{
+  "message": "Transaction fetched successfully",
+  "transaction": {
+    "ServiceName": "Orange Money Senegal",
+    "ServiceCode": "OM_SN_CASHOUT",
+    "OperatorApi": "OM789012345",
+    "Type": "CASHOUT",
+    "Amount": 1000,
+    "Number": "771234567",
+    "Status": "SUCCESS",
+    "Initiated_at": "2024-03-20T10:30:00Z",
+    "Completed_at": "2024-03-20T10:35:00Z"
+  }
+}
+curl --request GET \
+  --url https://api-m.dexchange.sn/api/v1/transaction/{transactionId} \
+  --header 'Authorization: Bearer <token>'
+
+200
+
+404
+
+Copy
+{
+  "message": "<string>",
+  "transaction": {
+    "ServiceName": "<string>",
+    "ServiceCode": "<string>",
+    "Amount": 123,
+    "Number": "<string>",
+    "Status": "<string>",
+    "Initiated_at": "2023-11-07T05:31:56Z",
+    "Completed_at": "2023-11-07T05:31:56Z"
+  }
+}
+​
+Error Response (404)
+
+Copy
+{
+  "message": ["No transaction found"],
+  "success": false
+}
+​
+Error Codes
+HTTP Code	Description
+400	Invalid parameters
+401	Invalid API key
+403	API under maintenance
+404	Transaction not found
+​
+Request Example
+
+Copy
+curl -X GET https://api-m.dexchange.sn/api/v1/transaction/TID123456789 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+​
+Notes
+Possible Statuses
+PENDING - Awaiting processing
+PROCESSING - Being processed
+SUCCESS - Transaction successful
+FAILED - Transaction failed
+CANCELLED - Transaction cancelled
+Security
+Only transactions linked to your API key are accessible
+Expired transactions are also returned
+History is maintained for reference
+Authorizations
+​
+Authorization
+stringheaderrequired
+Entrez votre clé API comme: Bearer <API_KEY>
+
+Path Parameters
+​
+transactionId
+stringrequired
+ID de la transaction
+
+Response
+200
+
+200
+application/json
+Transaction trouvée
+
+​
+message
+string
+​
+transaction
+object
+Hide child attributes
+
+Confirm Wizall WithdrawalGet account balance
+
+
+                         Copy
+                         curl --request GET \
+                           --url https://api-m.dexchange.sn/api/v1/api-services/balance \
+                           --header 'Authorization: Bearer <token>'
+
+                         200
+
+                         401
+
+                         Copy
+                         {
+                           "message": "<string>",
+                           "balance": {
+                             "success": true,
+                             "balance": 123,
+                             "currency": "<string>",
+                             "lastUpdate": "2023-11-07T05:31:56Z"
+                           }
+                         }
+         Initialiser une transaction
+
+
+         Copy
+         curl --request POST \
+           --url https://api-m.dexchange.sn/api/v1/transaction/init \
+           --header 'Authorization: Bearer <token>' \
+           --header 'Content-Type: application/json' \
+           --data '{
+           "externalTransactionId": "<string>",
+           "serviceCode": "<string>",
+           "amount": 500100,
+           "number": "<string>",
+           "callBackURL": "<string>",
+           "successUrl": "<string>",
+           "failureUrl": "<string>"
+         }'
+
+         201
+
+         400
+
+         Copy
+         {
+           "message": "<string>",
+           "transaction": {
+             "success": true,
+             "transactionId": "<string>",
+             "externalTransactionId": "<string>",
+             "transactionType": "<string>",
+             "amount": 123,
+             "transactionFee": 123,
+             "number": "<string>",
+             "callBackURL": "<string>",
+             "successUrl": "<string>",
+             "failureUrl": "<string>",
+             "status": "<string>",
+             "cashout_url": "<string>",
+             "webhook": "<string>"
+           }
+         }
