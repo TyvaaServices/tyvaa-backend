@@ -3,14 +3,18 @@
  * @typedef {Object} PaymentAttributes
  * @property {number} id - The unique identifier for the payment record.
  * @property {string} transactionId - Unique transaction identifier from payment provider.
- * @property {number} bookingId - The ID of the booking associated with this payment. Foreign key to bookings.
+ * @property {string} externalTransactionId - External transaction ID (our internal reference).
+ * @property {number} bookingId - The ID of the booking associated with this payment.
  * @property {string} phone - Phone number associated with the payment.
- * @property {number} amount - Payment amount in the smallest currency unit.
- * @property {("PENDING"|"COMPLETED"|"FAILED"|"CANCELLED")} status - Payment status.
+ * @property {number} amount - Payment amount.
+ * @property {number} fee - Payment processing fee.
+ * @property {("pending"|"processing"|"completed"|"failed"|"cancelled")} status - Payment status.
  * @property {string} currency - Payment currency code (e.g., "XOF", "USD").
- * @property {string} paymentMethod - Payment method used (e.g., "cinetpay", "orange_money").
+ * @property {string} paymentMethod - Payment method used (e.g., "orange", "wave", "mtn").
+ * @property {string} provider - Payment provider (e.g., "dexchange", "cinetpay").
  * @property {string} metadata - Additional metadata as JSON string.
  * @property {string} operatorId - Payment operator identifier.
+ * @property {string} paymentUrl - Payment URL for user redirection.
  * @property {Date} createdAt - Timestamp when the payment was created.
  * @property {Date} updatedAt - Timestamp when the payment was last updated.
  */
@@ -35,7 +39,13 @@ const Payment = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
-            field: "transaction_id",
+            comment: "Provider transaction ID",
+        },
+        externalTransactionId: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            unique: true,
+            comment: "Our internal transaction reference",
         },
         bookingId: {
             type: DataTypes.INTEGER,
@@ -48,42 +58,143 @@ const Payment = sequelize.define(
         phone: {
             type: DataTypes.STRING,
             allowNull: true,
+            comment: "Customer phone number",
         },
         amount: {
-            type: DataTypes.FLOAT,
+            type: DataTypes.DECIMAL(10, 2),
             allowNull: false,
             validate: {
                 min: 0,
             },
+            comment: "Payment amount",
+        },
+        fee: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true,
+            defaultValue: 0,
+            validate: {
+                min: 0,
+            },
+            comment: "Payment processing fee",
         },
         status: {
-            type: DataTypes.ENUM("PENDING", "COMPLETED", "FAILED", "CANCELLED"),
-            defaultValue: "PENDING",
+            type: DataTypes.ENUM(
+                "pending",
+                "processing",
+                "completed",
+                "failed",
+                "cancelled"
+            ),
+            allowNull: false,
+            defaultValue: "pending",
         },
         currency: {
-            type: DataTypes.STRING,
-            allowNull: true,
+            type: DataTypes.STRING(3),
+            allowNull: false,
             defaultValue: "XOF",
+            validate: {
+                isUppercase: true,
+                len: [3, 3],
+            },
         },
         paymentMethod: {
             type: DataTypes.STRING,
-            allowNull: true,
-            field: "payment_method",
+            allowNull: false,
+            comment: "Payment method (orange, wave, mtn, etc.)",
+        },
+        provider: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: "dexchange",
+            comment: "Payment provider (dexchange, cinetpay, etc.)",
         },
         metadata: {
             type: DataTypes.TEXT,
             allowNull: true,
+            comment: "Additional metadata as JSON string",
         },
         operatorId: {
             type: DataTypes.STRING,
             allowNull: true,
-            field: "operator_id",
+            comment: "Payment operator identifier",
+        },
+        paymentUrl: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            comment: "Payment URL for user redirection",
         },
     },
     {
-        tableName: "payments",
         timestamps: true,
+        tableName: "Payments",
+        // Remove problematic indexes that cause the error
+        indexes: [],
     }
 );
+
+/**
+ * Instance methods for Payment model
+ */
+Payment.prototype.toJSON = function () {
+    const values = { ...this.dataValues };
+
+    // Parse metadata if it's a string
+    if (values.metadata && typeof values.metadata === "string") {
+        try {
+            values.metadata = JSON.parse(values.metadata);
+        } catch (e) {
+            // Keep as string if parsing fails
+        }
+    }
+
+    return values;
+};
+
+/**
+ * Check if payment is in a final state
+ */
+Payment.prototype.isFinal = function () {
+    return ["completed", "failed", "cancelled"].includes(this.status);
+};
+
+/**
+ * Check if payment is successful
+ */
+Payment.prototype.isSuccessful = function () {
+    return this.status === "completed";
+};
+
+/**
+ * Static methods for Payment model
+ */
+
+/**
+ * Find payment by external transaction ID
+ */
+Payment.findByExternalId = function (externalTransactionId) {
+    return this.findOne({
+        where: { externalTransactionId },
+    });
+};
+
+/**
+ * Find payments by booking ID
+ */
+Payment.findByBookingId = function (bookingId) {
+    return this.findAll({
+        where: { bookingId },
+        order: [["createdAt", "DESC"]],
+    });
+};
+
+/**
+ * Find payments by status
+ */
+Payment.findByStatus = function (status) {
+    return this.findAll({
+        where: { status },
+        order: [["createdAt", "DESC"]],
+    });
+};
 
 export default Payment;
