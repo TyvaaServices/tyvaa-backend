@@ -45,15 +45,15 @@ const bookingController = {
                 headers: req.headers,
                 contentType: req.headers["content-type"],
             });
-            
+
             // Extract userId from JWT token
             let userId = null;
             try {
                 logger.debug("Attempting JWT verification...");
                 await req.jwtVerify();
-                userId = req.user.userId;
-                logger.debug("User authenticated via JWT:", { 
-                    userId, 
+                userId = req.user.id;
+                logger.debug("User authenticated via JWT:", {
+                    userId,
                     user: req.user,
                     userType: typeof req.user,
                     userKeys: Object.keys(req.user || {}),
@@ -68,18 +68,26 @@ const bookingController = {
                 userId = req.body?.userId;
                 logger.debug("Using userId from body:", userId);
             }
-            
-            const { rideInstanceId, seatsToBook, seatsBooked } = req.body || {};
+
+            const {
+                rideInstanceId,
+                seatsToBook,
+                seatsBooked,
+                paymentMethod = "orange",
+                country = "SN",
+            } = req.body || {};
 
             // Handle both seatsToBook and seatsBooked field names for compatibility
             const seats = seatsToBook || seatsBooked;
-            
+
             logger.debug("Extracted data:", {
                 userId,
                 rideInstanceId,
                 seatsToBook,
                 seatsBooked,
                 seats,
+                paymentMethod,
+                country,
                 userIdType: typeof userId,
                 rideInstanceIdType: typeof rideInstanceId,
             });
@@ -91,21 +99,33 @@ const bookingController = {
             }
             if (!rideInstanceId) {
                 logger.debug("Validation failed: rideInstanceId missing");
-                return reply.code(400).send({ error: "rideInstanceId is required" });
+                return reply
+                    .code(400)
+                    .send({ error: "rideInstanceId is required" });
             }
             if (!seats) {
                 logger.debug("Validation failed: seats missing");
-                return reply.code(400).send({ error: "seatsToBook or seatsBooked is required" });
+                return reply
+                    .code(400)
+                    .send({ error: "seatsToBook or seatsBooked is required" });
             }
 
-            logger.debug("Calling bookingFacade.bookRide with:", { userId, rideInstanceId, seatsToBook: seats });
+            logger.debug("Calling bookingFacade.bookRide with:", {
+                userId,
+                rideInstanceId,
+                seatsToBook: seats,
+                paymentMethod,
+                country,
+            });
 
             const booking = await bookingFacade.bookRide({
                 userId,
                 rideInstanceId,
                 seatsToBook: seats,
+                paymentMethod,
+                country,
             });
-            
+
             logger.debug("Booking successful:", booking);
             return reply.code(201).send(booking);
         } catch (err) {
@@ -114,7 +134,18 @@ const bookingController = {
                 stack: err.stack,
                 name: err.name,
                 statusCode: err.statusCode,
+                code: err.code,
+                sqlMessage: err.sqlMessage,
+                sqlState: err.sqlState,
+                errno: err.errno,
+                sql: err.sql,
+                parameters: err.parameters,
+                cause: err.cause,
+                originalError: err.originalError,
+                parent: err.parent,
+                fullError: JSON.stringify(err, Object.getOwnPropertyNames(err)),
             });
+            console.error(err);
             const statusCode = err.statusCode || 400;
             return reply.code(statusCode).send({ error: err.message });
         }
