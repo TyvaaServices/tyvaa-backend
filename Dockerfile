@@ -22,6 +22,10 @@ COPY package*.json ./
 
 # Copy application source code
 COPY src ./src
+COPY seeders ./seeders
+COPY migrations ./migrations
+COPY config ./config
+COPY models ./models
 COPY .env* ./
 
 # Expose the application port (change if needed)
