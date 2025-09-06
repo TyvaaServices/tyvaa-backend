@@ -29,6 +29,7 @@ const idempotencyPlugin = (await import("./utils/idempotencyPlugin.js"))
     .default;
 const dashboardModule = (await import("./modules/dashboard-module/server.js"))
     .default;
+const auditModule = (await import("./modules/audit-module/server.js")).default;
 
 export async function buildApp() {
     const fastify = Fastify({ logger: true });
@@ -53,6 +54,7 @@ export async function buildApp() {
     fastify.register(bookingModule);
     fastify.register(paymentModule);
     fastify.register(dashboardModule);
+    fastify.register(auditModule);
     fastify.register(swagger, swaggerConfig.options);
     fastify.register(swaggerUi, swaggerConfig.uiOptions);
     fastify.register(compress, { global: true });

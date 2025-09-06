@@ -32,6 +32,13 @@ Payment.belongsTo(Booking, { foreignKey: "bookingId" });
 Booking.hasOne(Payment, { foreignKey: "bookingId" });
 
 User.hasMany(AuditLog, { foreignKey: "userId" });
+AuditLog.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+AuditAction.hasMany(AuditLog, { foreignKey: "actionTypeId" });
+AuditLog.belongsTo(AuditAction, {
+    foreignKey: "actionTypeId",
+    as: "actionType",
+});
 
 User.hasOne(PassengerProfile, { as: "passengerProfile", foreignKey: "userId" });
 PassengerProfile.belongsTo(User, { as: "user", foreignKey: "userId" });
