@@ -91,18 +91,29 @@ class RedisCacheService {
         }
         try {
             const data = await this.redisClient.get(key);
-            logger.info(`Redis GET key: ${key} | value: ${data}`);
+            // Fix: Properly handle data logging to avoid [object Object]
+            const logValue =
+                typeof data === "string" ? data : JSON.stringify(data);
+            logger.info(`Redis GET key: ${key} | value: ${logValue}`);
+
             if (data === null || data === undefined) {
                 logger.warn(`Redis key not found: ${key}`);
                 return null;
             }
-            return JSON.parse(data); // Assumes data is stored as a JSON string
+
+            // Handle case where data is already parsed (Upstash Redis auto-parses)
+            if (typeof data === "string") {
+                return JSON.parse(data);
+            }
+
+            // Data is already an object, return as-is
+            return data;
         } catch (error) {
             logger.error(
                 { error, key },
                 `Error getting value from Redis for key: ${key}`
             );
-            return null; // Or re-throw, depending on error handling strategy
+            return null;
         }
     }
 
