@@ -42,7 +42,7 @@
     "@fastify/swagger-ui": "^5.2.3",
     "@genkit-ai/googleai": "^1.14.0",
     "@jest/globals": "^30.0.4",
-    "@upstash/redis": "^1.35.1",
+    "@upstash/redis": "^1.35.5",
     "amqplib": "^0.10.8",
     "axios": "^1.10.0",
     "dotenv": "^17.0.1",
